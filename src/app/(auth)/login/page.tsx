@@ -29,7 +29,9 @@ export default function LoginPage() {
             label="Password"
             placeholder="Enter your password"
             variant="underlined"
+            
           />
+          <Link className="justify-end text-sm">Forget password? </Link>
           <Button color="primary" variant="solid" className="w-full">
             Sign In
           </Button>

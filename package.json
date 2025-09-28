@@ -2,6 +2,7 @@
   "name": "open-dashboard-next",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",
@@ -10,9 +11,11 @@
     "format": "biome format --write"
   },
   "dependencies": {
+    "@heroui/react": "^2.8.4",
+    "framer-motion": "^12.23.22",
+    "next": "15.5.4",
     "react": "19.1.0",
-    "react-dom": "19.1.0",
-    "next": "15.5.4"
+    "react-dom": "19.1.0"
   },
   "devDependencies": {
     "typescript": "^5",

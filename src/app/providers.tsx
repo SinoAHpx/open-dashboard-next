@@ -1,12 +1,5 @@
-"use client";
-
 import { HeroUIProvider } from "@heroui/react";
-import type { ReactNode } from "react";
 
-type ProvidersProps = {
-  children: ReactNode;
-};
-
-export function Providers({ children }: ProvidersProps) {
+export function Providers({ children }: { children: React.ReactNode }) {
   return <HeroUIProvider>{children}</HeroUIProvider>;
 }

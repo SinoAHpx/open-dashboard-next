@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@heroui/react": "^2.8.4",
+    "@phosphor-icons/react": "^2.1.10",
     "framer-motion": "^12.23.22",
     "next": "15.5.4",
     "react": "19.1.0",

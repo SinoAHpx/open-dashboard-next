@@ -1,7 +1,21 @@
 "use client";
 
-import { Listbox, ListboxItem } from "@heroui/listbox";
+import {
+  ChartBarIcon,
+  GearIcon,
+  HouseIcon,
+  UsersIcon,
+  type Icon,
+} from "@phosphor-icons/react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
+
+interface MenuItem {
+  key: string;
+  label: string;
+  href: string;
+  icon: Icon;
+}
 
 interface SidebarProps {
   isOpen?: boolean;
@@ -10,37 +24,61 @@ interface SidebarProps {
 export function Sidebar({ isOpen = true }: SidebarProps) {
   const pathname = usePathname();
 
-  const menuItems = [
-    { key: "dashboard", label: "Dashboard", href: "/" },
-    { key: "analytics", label: "Analytics", href: "/analytics" },
-    { key: "users", label: "Users", href: "/users" },
-    { key: "settings", label: "Settings", href: "/settings" },
+  const menuItems: MenuItem[] = [
+    { key: "dashboard", label: "Dashboard", href: "/", icon: HouseIcon },
+    {
+      key: "analytics",
+      label: "Analytics",
+      href: "/analytics",
+      icon: ChartBarIcon,
+    },
+    { key: "users", label: "Users", href: "/users", icon: UsersIcon },
+    { key: "settings", label: "Settings", href: "/settings", icon: GearIcon },
   ];
 
   return (
     <aside
       className={`${
         isOpen ? "w-64" : "w-0"
-      } bg-gray-50 dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 transition-all duration-300 overflow-hidden`}
+      } bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-950 border-r border-gray-200 dark:border-gray-800 transition-all duration-300 overflow-hidden`}
     >
       <div className="p-6">
-        <h2 className="text-2xl font-bold mb-8">Dashboard</h2>
+        <h2 className="text-2xl font-bold mb-8 bg-gradient-to-r from-primary-600 to-primary-400 bg-clip-text text-transparent">
+          Dashboard
+        </h2>
 
-        <Listbox
-          aria-label="Navigation"
-          variant="flat"
-          selectedKeys={[pathname === "/" ? "dashboard" : pathname.slice(1)]}
-        >
-          {menuItems.map((item) => (
-            <ListboxItem
-              key={item.key}
-              href={item.href}
-              className="mb-1"
-            >
-              {item.label}
-            </ListboxItem>
-          ))}
-        </Listbox>
+        <nav className="flex flex-col gap-1 space-y-2">
+          {menuItems.map((item) => {
+            const Icon = item.icon;
+            const isSelected = pathname === item.href;
+
+            return (
+              <Link
+                key={item.key}
+                href={item.href}
+                className={`
+                  flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200
+                  ${
+                    isSelected
+                      ? "bg-primary text-primary-foreground shadow-md shadow-primary/20"
+                      : "hover:bg-gray-200 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300"
+                  }
+                `}
+              >
+                <Icon
+                  size={20}
+                  weight={isSelected ? "fill" : "regular"}
+                  className={
+                    isSelected
+                      ? "text-primary-foreground"
+                      : "text-gray-600 dark:text-gray-400"
+                  }
+                />
+                <span className="font-medium">{item.label}</span>
+              </Link>
+            );
+          })}
+        </nav>
       </div>
     </aside>
   );

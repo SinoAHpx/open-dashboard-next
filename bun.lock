@@ -5,6 +5,7 @@
       "name": "open-dashboard-next",
       "dependencies": {
         "@heroui/react": "^2.8.4",
+        "@phosphor-icons/react": "^2.1.10",
         "framer-motion": "^12.23.22",
         "next": "15.5.4",
         "react": "19.1.0",
@@ -299,6 +300,8 @@
     "@next/swc-win32-arm64-msvc": ["@next/swc-win32-arm64-msvc@15.5.4", "", { "os": "win32", "cpu": "arm64" }, "sha512-PcR2bN7FlM32XM6eumklmyWLLbu2vs+D7nJX8OAIoWy69Kef8mfiN4e8TUv2KohprwifdpFKPzIP1njuCjD0YA=="],
 
     "@next/swc-win32-x64-msvc": ["@next/swc-win32-x64-msvc@15.5.4", "", { "os": "win32", "cpu": "x64" }, "sha512-1ur2tSHZj8Px/KMAthmuI9FMp/YFusMMGoRNJaRZMOlSkgvLjzosSdQI0cJAKogdHl3qXUQKL9MGaYvKwA7DXg=="],
+
+    "@phosphor-icons/react": ["@phosphor-icons/react@2.1.10", "", { "peerDependencies": { "react": ">= 16.8", "react-dom": ">= 16.8" } }, "sha512-vt8Tvq8GLjheAZZYa+YG/pW7HDbov8El/MANW8pOAz4eGxrwhnbfrQZq0Cp4q8zBEu8NIhHdnr+r8thnfRSNYA=="],
 
     "@react-aria/breadcrumbs": ["@react-aria/breadcrumbs@3.5.28", "", { "dependencies": { "@react-aria/i18n": "^3.12.12", "@react-aria/link": "^3.8.5", "@react-aria/utils": "^3.30.1", "@react-types/breadcrumbs": "^3.7.16", "@react-types/shared": "^3.32.0", "@swc/helpers": "^0.5.0" }, "peerDependencies": { "react": "^16.8.0 || ^17.0.0-rc.1 || ^18.0.0 || ^19.0.0-rc.1", "react-dom": "^16.8.0 || ^17.0.0-rc.1 || ^18.0.0 || ^19.0.0-rc.1" } }, "sha512-6S3QelpajodEzN7bm49XXW5gGoZksK++cl191W0sexq/E5hZHAEA9+CFC8pL3px13ji7qHGqKAxOP4IUVBdVpQ=="],
 

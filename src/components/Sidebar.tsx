@@ -1,21 +1,8 @@
 "use client";
 
-import {
-  ChartBarIcon,
-  GearIcon,
-  HouseIcon,
-  UsersIcon,
-  type Icon,
-} from "@phosphor-icons/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-
-interface MenuItem {
-  key: string;
-  label: string;
-  href: string;
-  icon: Icon;
-}
+import { menuItems } from "@/lib/sidebar-items";
 
 interface SidebarProps {
   isOpen?: boolean;
@@ -23,18 +10,6 @@ interface SidebarProps {
 
 export function Sidebar({ isOpen = true }: SidebarProps) {
   const pathname = usePathname();
-
-  const menuItems: MenuItem[] = [
-    { key: "dashboard", label: "Dashboard", href: "/", icon: HouseIcon },
-    {
-      key: "analytics",
-      label: "Analytics",
-      href: "/analytics",
-      icon: ChartBarIcon,
-    },
-    { key: "users", label: "Users", href: "/users", icon: UsersIcon },
-    { key: "settings", label: "Settings", href: "/settings", icon: GearIcon },
-  ];
 
   return (
     <aside

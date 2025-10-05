@@ -18,8 +18,8 @@ export function Sidebar({ isOpen = true }: SidebarProps) {
       } bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-950 border-r border-gray-200 dark:border-gray-800 transition-all duration-300 overflow-hidden`}
     >
       <div className="p-6">
-        <h2 className="text-2xl font-bold mb-8 bg-gradient-to-r from-primary-600 to-primary-400 bg-clip-text text-transparent">
-          Dashboard
+        <h2 className="text-2xl text-center font-bold mb-8 bg-gradient-to-r from-primary-600 to-primary-400 bg-clip-text text-transparent">
+          The System
         </h2>
 
         <nav className="flex flex-col gap-1 space-y-2">

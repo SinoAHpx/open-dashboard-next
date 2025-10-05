@@ -2,10 +2,6 @@
 
 This file provides guidance to Codex when working with code in this repository.
 
-## Rules you must follow:
-
-- Commit current changes when the user requests are finished, following this format: `feat/ui/fix/chore/doc: a brief summary about changes.`
-
 ## Tech Stack & Architecture
 
 This is a Next.js 15 application using the App Router pattern with the following key technologies:

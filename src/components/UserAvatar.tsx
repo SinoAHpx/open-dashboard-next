@@ -9,12 +9,12 @@ import {
   DropdownItem,
 } from "@heroui/react";
 import {
-  User,
-  Gear,
-  SignOut,
-  Moon,
-  Sun,
-  Bell,
+  UserIcon,
+  GearIcon,
+  SignOutIcon,
+  MoonIcon,
+  SunIcon,
+  BellIcon,
 } from "@phosphor-icons/react/dist/ssr";
 import { useRouter } from "next/navigation";
 
@@ -64,21 +64,21 @@ export function UserAvatar() {
           <DropdownItem
             key="profile"
             description="View your profile"
-            startContent={<User size={20} />}
+            startContent={<UserIcon size={20} />}
           >
             Profile
           </DropdownItem>
           <DropdownItem
             key="settings"
             description="Manage your settings"
-            startContent={<Gear size={20} />}
+            startContent={<GearIcon size={20} />}
           >
             Settings
           </DropdownItem>
           <DropdownItem
             key="notifications"
             description="View notifications"
-            startContent={<Bell size={20} />}
+            startContent={<BellIcon size={20} />}
           >
             Notifications
           </DropdownItem>
@@ -87,7 +87,7 @@ export function UserAvatar() {
           <DropdownItem
             key="theme"
             description="Toggle dark mode"
-            startContent={<Moon size={20} />}
+            startContent={<MoonIcon size={20} />}
           >
             Theme
           </DropdownItem>
@@ -98,7 +98,7 @@ export function UserAvatar() {
             className="text-danger"
             color="danger"
             description="Sign out of your account"
-            startContent={<SignOut size={20} />}
+            startContent={<SignOutIcon size={20} />}
           >
             Logout
           </DropdownItem>

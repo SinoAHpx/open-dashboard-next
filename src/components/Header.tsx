@@ -2,6 +2,7 @@
 
 import { MagnifyingGlassIcon } from "@phosphor-icons/react/dist/ssr";
 import { Kbd } from "@heroui/react";
+import { NotificationButton } from "./NotificationButton";
 import { UserAvatar } from "./UserAvatar";
 
 export function Header() {
@@ -25,7 +26,8 @@ export function Header() {
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
+          <NotificationButton />
           <UserAvatar />
         </div>
       </div>

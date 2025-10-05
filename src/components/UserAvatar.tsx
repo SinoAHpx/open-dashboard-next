@@ -7,6 +7,7 @@ import {
   DropdownMenu,
   DropdownSection,
   DropdownItem,
+  Button,
 } from "@heroui/react";
 import {
   UserIcon,
@@ -17,6 +18,10 @@ import {
   BellIcon,
 } from "@phosphor-icons/react/dist/ssr";
 import { useRouter } from "next/navigation";
+
+const USER = {
+  name: "Alex Johnson",
+};
 
 export function UserAvatar() {
   const router = useRouter();
@@ -45,15 +50,22 @@ export function UserAvatar() {
   return (
     <Dropdown placement="bottom-end">
       <DropdownTrigger>
-        <Avatar
-          isBordered
-          as="button"
-          className="transition-transform hover:scale-105"
-          color="primary"
-          name="User"
-          size="sm"
-          src="https://i.pravatar.cc/150?u=user@example.com"
-        />
+        <Button variant="light" radius="full" endContent={
+          <Avatar
+
+            className="transition-transform"
+            color="primary"
+            name={USER.name}
+            size="sm"
+            src="https://i.pravatar.cc/150?u=user@example.com"
+          />
+        }>
+          <span className="hidden text-sm font-medium text-gray-700 dark:text-gray-200 sm:inline">
+            {USER.name}
+          </span>
+          
+          
+        </Button>
       </DropdownTrigger>
       <DropdownMenu
         aria-label="User Actions"

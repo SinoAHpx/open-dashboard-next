@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Command } from "cmdk";
+import { DialogTitle } from "@radix-ui/react-dialog";
 import {
   MagnifyingGlassIcon,
   HouseIcon,
@@ -17,6 +18,7 @@ import {
   SunIcon,
 } from "@phosphor-icons/react/dist/ssr";
 import { menuItems } from "@/lib/sidebar-items";
+import { Kbd } from "@heroui/kbd";
 
 interface CommandMenuProps {
   open: boolean;
@@ -72,6 +74,7 @@ export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
         label="Global Command Menu"
         className="fixed left-[50%] top-[30%] z-50 w-full max-w-2xl translate-x-[-50%] translate-y-[-30%] animate-in fade-in-90 slide-in-from-bottom-10"
       >
+        <DialogTitle className="sr-only">Command Menu</DialogTitle>
         <div className="overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 shadow-2xl">
           {/* Search Input */}
           <div className="flex items-center border-b border-gray-200 dark:border-gray-800 px-4">
@@ -85,9 +88,9 @@ export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
               placeholder="Type a command or search..."
               className="flex h-14 w-full bg-transparent px-4 text-sm text-foreground placeholder:text-gray-400 dark:placeholder:text-gray-500 outline-none"
             />
-            <kbd className="hidden sm:inline-flex h-6 select-none items-center gap-1 rounded bg-gray-100 dark:bg-gray-800 px-2 font-mono text-xs text-gray-600 dark:text-gray-400">
+            <Kbd className="hidden sm:inline-flex h-6 select-none items-center gap-1 rounded bg-gray-100 dark:bg-gray-800 px-2 font-mono text-xs text-gray-600 dark:text-gray-400">
               ESC
-            </kbd>
+            </Kbd>
           </div>
 
           {/* Command List */}
@@ -180,9 +183,9 @@ export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
                   className="mr-3 text-gray-600 dark:text-gray-400"
                 />
                 <span className="text-foreground">Toggle Theme</span>
-                <kbd className="ml-auto hidden sm:inline-flex h-5 select-none items-center gap-1 rounded bg-gray-100 dark:bg-gray-800 px-1.5 font-mono text-xs text-gray-600 dark:text-gray-400">
+                <Kbd className="ml-auto hidden sm:inline-flex h-5 select-none items-center gap-1 rounded bg-gray-100 dark:bg-gray-800 px-1.5 font-mono text-xs text-gray-600 dark:text-gray-400">
                   ⌘T
-                </kbd>
+                </Kbd>
               </Command.Item>
             </Command.Group>
 
@@ -215,15 +218,15 @@ export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
               <div className="flex items-center gap-3">
                 <span className="hidden sm:inline-flex items-center gap-1">
                   Open
-                  <kbd className="inline-flex h-5 select-none items-center gap-1 rounded bg-gray-100 dark:bg-gray-800 px-1.5 font-mono text-xs">
+                  <Kbd className="inline-flex h-5 select-none items-center gap-1 rounded bg-gray-100 dark:bg-gray-800 px-1.5 font-mono text-xs">
                     ⌘K
-                  </kbd>
+                  </Kbd>
                 </span>
                 <span className="hidden sm:inline-flex items-center gap-1">
                   Close
-                  <kbd className="inline-flex h-5 select-none items-center gap-1 rounded bg-gray-100 dark:bg-gray-800 px-1.5 font-mono text-xs">
+                  <Kbd className="inline-flex h-5 select-none items-center gap-1 rounded bg-gray-100 dark:bg-gray-800 px-1.5 font-mono text-xs">
                     ESC
-                  </kbd>
+                  </Kbd>
                 </span>
               </div>
             </div>

@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Command } from "cmdk";
 import { DialogTitle } from "@radix-ui/react-dialog";
+import { Kbd } from "@heroui/react";
 import {
   MagnifyingGlassIcon,
   HouseIcon,
@@ -18,7 +19,6 @@ import {
   SunIcon,
 } from "@phosphor-icons/react/dist/ssr";
 import { menuItems } from "@/lib/sidebar-items";
-import { Kbd } from "@heroui/kbd";
 
 interface CommandMenuProps {
   open: boolean;
@@ -88,7 +88,7 @@ export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
               placeholder="Type a command or search..."
               className="flex h-14 w-full bg-transparent px-4 text-sm text-foreground placeholder:text-gray-400 dark:placeholder:text-gray-500 outline-none"
             />
-            <Kbd className="hidden sm:inline-flex h-6 select-none items-center gap-1 rounded bg-gray-100 dark:bg-gray-800 px-2 font-mono text-xs text-gray-600 dark:text-gray-400">
+            <Kbd className="hidden sm:inline-flex">
               ESC
             </Kbd>
           </div>
@@ -183,8 +183,8 @@ export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
                   className="mr-3 text-gray-600 dark:text-gray-400"
                 />
                 <span className="text-foreground">Toggle Theme</span>
-                <Kbd className="ml-auto hidden sm:inline-flex h-5 select-none items-center gap-1 rounded bg-gray-100 dark:bg-gray-800 px-1.5 font-mono text-xs text-gray-600 dark:text-gray-400">
-                  ⌘T
+                <Kbd className="ml-auto hidden sm:inline-flex" keys={["command"]}>
+                  T
                 </Kbd>
               </Command.Item>
             </Command.Group>
@@ -218,13 +218,13 @@ export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
               <div className="flex items-center gap-3">
                 <span className="hidden sm:inline-flex items-center gap-1">
                   Open
-                  <Kbd className="inline-flex h-5 select-none items-center gap-1 rounded bg-gray-100 dark:bg-gray-800 px-1.5 font-mono text-xs">
-                    ⌘K
+                  <Kbd keys={["command"]}>
+                    K
                   </Kbd>
                 </span>
                 <span className="hidden sm:inline-flex items-center gap-1">
                   Close
-                  <Kbd className="inline-flex h-5 select-none items-center gap-1 rounded bg-gray-100 dark:bg-gray-800 px-1.5 font-mono text-xs">
+                  <Kbd>
                     ESC
                   </Kbd>
                 </span>

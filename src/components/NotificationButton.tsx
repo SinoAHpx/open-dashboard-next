@@ -38,7 +38,6 @@ export function NotificationButton() {
           variant="light"
           radius="full"
           aria-label="Open notifications"
-          className="relative h-10 w-10 rounded-xl border border-transparent hover:border-gray-200 hover:bg-gray-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-500 dark:hover:border-gray-800 dark:hover:bg-gray-900"
         >
           <BellIcon size={22} className="text-gray-500 dark:text-gray-400" />
           <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary-500 px-1 text-[10px] font-semibold text-white">

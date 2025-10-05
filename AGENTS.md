@@ -2,6 +2,10 @@
 
 This file provides guidance to Codex when working with code in this repository.
 
+## Rules MUST FOLLOW
+
+- Before start operating every user request, use context7 mcp to query relevent libraries first, to get to know the latest documentation.
+
 ## Tech Stack & Architecture
 
 This is a Next.js 15 application using the App Router pattern with the following key technologies:

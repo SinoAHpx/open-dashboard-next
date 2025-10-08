@@ -7,7 +7,7 @@ import { DialogTitle } from "@radix-ui/react-dialog";
 import { Kbd } from "@heroui/react";
 import type { KbdKey } from "@heroui/kbd";
 import { MagnifyingGlassIcon } from "@phosphor-icons/react/dist/ssr";
-import { menuItems } from "@/lib/sidebar-items";
+import { mainMenuItems, bottomMenuItems } from "@/lib/sidebar-items";
 import { commandMenuGroups, type CommandMenuItemConfig } from "@/lib/command-menu-items";
 
 const ESCAPE_KEYS: KbdKey[] = ["escape"];
@@ -115,11 +115,11 @@ export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
               heading="Navigation"
               className="mb-2 [&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:py-2 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:text-gray-500 dark:[&_[cmdk-group-heading]]:text-gray-400"
             >
-              {menuItems.map((item) => {
+              {[...mainMenuItems.flatMap((group) => group.items), ...bottomMenuItems].map((item) => {
                 const Icon = item.icon;
                 return (
                   <Command.Item
-                    key={item.key}
+                    key={item.label}
                     value={item.label}
                     onSelect={() => runCommand(() => router.push(item.href))}
                     className={NEUTRAL_ITEM_CLASSES}

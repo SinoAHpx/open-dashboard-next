@@ -2,7 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { menuItems, type MenuItem } from "@/lib/sidebar-items";
+import {
+  mainMenuItems,
+  bottomMenuItems,
+  type MenuItem,
+} from "@/lib/sidebar-items";
 
 interface SidebarProps {
   isOpen?: boolean;
@@ -10,15 +14,14 @@ interface SidebarProps {
 
 export function Sidebar({ isOpen = true }: SidebarProps) {
   const pathname = usePathname();
-  const settingsItem = menuItems.find((item) => item.key === "settings");
-  const mainItems = menuItems.filter((item) => item.key !== "settings");
+
   const renderItem = (item: MenuItem) => {
     const Icon = item.icon;
     const isSelected = pathname === item.href;
 
     return (
       <Link
-        key={item.key}
+        key={item.label}
         href={item.href}
         className={`
           flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200
@@ -54,15 +57,29 @@ export function Sidebar({ isOpen = true }: SidebarProps) {
           The System
         </h2>
 
-        <nav className="flex flex-col gap-1 space-y-2">
-          {mainItems.map((item) => renderItem(item))}
+        <nav className="flex flex-col gap-1 space-y-2 flex-1 overflow-y-auto pr-2 -mr-2">
+          {mainMenuItems.map((group, groupIndex) => (
+            <div key={groupIndex}>
+              {group.groupLabel && (
+                <div className="px-4 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  {group.groupLabel}
+                </div>
+              )}
+              <div className="flex flex-col gap-1">
+                {group.items.map((item) => renderItem(item))}
+              </div>
+              {groupIndex < mainMenuItems.length - 1 && (
+                <div className="my-2 border-t border-gray-200 dark:border-gray-800" />
+              )}
+            </div>
+          ))}
         </nav>
 
-        {settingsItem ? (
-          <nav className="mt-auto pt-5 border-t border-gray-200 dark:border-gray-800">
-            {renderItem(settingsItem)}
+        {bottomMenuItems.length > 0 && (
+          <nav className="mt-auto pt-5 border-t border-gray-200 dark:border-gray-800 flex flex-col gap-1">
+            {bottomMenuItems.map((item) => renderItem(item))}
           </nav>
-        ) : null}
+        )}
       </div>
     </aside>
   );

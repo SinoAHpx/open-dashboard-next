@@ -15,6 +15,7 @@ import {
   SelectItem,
   Spinner,
   Input,
+  Button,
 } from "@heroui/react";
 import {
   useReactTable,
@@ -22,7 +23,7 @@ import {
   flexRender,
   type ColumnDef,
 } from "@tanstack/react-table";
-import { MagnifyingGlass, CaretUp, CaretDown } from "@phosphor-icons/react";
+import { MagnifyingGlass, CaretUp, CaretDown, ArrowClockwise } from "@phosphor-icons/react";
 import {
   getPaginationUsers,
   type PaginationUser,
@@ -226,6 +227,31 @@ export default function PaginationPage() {
     setPage(1); // Reset to first page when filter changes
   };
 
+  const handleRefresh = () => {
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        const response = await getPaginationUsers({
+          page,
+          pageSize,
+          search,
+          status: statusFilter,
+          sortBy,
+          sortOrder,
+        });
+        setData(response.data);
+        setTotalPages(response.pagination.totalPages);
+        setTotalCount(response.pagination.totalCount);
+      } catch (error) {
+        console.error("Failed to load pagination users:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  };
+
   return (
     <div className="flex h-full flex-col p-8">
       <div className="mb-6 shrink-0">
@@ -259,6 +285,15 @@ export default function PaginationPage() {
           <SelectItem key="pending">Pending</SelectItem>
           <SelectItem key="inactive">Inactive</SelectItem>
         </Select>
+        <Button
+          isIconOnly
+          variant="flat"
+          onPress={handleRefresh}
+          isLoading={isLoading}
+          aria-label="Refresh"
+        >
+          <ArrowClockwise size={20} />
+        </Button>
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">

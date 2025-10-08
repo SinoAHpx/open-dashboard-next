@@ -22,12 +22,15 @@ export interface GetPaginationUsersParams {
   page?: number;
   pageSize?: number;
   search?: string;
+  status?: string;
+  sortBy?: string;
+  sortOrder?: "asc" | "desc";
 }
 
 export async function getPaginationUsers(
   params: GetPaginationUsersParams = {}
 ): Promise<PaginationResponse> {
-  const { page = 1, pageSize = 10, search = "" } = params;
+  const { page = 1, pageSize = 10, search = "", status = "", sortBy = "", sortOrder = "asc" } = params;
 
   const queryParams = new URLSearchParams({
     page: page.toString(),
@@ -36,6 +39,15 @@ export async function getPaginationUsers(
 
   if (search) {
     queryParams.append("search", search);
+  }
+
+  if (status) {
+    queryParams.append("status", status);
+  }
+
+  if (sortBy) {
+    queryParams.append("sortBy", sortBy);
+    queryParams.append("sortOrder", sortOrder);
   }
 
   const response = await fetch(`/api/pagination?${queryParams.toString()}`);

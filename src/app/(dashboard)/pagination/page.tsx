@@ -19,12 +19,8 @@ import {
 import {
   useReactTable,
   getCoreRowModel,
-  getSortedRowModel,
-  getFilteredRowModel,
   flexRender,
   type ColumnDef,
-  type SortingState,
-  type ColumnFiltersState,
 } from "@tanstack/react-table";
 import { MagnifyingGlass, CaretUp, CaretDown } from "@phosphor-icons/react";
 import {
@@ -47,20 +43,34 @@ export default function PaginationPage() {
 
   const [data, setData] = useState<PaginationUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [page, setPage] = useState(() => {
-    const pageParam = searchParams.get("page");
-    return pageParam ? Number.parseInt(pageParam, 10) : 1;
-  });
-  const [pageSize, setPageSize] = useState(() => {
-    const pageSizeParam = searchParams.get("pageSize");
-    return pageSizeParam ? Number.parseInt(pageSizeParam, 15) : 15;
-  });
+
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
 
-  const [sorting, setSorting] = useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-  const [globalFilter, setGlobalFilter] = useState("");
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const [sortBy, setSortBy] = useState("");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+
+  // Initialize from URL on mount
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+    useEffect(() => {
+    const pageParam = searchParams.get("page");
+    const pageSizeParam = searchParams.get("pageSize");
+    const searchParam = searchParams.get("search");
+    const statusParam = searchParams.get("status");
+    const sortByParam = searchParams.get("sortBy");
+    const sortOrderParam = searchParams.get("sortOrder");
+
+    if (pageParam) setPage(Number.parseInt(pageParam, 10));
+    if (pageSizeParam) setPageSize(Number.parseInt(pageSizeParam, 10));
+    if (searchParam) setSearch(searchParam);
+    if (statusParam) setStatusFilter(statusParam);
+    if (sortByParam) setSortBy(sortByParam);
+    if (sortOrderParam) setSortOrder(sortOrderParam as "asc" | "desc");
+  }, []);
 
   const statusColorMap: Record<
     PaginationUser["status"],
@@ -100,7 +110,6 @@ export default function PaginationPage() {
             </Chip>
           );
         },
-        filterFn: "equals",
       },
       {
         accessorKey: "role",
@@ -136,38 +145,30 @@ export default function PaginationPage() {
   const table = useReactTable({
     data,
     columns,
-    state: {
-      sorting,
-      columnFilters,
-      globalFilter,
-    },
-    onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
-    onGlobalFilterChange: setGlobalFilter,
     getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
+    manualSorting: true,
+    manualFiltering: true,
   });
 
+  // Sync URL with state
   useEffect(() => {
     const params = new URLSearchParams();
     params.set("page", page.toString());
     params.set("pageSize", pageSize.toString());
-    if (globalFilter) {
-      params.set("search", globalFilter);
+    if (search) {
+      params.set("search", search);
     }
-    if (columnFilters.length > 0) {
-      for (const filter of columnFilters) {
-        params.set(filter.id, String(filter.value));
-      }
+    if (statusFilter) {
+      params.set("status", statusFilter);
     }
-    if (sorting.length > 0) {
-      params.set("sortBy", sorting[0].id);
-      params.set("sortOrder", sorting[0].desc ? "desc" : "asc");
+    if (sortBy) {
+      params.set("sortBy", sortBy);
+      params.set("sortOrder", sortOrder);
     }
     router.replace(`?${params.toString()}`, { scroll: false });
-  }, [page, pageSize, globalFilter, columnFilters, sorting, router]);
+  }, [page, pageSize, search, statusFilter, sortBy, sortOrder, router]);
 
+  // Fetch data from server
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
@@ -175,6 +176,10 @@ export default function PaginationPage() {
         const response = await getPaginationUsers({
           page,
           pageSize,
+          search,
+          status: statusFilter,
+          sortBy,
+          sortOrder,
         });
         setData(response.data);
         setTotalPages(response.pagination.totalPages);
@@ -187,7 +192,7 @@ export default function PaginationPage() {
     };
 
     fetchData();
-  }, [page, pageSize]);
+  }, [page, pageSize, search, statusFilter, sortBy, sortOrder]);
 
   const handlePageSizeChange = (value: string) => {
     const newPageSize = Number.parseInt(value, 10);
@@ -195,9 +200,31 @@ export default function PaginationPage() {
     setPage(1);
   };
 
-  const statusFilter = columnFilters.find((f) => f.id === "status")?.value as
-    | string
-    | undefined;
+  const handleSort = (columnId: string) => {
+    if (sortBy === columnId) {
+      // Toggle sort order or clear
+      if (sortOrder === "asc") {
+        setSortOrder("desc");
+      } else {
+        setSortBy("");
+        setSortOrder("asc");
+      }
+    } else {
+      setSortBy(columnId);
+      setSortOrder("asc");
+    }
+    setPage(1); // Reset to first page when sorting changes
+  };
+
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
+    setPage(1); // Reset to first page when search changes
+  };
+
+  const handleStatusChange = (value: string) => {
+    setStatusFilter(value);
+    setPage(1); // Reset to first page when filter changes
+  };
 
   return (
     <div className="flex h-full flex-col p-8">
@@ -216,22 +243,15 @@ export default function PaginationPage() {
           isClearable
           placeholder="Search all columns..."
           startContent={<MagnifyingGlass size={18} />}
-          value={globalFilter}
-          onValueChange={setGlobalFilter}
+          value={search}
+          onValueChange={handleSearchChange}
           className="flex-1"
         />
         <Select
           size="md"
           placeholder="Filter by status"
           selectedKeys={statusFilter ? [statusFilter] : []}
-          onChange={(e) => {
-            const value = e.target.value;
-            if (value) {
-              table.getColumn("status")?.setFilterValue(value);
-            } else {
-              table.getColumn("status")?.setFilterValue(undefined);
-            }
-          }}
+          onChange={(e) => handleStatusChange(e.target.value)}
           className="w-48"
           aria-label="Filter by status"
         >
@@ -254,31 +274,25 @@ export default function PaginationPage() {
                     >
                       {header.isPlaceholder ? null : (
                         <div
-                          className={
-                            header.column.getCanSort()
-                              ? "flex items-center gap-2 cursor-pointer select-none"
-                              : "flex items-center gap-2"
-                          }
-                          onClick={header.column.getToggleSortingHandler()}
+                          className="flex items-center gap-2 cursor-pointer select-none"
+                          onClick={() => handleSort(header.column.id)}
                         >
                           {flexRender(
                             header.column.columnDef.header,
                             header.getContext()
                           )}
-                          {header.column.getCanSort() && (
-                            <span className="text-gray-400">
-                              {header.column.getIsSorted() === "asc" ? (
-                                <CaretUp size={16} weight="fill" />
-                              ) : header.column.getIsSorted() === "desc" ? (
-                                <CaretDown size={16} weight="fill" />
-                              ) : (
-                                <div className="flex flex-col">
-                                  <CaretUp size={12} />
-                                  <CaretDown size={12} className="-mt-1" />
-                                </div>
-                              )}
-                            </span>
-                          )}
+                          <span className="text-gray-400">
+                            {sortBy === header.column.id && sortOrder === "asc" ? (
+                              <CaretUp size={16} weight="fill" />
+                            ) : sortBy === header.column.id && sortOrder === "desc" ? (
+                              <CaretDown size={16} weight="fill" />
+                            ) : (
+                              <div className="flex flex-col">
+                                <CaretUp size={12} />
+                                <CaretDown size={12} className="-mt-1" />
+                              </div>
+                            )}
+                          </span>
                         </div>
                       )}
                     </th>

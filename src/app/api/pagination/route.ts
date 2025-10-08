@@ -39,19 +39,43 @@ export async function GET(request: NextRequest) {
     const page = Number.parseInt(searchParams.get("page") || "1", 10);
     const pageSize = Number.parseInt(searchParams.get("pageSize") || "10", 10);
     const search = searchParams.get("search") || "";
+    const status = searchParams.get("status") || "";
+    const sortBy = searchParams.get("sortBy") || "";
+    const sortOrder = searchParams.get("sortOrder") || "asc";
 
     const allUsers = generateUsers();
 
     let filteredUsers = allUsers;
+
+    // Apply search filter
     if (search) {
       const searchLower = search.toLowerCase();
-      filteredUsers = allUsers.filter(
+      filteredUsers = filteredUsers.filter(
         (user) =>
           user.name.toLowerCase().includes(searchLower) ||
           user.email.toLowerCase().includes(searchLower) ||
           user.role.toLowerCase().includes(searchLower) ||
           user.department.toLowerCase().includes(searchLower)
       );
+    }
+
+    // Apply status filter
+    if (status) {
+      filteredUsers = filteredUsers.filter(
+        (user) => user.status === status.toLowerCase()
+      );
+    }
+
+    // Apply sorting
+    if (sortBy) {
+      filteredUsers.sort((a, b) => {
+        const aValue = a[sortBy as keyof PaginationUser];
+        const bValue = b[sortBy as keyof PaginationUser];
+
+        if (aValue < bValue) return sortOrder === "asc" ? -1 : 1;
+        if (aValue > bValue) return sortOrder === "asc" ? 1 : -1;
+        return 0;
+      });
     }
 
     const totalCount = filteredUsers.length;

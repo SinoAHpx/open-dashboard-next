@@ -12,6 +12,7 @@ import {
   Pagination,
   Select,
   SelectItem,
+  Spinner,
 } from "@heroui/react";
 import {
   getPaginationUsers,
@@ -137,17 +138,21 @@ export default function PaginationPage() {
           }}
         >
           <TableHeader columns={columns}>
-            {(column) => <TableColumn key={column.key}>{column.label}</TableColumn>}
+            {(column) => (
+              <TableColumn key={column.key}>{column.label}</TableColumn>
+            )}
           </TableHeader>
           <TableBody
             items={data}
             isLoading={isLoading}
-            loadingContent={<span>Loading...</span>}
+            loadingContent={<Spinner color="default" />}
             emptyContent="No users found"
           >
             {(item) => (
               <TableRow key={item.id}>
-                {(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}
+                {(columnKey) => (
+                  <TableCell>{renderCell(item, columnKey)}</TableCell>
+                )}
               </TableRow>
             )}
           </TableBody>
@@ -167,9 +172,7 @@ export default function PaginationPage() {
             aria-label="Select page size"
           >
             {PAGE_SIZE_OPTIONS.map((option) => (
-              <SelectItem key={option.value}>
-                {option.label}
-              </SelectItem>
+              <SelectItem key={option.value}>{option.label}</SelectItem>
             ))}
           </Select>
         </div>

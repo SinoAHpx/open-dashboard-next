@@ -19,10 +19,6 @@ import {
 } from "@phosphor-icons/react/dist/ssr";
 import { useRouter } from "next/navigation";
 
-const USER = {
-  name: "Alex Johnson",
-};
-
 export function UserAvatar() {
   const router = useRouter();
 
@@ -55,13 +51,13 @@ export function UserAvatar() {
 
             className="transition-transform"
             color="primary"
-            name={USER.name}
+            name={'Rick'}
             size="sm"
             src="https://i.pravatar.cc/150?u=user@example.com"
           />
         }>
           <span className="hidden text-sm font-medium text-gray-700 dark:text-gray-200 sm:inline">
-            {USER.name}
+            Rick Asley
           </span>
           
           

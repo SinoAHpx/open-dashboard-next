@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   Table,
@@ -14,7 +14,19 @@ import {
   Select,
   SelectItem,
   Spinner,
+  Input,
 } from "@heroui/react";
+import {
+  useReactTable,
+  getCoreRowModel,
+  getSortedRowModel,
+  getFilteredRowModel,
+  flexRender,
+  type ColumnDef,
+  type SortingState,
+  type ColumnFiltersState,
+} from "@tanstack/react-table";
+import { MagnifyingGlass, CaretUp, CaretDown } from "@phosphor-icons/react";
 import {
   getPaginationUsers,
   type PaginationUser,
@@ -46,6 +58,10 @@ export default function PaginationPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
 
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [globalFilter, setGlobalFilter] = useState("");
+
   const statusColorMap: Record<
     PaginationUser["status"],
     "success" | "warning" | "danger"
@@ -55,56 +71,102 @@ export default function PaginationPage() {
     inactive: "danger",
   };
 
-  const columns = [
-    { key: "name", label: "Name" },
-    { key: "email", label: "Email" },
-    { key: "status", label: "Status" },
-    { key: "role", label: "Role" },
-    { key: "department", label: "Department" },
-    { key: "joinDate", label: "Join Date" },
-  ];
+  const columns = useMemo<ColumnDef<PaginationUser>[]>(
+    () => [
+      {
+        accessorKey: "name",
+        header: "Name",
+        cell: (info) => (
+          <span className="font-medium">{info.getValue() as string}</span>
+        ),
+      },
+      {
+        accessorKey: "email",
+        header: "Email",
+        cell: (info) => (
+          <span className="text-gray-600 dark:text-gray-400">
+            {info.getValue() as string}
+          </span>
+        ),
+      },
+      {
+        accessorKey: "status",
+        header: "Status",
+        cell: (info) => {
+          const status = info.getValue() as PaginationUser["status"];
+          return (
+            <Chip color={statusColorMap[status]} size="sm" variant="flat">
+              {status.charAt(0).toUpperCase() + status.slice(1)}
+            </Chip>
+          );
+        },
+        filterFn: "equals",
+      },
+      {
+        accessorKey: "role",
+        header: "Role",
+        cell: (info) => (
+          <span className="text-gray-600 dark:text-gray-400">
+            {info.getValue() as string}
+          </span>
+        ),
+      },
+      {
+        accessorKey: "department",
+        header: "Department",
+        cell: (info) => (
+          <span className="text-gray-600 dark:text-gray-400">
+            {info.getValue() as string}
+          </span>
+        ),
+      },
+      {
+        accessorKey: "joinDate",
+        header: "Join Date",
+        cell: (info) => (
+          <span className="text-gray-600 dark:text-gray-400">
+            {info.getValue() as string}
+          </span>
+        ),
+      },
+    ],
+    []
+  );
 
-  const renderCell = (user: PaginationUser, columnKey: React.Key) => {
-    switch (columnKey) {
-      case "name":
-        return <span className="font-medium">{user.name}</span>;
-      case "email":
-        return (
-          <span className="text-gray-600 dark:text-gray-400">{user.email}</span>
-        );
-      case "status":
-        return (
-          <Chip color={statusColorMap[user.status]} size="sm" variant="flat">
-            {user.status.charAt(0).toUpperCase() + user.status.slice(1)}
-          </Chip>
-        );
-      case "role":
-        return (
-          <span className="text-gray-600 dark:text-gray-400">{user.role}</span>
-        );
-      case "department":
-        return (
-          <span className="text-gray-600 dark:text-gray-400">
-            {user.department}
-          </span>
-        );
-      case "joinDate":
-        return (
-          <span className="text-gray-600 dark:text-gray-400">
-            {user.joinDate}
-          </span>
-        );
-      default:
-        return null;
-    }
-  };
+  const table = useReactTable({
+    data,
+    columns,
+    state: {
+      sorting,
+      columnFilters,
+      globalFilter,
+    },
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    onGlobalFilterChange: setGlobalFilter,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+  });
 
   useEffect(() => {
     const params = new URLSearchParams();
     params.set("page", page.toString());
     params.set("pageSize", pageSize.toString());
+    if (globalFilter) {
+      params.set("search", globalFilter);
+    }
+    if (columnFilters.length > 0) {
+      for (const filter of columnFilters) {
+        params.set(filter.id, String(filter.value));
+      }
+    }
+    if (sorting.length > 0) {
+      params.set("sortBy", sorting[0].id);
+      params.set("sortOrder", sorting[0].desc ? "desc" : "asc");
+    }
     router.replace(`?${params.toString()}`, { scroll: false });
-  }, [page, pageSize, router]);
+  }, [page, pageSize, globalFilter, columnFilters, sorting, router]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -133,6 +195,10 @@ export default function PaginationPage() {
     setPage(1);
   };
 
+  const statusFilter = columnFilters.find((f) => f.id === "status")?.value as
+    | string
+    | undefined;
+
   return (
     <div className="flex h-full flex-col p-8">
       <div className="mb-6 shrink-0">
@@ -145,35 +211,117 @@ export default function PaginationPage() {
         </p>
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col ">
-        <Table
-          aria-label="Pagination table with server-side data"
-          classNames={{
-            wrapper: "h-full overflow-auto",
-            base: "h-full",
-            th: "sticky top-0 z-10 backdrop-blur-md bg-gray-50/80 dark:bg-gray-800/80",
+      <div className="mb-4 flex shrink-0 items-center gap-4">
+        <Input
+          isClearable
+          placeholder="Search all columns..."
+          startContent={<MagnifyingGlass size={18} />}
+          value={globalFilter}
+          onValueChange={setGlobalFilter}
+          className="flex-1"
+        />
+        <Select
+          size="md"
+          placeholder="Filter by status"
+          selectedKeys={statusFilter ? [statusFilter] : []}
+          onChange={(e) => {
+            const value = e.target.value;
+            if (value) {
+              table.getColumn("status")?.setFilterValue(value);
+            } else {
+              table.getColumn("status")?.setFilterValue(undefined);
+            }
           }}
+          className="w-48"
+          aria-label="Filter by status"
         >
-          <TableHeader columns={columns}>
-            {(column) => (
-              <TableColumn key={column.key}>{column.label}</TableColumn>
-            )}
-          </TableHeader>
-          <TableBody
-            items={data}
-            isLoading={isLoading}
-            loadingContent={<Spinner color="default" />}
-            emptyContent="No users found"
-          >
-            {(item) => (
-              <TableRow key={item.id}>
-                {(columnKey) => (
-                  <TableCell>{renderCell(item, columnKey)}</TableCell>
-                )}
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+          <SelectItem key="active">Active</SelectItem>
+          <SelectItem key="pending">Pending</SelectItem>
+          <SelectItem key="inactive">Inactive</SelectItem>
+        </Select>
+      </div>
+
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
+        <div className="flex-1 overflow-auto">
+          <table className="w-full">
+            <thead className="sticky top-0 z-10 backdrop-blur-md bg-gray-50/80 dark:bg-gray-800/80">
+              {table.getHeaderGroups().map((headerGroup) => (
+                <tr key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => (
+                    <th
+                      key={header.id}
+                      className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300"
+                    >
+                      {header.isPlaceholder ? null : (
+                        <div
+                          className={
+                            header.column.getCanSort()
+                              ? "flex items-center gap-2 cursor-pointer select-none"
+                              : "flex items-center gap-2"
+                          }
+                          onClick={header.column.getToggleSortingHandler()}
+                        >
+                          {flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
+                          {header.column.getCanSort() && (
+                            <span className="text-gray-400">
+                              {header.column.getIsSorted() === "asc" ? (
+                                <CaretUp size={16} weight="fill" />
+                              ) : header.column.getIsSorted() === "desc" ? (
+                                <CaretDown size={16} weight="fill" />
+                              ) : (
+                                <div className="flex flex-col">
+                                  <CaretUp size={12} />
+                                  <CaretDown size={12} className="-mt-1" />
+                                </div>
+                              )}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </th>
+                  ))}
+                </tr>
+              ))}
+            </thead>
+            <tbody>
+              {isLoading ? (
+                <tr>
+                  <td colSpan={columns.length} className="py-20 text-center">
+                    <Spinner color="default" />
+                  </td>
+                </tr>
+              ) : table.getRowModel().rows.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={columns.length}
+                    className="py-20 text-center text-gray-500 dark:text-gray-400"
+                  >
+                    No users found
+                  </td>
+                </tr>
+              ) : (
+                table.getRowModel().rows.map((row) => (
+                  <tr
+                    key={row.id}
+                    className="border-t border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50"
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <td key={cell.id} className="px-4 py-3 text-sm">
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </td>
+                    ))}
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <div className="mt-6 flex shrink-0 items-center justify-between">

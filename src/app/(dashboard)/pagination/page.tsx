@@ -2,112 +2,99 @@
 
 import { useEffect, useState } from "react";
 import {
-  useReactTable,
-  getCoreRowModel,
-  type ColumnDef,
-  flexRender,
-} from "@tanstack/react-table";
-import { Chip, Pagination } from "@heroui/react";
+  Table,
+  TableHeader,
+  TableBody,
+  TableColumn,
+  TableRow,
+  TableCell,
+  Chip,
+  Pagination,
+  Select,
+  SelectItem,
+} from "@heroui/react";
 import {
   getPaginationUsers,
   type PaginationUser,
 } from "@/lib/api-wrapper/pagination";
 
+const PAGE_SIZE_OPTIONS = [
+  { value: "5", label: "5" },
+  { value: "10", label: "10" },
+  { value: "15", label: "15" },
+  { value: "20", label: "20" },
+  { value: "25", label: "25" },
+  { value: "50", label: "50" },
+];
+
 export default function PaginationPage() {
   const [data, setData] = useState<PaginationUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [pagination, setPagination] = useState({
-    pageIndex: 0,
-    pageSize: 10,
-  });
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
 
-  const columns: ColumnDef<PaginationUser>[] = [
-    {
-      accessorKey: "name",
-      header: "Name",
-      cell: (info) => (
-        <span className="font-medium">{info.getValue() as string}</span>
-      ),
-    },
-    {
-      accessorKey: "email",
-      header: "Email",
-      cell: (info) => (
-        <span className="text-gray-600 dark:text-gray-400">
-          {info.getValue() as string}
-        </span>
-      ),
-    },
-    {
-      accessorKey: "status",
-      header: "Status",
-      cell: (info) => {
-        const status = info.getValue() as PaginationUser["status"];
-        const statusColorMap: Record<
-          PaginationUser["status"],
-          "success" | "warning" | "danger"
-        > = {
-          active: "success",
-          pending: "warning",
-          inactive: "danger",
-        };
-        return (
-          <Chip color={statusColorMap[status]} size="sm" variant="flat">
-            {status.charAt(0).toUpperCase() + status.slice(1)}
-          </Chip>
-        );
-      },
-    },
-    {
-      accessorKey: "role",
-      header: "Role",
-      cell: (info) => (
-        <span className="text-gray-600 dark:text-gray-400">
-          {info.getValue() as string}
-        </span>
-      ),
-    },
-    {
-      accessorKey: "department",
-      header: "Department",
-      cell: (info) => (
-        <span className="text-gray-600 dark:text-gray-400">
-          {info.getValue() as string}
-        </span>
-      ),
-    },
-    {
-      accessorKey: "joinDate",
-      header: "Join Date",
-      cell: (info) => (
-        <span className="text-gray-600 dark:text-gray-400">
-          {info.getValue() as string}
-        </span>
-      ),
-    },
+  const statusColorMap: Record<
+    PaginationUser["status"],
+    "success" | "warning" | "danger"
+  > = {
+    active: "success",
+    pending: "warning",
+    inactive: "danger",
+  };
+
+  const columns = [
+    { key: "name", label: "Name" },
+    { key: "email", label: "Email" },
+    { key: "status", label: "Status" },
+    { key: "role", label: "Role" },
+    { key: "department", label: "Department" },
+    { key: "joinDate", label: "Join Date" },
   ];
 
-  const table = useReactTable({
-    data,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-    manualPagination: true,
-    pageCount: totalPages,
-    state: {
-      pagination,
-    },
-    onPaginationChange: setPagination,
-  });
+  const renderCell = (user: PaginationUser, columnKey: React.Key) => {
+    switch (columnKey) {
+      case "name":
+        return <span className="font-medium">{user.name}</span>;
+      case "email":
+        return (
+          <span className="text-gray-600 dark:text-gray-400">{user.email}</span>
+        );
+      case "status":
+        return (
+          <Chip color={statusColorMap[user.status]} size="sm" variant="flat">
+            {user.status.charAt(0).toUpperCase() + user.status.slice(1)}
+          </Chip>
+        );
+      case "role":
+        return (
+          <span className="text-gray-600 dark:text-gray-400">{user.role}</span>
+        );
+      case "department":
+        return (
+          <span className="text-gray-600 dark:text-gray-400">
+            {user.department}
+          </span>
+        );
+      case "joinDate":
+        return (
+          <span className="text-gray-600 dark:text-gray-400">
+            {user.joinDate}
+          </span>
+        );
+      default:
+        return null;
+    }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
       try {
         const response = await getPaginationUsers({
-          page: pagination.pageIndex + 1,
-          pageSize: pagination.pageSize,
+          page,
+          pageSize,
         });
         setData(response.data);
         setTotalPages(response.pagination.totalPages);
@@ -120,7 +107,13 @@ export default function PaginationPage() {
     };
 
     fetchData();
-  }, [pagination.pageIndex, pagination.pageSize]);
+  }, [page, pageSize]);
+
+  const handlePageSizeChange = (value: string) => {
+    const newPageSize = Number.parseInt(value, 10);
+    setPageSize(newPageSize);
+    setPage(1);
+  };
 
   return (
     <div className="flex h-full flex-col p-8">
@@ -134,79 +127,56 @@ export default function PaginationPage() {
         </p>
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
-        <div className="flex-1 overflow-auto">
-          <table className="w-full">
-            <thead className="sticky top-0 bg-gray-50 dark:bg-gray-800">
-              {table.getHeaderGroups().map((headerGroup) => (
-                <tr key={headerGroup.id}>
-                  {headerGroup.headers.map((header) => (
-                    <th
-                      key={header.id}
-                      className="border-b border-gray-200 px-6 py-3 text-left text-sm font-semibold text-gray-900 dark:border-gray-700 dark:text-gray-100"
-                    >
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
-                    </th>
-                  ))}
-                </tr>
-              ))}
-            </thead>
-            <tbody className="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-900">
-              {isLoading ? (
-                <tr>
-                  <td
-                    colSpan={columns.length}
-                    className="px-6 py-8 text-center text-gray-500 dark:text-gray-400"
-                  >
-                    Loading...
-                  </td>
-                </tr>
-              ) : table.getRowModel().rows.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={columns.length}
-                    className="px-6 py-8 text-center text-gray-500 dark:text-gray-400"
-                  >
-                    No users found
-                  </td>
-                </tr>
-              ) : (
-                table.getRowModel().rows.map((row) => (
-                  <tr
-                    key={row.id}
-                    className="hover:bg-gray-50 dark:hover:bg-gray-800"
-                  >
-                    {row.getVisibleCells().map((cell) => (
-                      <td
-                        key={cell.id}
-                        className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100"
-                      >
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
-                        )}
-                      </td>
-                    ))}
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+      <div className="flex min-h-0 flex-1 flex-col ">
+        <Table
+          aria-label="Pagination table with server-side data"
+          classNames={{
+            wrapper: "h-full overflow-auto",
+            base: "h-full",
+          }}
+        >
+          <TableHeader columns={columns}>
+            {(column) => <TableColumn key={column.key}>{column.label}</TableColumn>}
+          </TableHeader>
+          <TableBody
+            items={data}
+            isLoading={isLoading}
+            loadingContent={<span>Loading...</span>}
+            emptyContent="No users found"
+          >
+            {(item) => (
+              <TableRow key={item.id}>
+                {(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
       </div>
 
-      <div className="mt-6 flex shrink-0 justify-center">
+      <div className="mt-6 flex shrink-0 items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-gray-600 dark:text-gray-400">
+            Rows per page:
+          </span>
+          <Select
+            size="sm"
+            selectedKeys={[pageSize.toString()]}
+            onChange={(e) => handlePageSizeChange(e.target.value)}
+            className="w-20"
+            aria-label="Select page size"
+          >
+            {PAGE_SIZE_OPTIONS.map((option) => (
+              <SelectItem key={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </Select>
+        </div>
+
         <Pagination
           total={totalPages}
-          page={pagination.pageIndex + 1}
-          onChange={(page) =>
-            setPagination((prev) => ({ ...prev, pageIndex: page - 1 }))
-          }
+          page={page}
+          onChange={setPage}
           showControls
           color="primary"
         />

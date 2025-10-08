@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   Table,
   TableHeader,
@@ -29,10 +30,19 @@ const PAGE_SIZE_OPTIONS = [
 ];
 
 export default function PaginationPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
   const [data, setData] = useState<PaginationUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const [page, setPage] = useState(() => {
+    const pageParam = searchParams.get("page");
+    return pageParam ? Number.parseInt(pageParam, 10) : 1;
+  });
+  const [pageSize, setPageSize] = useState(() => {
+    const pageSizeParam = searchParams.get("pageSize");
+    return pageSizeParam ? Number.parseInt(pageSizeParam, 15) : 15;
+  });
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
 
@@ -88,6 +98,13 @@ export default function PaginationPage() {
         return null;
     }
   };
+
+  useEffect(() => {
+    const params = new URLSearchParams();
+    params.set("page", page.toString());
+    params.set("pageSize", pageSize.toString());
+    router.replace(`?${params.toString()}`, { scroll: false });
+  }, [page, pageSize, router]);
 
   useEffect(() => {
     const fetchData = async () => {

@@ -5,6 +5,7 @@ import {
   CalendarIcon,
   GearIcon,
   HouseIcon,
+  TableIcon,
   UserIcon,
 } from "@phosphor-icons/react";
 
@@ -23,6 +24,12 @@ export const mainMenuItems: MenuGroup[] = [
   {
     items: [
       { label: "Dashboard", href: "/", icon: HouseIcon },
+    ],
+  },
+  {
+    groupLabel: "Table",
+    items: [
+      { label: "Simple", href: "/simple", icon: TableIcon },
     ],
   },
 ];

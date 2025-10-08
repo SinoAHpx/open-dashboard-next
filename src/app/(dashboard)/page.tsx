@@ -1,6 +1,9 @@
 "use client";
 
 import { Card, CardBody, CardHeader } from "@heroui/card";
+import { Button } from "@heroui/button";
+import { Progress } from "@heroui/progress";
+import { Chip } from "@heroui/chip";
 import { useAuthStore } from "@/stores/authStore";
 import {
   LineChart,
@@ -22,50 +25,116 @@ import {
   categoryData,
   trafficSourceData,
 } from "@/lib/dashboard/chart-data";
+import { TrendUp, TrendDown, Users, CurrencyDollar, Clock, ChartLine } from "@phosphor-icons/react";
 
-const COLORS = ["#3b82f6", "#8b5cf6", "#ec4899", "#f59e0b", "#10b981"];
+const THEME_COLORS = {
+  primary: "#0a0a0a",
+  secondary: "#404040",
+  tertiary: "#737373",
+  accent1: "#525252",
+  accent2: "#262626",
+  pie: ["#0a0a0a", "#262626", "#404040", "#525252", "#737373"],
+};
 
 export default function DashboardPage() {
   const user = useAuthStore((state) => state.user);
 
   return (
     <div className="p-8">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+      <div className="flex justify-between items-center mb-8">
+        <div>
+          <h1 className="text-3xl font-bold">Dashboard Overview</h1>
+          <p className="text-gray-500 mt-1">Welcome back, {user?.name || user?.email}</p>
+        </div>
+        <div className="flex gap-3">
+          <Button variant="bordered">Export Report</Button>
+          <Button color="primary">Create New</Button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <Card>
-          <CardHeader>
-            <h3 className="text-lg font-semibold">Total Users</h3>
-          </CardHeader>
-          <CardBody>
+          <CardBody className="gap-3">
+            <div className="flex justify-between items-start">
+              <div className="flex items-center gap-2">
+                <div className="p-2 bg-gray-100 dark:bg-gray-800 rounded-lg">
+                  <Users size={24} weight="duotone" />
+                </div>
+                <p className="text-sm text-gray-500">Total Users</p>
+              </div>
+              <Chip size="sm" color="success" variant="flat" startContent={<TrendUp size={14} />}>
+                12%
+              </Chip>
+            </div>
             <p className="text-3xl font-bold">1,234</p>
-            <p className="text-sm text-gray-500 mt-2">+12% from last month</p>
+            <Progress value={65} size="sm" color="default" className="mt-2" />
+            <p className="text-xs text-gray-400">65% of monthly target</p>
           </CardBody>
         </Card>
 
         <Card>
-          <CardHeader>
-            <h3 className="text-lg font-semibold">Revenue</h3>
-          </CardHeader>
-          <CardBody>
+          <CardBody className="gap-3">
+            <div className="flex justify-between items-start">
+              <div className="flex items-center gap-2">
+                <div className="p-2 bg-gray-100 dark:bg-gray-800 rounded-lg">
+                  <CurrencyDollar size={24} weight="duotone" />
+                </div>
+                <p className="text-sm text-gray-500">Revenue</p>
+              </div>
+              <Chip size="sm" color="success" variant="flat" startContent={<TrendUp size={14} />}>
+                8%
+              </Chip>
+            </div>
             <p className="text-3xl font-bold">$45,678</p>
-            <p className="text-sm text-gray-500 mt-2">+8% from last month</p>
+            <Progress value={78} size="sm" color="default" className="mt-2" />
+            <p className="text-xs text-gray-400">78% of monthly target</p>
           </CardBody>
         </Card>
 
         <Card>
-          <CardHeader>
-            <h3 className="text-lg font-semibold">Active Sessions</h3>
-          </CardHeader>
-          <CardBody>
+          <CardBody className="gap-3">
+            <div className="flex justify-between items-start">
+              <div className="flex items-center gap-2">
+                <div className="p-2 bg-gray-100 dark:bg-gray-800 rounded-lg">
+                  <Clock size={24} weight="duotone" />
+                </div>
+                <p className="text-sm text-gray-500">Active Sessions</p>
+              </div>
+              <Chip size="sm" color="success" variant="flat" startContent={<TrendUp size={14} />}>
+                5%
+              </Chip>
+            </div>
             <p className="text-3xl font-bold">432</p>
-            <p className="text-sm text-gray-500 mt-2">+5% from last hour</p>
+            <Progress value={43} size="sm" color="default" className="mt-2" />
+            <p className="text-xs text-gray-400">Peak: 542 sessions</p>
+          </CardBody>
+        </Card>
+
+        <Card>
+          <CardBody className="gap-3">
+            <div className="flex justify-between items-start">
+              <div className="flex items-center gap-2">
+                <div className="p-2 bg-gray-100 dark:bg-gray-800 rounded-lg">
+                  <ChartLine size={24} weight="duotone" />
+                </div>
+                <p className="text-sm text-gray-500">Conversion Rate</p>
+              </div>
+              <Chip size="sm" color="danger" variant="flat" startContent={<TrendDown size={14} />}>
+                2%
+              </Chip>
+            </div>
+            <p className="text-3xl font-bold">3.24%</p>
+            <Progress value={32} size="sm" color="default" className="mt-2" />
+            <p className="text-xs text-gray-400">Industry avg: 3.5%</p>
           </CardBody>
         </Card>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         <Card>
-          <CardHeader>
+          <CardHeader className="flex justify-between items-center">
             <h3 className="text-lg font-semibold">Revenue & Users Trend</h3>
+            <Chip size="sm" variant="flat">Last 7 months</Chip>
           </CardHeader>
           <CardBody>
             <ResponsiveContainer width="100%" height={300}>
@@ -81,16 +150,16 @@ export default function DashboardPage() {
                 <Line
                   type="monotone"
                   dataKey="revenue"
-                  stroke="#3b82f6"
+                  stroke={THEME_COLORS.primary}
                   strokeWidth={2}
-                  dot={{ fill: "#3b82f6" }}
+                  dot={{ fill: THEME_COLORS.primary }}
                 />
                 <Line
                   type="monotone"
                   dataKey="users"
-                  stroke="#8b5cf6"
+                  stroke={THEME_COLORS.secondary}
                   strokeWidth={2}
-                  dot={{ fill: "#8b5cf6" }}
+                  dot={{ fill: THEME_COLORS.secondary }}
                 />
               </LineChart>
             </ResponsiveContainer>
@@ -98,8 +167,9 @@ export default function DashboardPage() {
         </Card>
 
         <Card>
-          <CardHeader>
+          <CardHeader className="flex justify-between items-center">
             <h3 className="text-lg font-semibold">Product Performance</h3>
+            <Chip size="sm" variant="flat">Top 5 Products</Chip>
           </CardHeader>
           <CardBody>
             <ResponsiveContainer width="100%" height={300}>
@@ -111,14 +181,14 @@ export default function DashboardPage() {
                 <XAxis dataKey="name" stroke="#6b7280" />
                 <YAxis stroke="#6b7280" />
                 <Tooltip />
-                <Bar dataKey="value" fill="#3b82f6" radius={[8, 8, 0, 0]} />
+                <Bar dataKey="value" fill={THEME_COLORS.primary} radius={[8, 8, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </CardBody>
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         <Card>
           <CardHeader>
             <h3 className="text-lg font-semibold">Traffic Sources</h3>
@@ -141,13 +211,68 @@ export default function DashboardPage() {
                   {trafficSourceData.map((entry, index) => (
                     <Cell
                       key={`cell-${entry.name}`}
-                      fill={COLORS[index % COLORS.length]}
+                      fill={THEME_COLORS.pie[index % THEME_COLORS.pie.length]}
                     />
                   ))}
                 </Pie>
                 <Tooltip />
               </PieChart>
             </ResponsiveContainer>
+          </CardBody>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <h3 className="text-lg font-semibold">Recent Activity</h3>
+          </CardHeader>
+          <CardBody className="gap-4">
+            {[
+              { user: "John Doe", action: "Created new project", time: "2 min ago" },
+              { user: "Jane Smith", action: "Updated dashboard", time: "15 min ago" },
+              { user: "Bob Wilson", action: "Added new users", time: "1 hour ago" },
+              { user: "Alice Brown", action: "Generated report", time: "2 hours ago" },
+            ].map((activity, idx) => (
+              <div key={idx} className="flex items-start gap-3 pb-3 border-b last:border-b-0 border-gray-200 dark:border-gray-800">
+                <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs font-semibold">
+                  {activity.user.split(" ").map(n => n[0]).join("")}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">{activity.user}</p>
+                  <p className="text-xs text-gray-500">{activity.action}</p>
+                </div>
+                <span className="text-xs text-gray-400 whitespace-nowrap">{activity.time}</span>
+              </div>
+            ))}
+          </CardBody>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <h3 className="text-lg font-semibold">Quick Actions</h3>
+          </CardHeader>
+          <CardBody className="gap-3">
+            <Button fullWidth variant="flat">Generate Report</Button>
+            <Button fullWidth variant="flat">Invite Team Member</Button>
+            <Button fullWidth variant="flat">View Analytics</Button>
+            <Button fullWidth variant="flat">Manage Settings</Button>
+
+            <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
+              <p className="text-sm font-semibold mb-2">System Status</p>
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-gray-600">API Status</span>
+                  <Chip size="sm" color="success" variant="dot">Operational</Chip>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-gray-600">Database</span>
+                  <Chip size="sm" color="success" variant="dot">Healthy</Chip>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-gray-600">Storage</span>
+                  <Chip size="sm" color="warning" variant="dot">72% Used</Chip>
+                </div>
+              </div>
+            </div>
           </CardBody>
         </Card>
       </div>

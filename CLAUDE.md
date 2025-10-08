@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This project is a Dashboard template, for ship a SaaS/App back-end faster.
 
 ## Tech Stack & Architecture
 
@@ -9,6 +9,8 @@ This is a Next.js 15 application using the App Router pattern with the following
 - **Framework**: Next.js 15.5.4 with App Router architecture
 - **React**: Version 19.1.0 (latest)
 - **Runtime**: Bun (preferred package manager and runtime)
+- **Data visualization**: Recharts
+- **Database access**: Use TypeORM
 - **Build Tool**: Turbopack (Next.js's Rust-based bundler)
 - **Styling**: Tailwind CSS v4 + Hero UI + Phosphor-icons
 - **State Management**: Zustand

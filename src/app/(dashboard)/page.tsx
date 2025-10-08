@@ -26,18 +26,11 @@ import {
   trafficSourceData,
 } from "@/lib/dashboard/chart-data";
 import { TrendUp, TrendDown, Users, CurrencyDollar, Clock, ChartLine } from "@phosphor-icons/react";
-
-const THEME_COLORS = {
-  primary: "#0a0a0a",
-  secondary: "#404040",
-  tertiary: "#737373",
-  accent1: "#525252",
-  accent2: "#262626",
-  pie: ["#0a0a0a", "#262626", "#404040", "#525252", "#737373"],
-};
+import { useThemeColors } from "@/lib/color-theme";
 
 export default function DashboardPage() {
   const user = useAuthStore((state) => state.user);
+  const themeColors = useThemeColors();
 
   return (
     <div className="p-8">
@@ -142,24 +135,24 @@ export default function DashboardPage() {
                 data={monthlyRevenueData}
                 margin={{ top: 5, right: 20, bottom: 5, left: 0 }}
               >
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                <XAxis dataKey="name" stroke="#6b7280" />
-                <YAxis stroke="#6b7280" />
+                <CartesianGrid strokeDasharray="3 3" stroke={themeColors.chartColors.grid} />
+                <XAxis dataKey="name" stroke={themeColors.chartColors.axis} />
+                <YAxis stroke={themeColors.chartColors.axis} />
                 <Tooltip />
                 <Legend />
                 <Line
                   type="monotone"
                   dataKey="revenue"
-                  stroke={THEME_COLORS.primary}
+                  stroke={themeColors.chartColors.primary}
                   strokeWidth={2}
-                  dot={{ fill: THEME_COLORS.primary }}
+                  dot={{ fill: themeColors.chartColors.primary }}
                 />
                 <Line
                   type="monotone"
                   dataKey="users"
-                  stroke={THEME_COLORS.secondary}
+                  stroke={themeColors.chartColors.secondary}
                   strokeWidth={2}
-                  dot={{ fill: THEME_COLORS.secondary }}
+                  dot={{ fill: themeColors.chartColors.secondary }}
                 />
               </LineChart>
             </ResponsiveContainer>
@@ -177,11 +170,11 @@ export default function DashboardPage() {
                 data={categoryData}
                 margin={{ top: 5, right: 20, bottom: 5, left: 0 }}
               >
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                <XAxis dataKey="name" stroke="#6b7280" />
-                <YAxis stroke="#6b7280" />
+                <CartesianGrid strokeDasharray="3 3" stroke={themeColors.chartColors.grid} />
+                <XAxis dataKey="name" stroke={themeColors.chartColors.axis} />
+                <YAxis stroke={themeColors.chartColors.axis} />
                 <Tooltip />
-                <Bar dataKey="value" fill={THEME_COLORS.primary} radius={[8, 8, 0, 0]} />
+                <Bar dataKey="value" fill={themeColors.chartColors.primary} radius={[8, 8, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </CardBody>
@@ -205,13 +198,12 @@ export default function DashboardPage() {
                     `${props.name} ${(props.percent * 100).toFixed(0)}%`
                   }
                   outerRadius={100}
-                  fill="#8884d8"
                   dataKey="value"
                 >
                   {trafficSourceData.map((entry, index) => (
                     <Cell
                       key={`cell-${entry.name}`}
-                      fill={THEME_COLORS.pie[index % THEME_COLORS.pie.length]}
+                      fill={themeColors.chartPalette[index % themeColors.chartPalette.length]}
                     />
                   ))}
                 </Pie>

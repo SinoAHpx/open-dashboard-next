@@ -133,6 +133,7 @@ export default function PaginationPage() {
           classNames={{
             wrapper: "h-full overflow-auto",
             base: "h-full",
+            th: "sticky top-0 z-10 backdrop-blur-md bg-gray-50/80 dark:bg-gray-800/80",
           }}
         >
           <TableHeader columns={columns}>

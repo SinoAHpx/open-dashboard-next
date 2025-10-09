@@ -1,96 +1,85 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useRef, useMemo } from "react";
 import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableColumn,
-  TableRow,
-  TableCell,
-  Chip,
-} from "@heroui/react";
-import { getSimpleUsers, type SimpleUser } from "@/lib/api-wrapper/simple";
+  PaginationTable,
+  type PaginationTableRef,
+} from "@/components/pagination-table";
+import {
+  createRichCellsConfig,
+  type RichCellTask,
+} from "@/lib/config/pagination-richcells.config";
+import { Button, useDisclosure } from "@heroui/react";
+import { Plus } from "@phosphor-icons/react";
 
 export default function RichCellPage() {
-  const [users, setUsers] = useState<SimpleUser[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const tableRef = useRef<PaginationTableRef>(null);
+  const { isOpen, onOpen, onClose } = useDisclosure();
 
-  useEffect(() => {
-    getSimpleUsers()
-      .then((data) => {
-        setUsers(data);
-        setIsLoading(false);
-      })
-      .catch((error) => {
-        console.error("Failed to load users:", error);
-        setIsLoading(false);
-      });
-  }, []);
-
-  const statusColorMap: Record<
-    SimpleUser["status"],
-    "success" | "warning" | "danger"
-  > = {
-    active: "success",
-    pending: "warning",
-    inactive: "danger",
+  const handleEdit = (task: RichCellTask) => {
+    console.log("Editing task:", task);
+    // Here you would open a modal or form to edit the task
   };
 
-  const columns = [
-    { key: "name", label: "Name" },
-    { key: "email", label: "Email" },
-    { key: "status", label: "Status" },
-    { key: "role", label: "Role" },
-  ];
-
-  const renderCell = (user: SimpleUser, columnKey: React.Key) => {
-    switch (columnKey) {
-      case "name":
-        return <span className="font-medium">{user.name}</span>;
-      case "email":
-        return <span className="text-gray-600 dark:text-gray-400">{user.email}</span>;
-      case "status":
-        return (
-          <Chip color={statusColorMap[user.status]} size="sm" variant="flat">
-            {user.status.charAt(0).toUpperCase() + user.status.slice(1)}
-          </Chip>
-        );
-      case "role":
-        return <span className="text-gray-600 dark:text-gray-400">{user.role}</span>;
-      default:
-        return null;
+  const handleDelete = (id: string) => {
+    if (confirm("Are you sure you want to delete this task?")) {
+      console.log("Deleting task:", id);
+      // Here you would call your API to delete the task
+      tableRef.current?.refresh();
     }
   };
 
+  const handleUpdateProgress = (id: string, progress: number) => {
+    console.log(`Updating task ${id} progress to ${progress}%`);
+    // Here you would call your API to update the progress
+    tableRef.current?.refresh();
+  };
+
+  const handleUpdateTask = (id: string, field: string, value: string) => {
+    console.log(`Updating task ${id} field ${field} to ${value}`);
+    // Here you would call your API to update the task
+    tableRef.current?.refresh();
+  };
+
+  const handleAddTask = () => {
+    console.log("Adding new task");
+    // Here you would open a modal or form to add a new task
+    onOpen();
+  };
+
+  const config = useMemo(
+    () =>
+      createRichCellsConfig({
+        onEdit: handleEdit,
+        onDelete: handleDelete,
+        onUpdateProgress: handleUpdateProgress,
+        onUpdateTask: handleUpdateTask,
+      }),
+    []
+  );
+
   return (
-    <div className="space-y-6 p-8">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-          Rich Cell Table
-        </h1>
-        <p className="mt-2 text-gray-600 dark:text-gray-400">
-          Table with rich cell content and custom rendering
-        </p>
+    <div className="flex flex-1 min-h-0 flex-col p-8">
+      <div className="mb-6 shrink-0 flex justify-between items-start">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+            Rich Cell Table
+          </h1>
+          <p className="mt-2 text-gray-600 dark:text-gray-400">
+            Advanced table with avatars, editable inputs, progress bars, and more interactive components.
+            Total tasks: {tableRef.current?.getTotalCount() || 0}
+          </p>
+        </div>
+        <Button
+          color="primary"
+          startContent={<Plus size={18} weight="bold" />}
+          onPress={handleAddTask}
+        >
+          Add Task
+        </Button>
       </div>
 
-      <Table aria-label="Rich cell table">
-        <TableHeader columns={columns}>
-          {(column) => <TableColumn key={column.key}>{column.label}</TableColumn>}
-        </TableHeader>
-        <TableBody
-          items={users}
-          isLoading={isLoading}
-          loadingContent={<span>Loading...</span>}
-          emptyContent="No users found"
-        >
-          {(item) => (
-            <TableRow key={item.id}>
-              {(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
+      <PaginationTable ref={tableRef} {...config} />
     </div>
   );
 }

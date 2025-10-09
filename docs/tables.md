@@ -19,9 +19,9 @@ This guide explains how to use the universal pagination table boilerplate to qui
 
 The pagination table system consists of three main parts:
 
-1. **PaginationTable Component** - The reusable table component (in `src/components/pagination-table.tsx`)
-2. **Table Configuration** - Column definitions and API integration (in `src/lib/config/`)
-3. **Page Wrapper** - The page that uses the table with custom headers and actions
+1. **PaginationTable Component** \- The reusable table component \(in `src/components/pagination-table.tsx`)
+2. **Table Configuration** \- Column definitions and API integration \(in `src/lib/config/`)
+3. **Page Wrapper** \- The page that uses the table with custom headers and actions
 
 ### Why This Approach?
 
@@ -35,7 +35,7 @@ The pagination table system consists of three main parts:
 
 ## Quick Start
 
-### 1. Create Your Configuration File
+### 1\. Create Your Configuration File
 
 Create a new file in `src/lib/config/` for your table config:
 
@@ -61,14 +61,16 @@ export interface Order {
 async function fetchOrders(
   params: PaginationRequest
 ): Promise<PaginationResponse<Order>> {
-  const response = await fetch(`/api/orders?${new URLSearchParams({
-    page: params.page.toString(),
-    pageSize: params.pageSize.toString(),
-    search: params.search || "",
-    status: params.status as string || "",
-    sortBy: params.sortBy || "",
-    sortOrder: params.sortOrder || "",
-  })}`);
+  const response = await fetch(
+    `/api/orders?${new URLSearchParams({
+      page: params.page.toString(),
+      pageSize: params.pageSize.toString(),
+      search: params.search || "",
+      status: (params.status as string) || "",
+      sortBy: params.sortBy || "",
+      sortOrder: params.sortOrder || "",
+    })}`
+  );
 
   return response.json();
 }
@@ -78,7 +80,9 @@ const columns: ColumnDef<Order>[] = [
   {
     accessorKey: "customerName",
     header: "Customer",
-    cell: (info) => <span className="font-medium">{info.getValue() as string}</span>,
+    cell: (info) => (
+      <span className="font-medium">{info.getValue() as string}</span>
+    ),
   },
   {
     accessorKey: "total",
@@ -119,7 +123,7 @@ export const ordersTableConfig: PaginationTableConfig<Order> = {
 };
 ```
 
-### 2. Use It In Your Page
+### 2\. Use It In Your Page
 
 ```tsx
 // src/app/(dashboard)/orders/page.tsx
@@ -211,11 +215,11 @@ For a read-only table without actions, use the pattern shown in Quick Start.
 
 ### Key Points
 
-1. **Define your data type** - TypeScript interface for your data
-2. **Create fetch function** - Adapter that calls your API
-3. **Define columns** - What data to display and how
+1. **Define your data type** \- TypeScript interface for your data
+2. **Create fetch function** \- Adapter that calls your API
+3. **Define columns** \- What data to display and how
 4. **Configure filters** (optional) - Dropdown filters for your data
-5. **Export config** - Single object with all settings
+5. **Export config** \- Single object with all settings
 
 ### Column Customization
 
@@ -246,7 +250,13 @@ For tables with edit/delete/view actions (like the Products table), use a factor
 
 ```tsx
 // src/lib/config/pagination-products.config.tsx
-import { Button, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from "@heroui/react";
+import {
+  Button,
+  Dropdown,
+  DropdownTrigger,
+  DropdownMenu,
+  DropdownItem,
+} from "@heroui/react";
 import { DotsThreeVertical, PencilSimple, Trash } from "@phosphor-icons/react";
 
 export function createProductsConfig(options: {
@@ -304,7 +314,10 @@ export function createProductsConfig(options: {
 "use client";
 
 import { useRef, useMemo } from "react";
-import { PaginationTable, type PaginationTableRef } from "@/components/pagination-table";
+import {
+  PaginationTable,
+  type PaginationTableRef,
+} from "@/components/pagination-table";
 import { createProductsConfig } from "@/lib/config/pagination-products.config";
 import { deleteProduct } from "@/lib/api-wrapper/products";
 
@@ -319,16 +332,17 @@ export default function ProductsPage() {
   const handleDelete = (id: string) => {
     if (confirm("Are you sure?")) {
       deleteProduct(id);
-      tableRef.current?.refresh();  // Refresh table after deletion
+      tableRef.current?.refresh(); // Refresh table after deletion
     }
   };
 
   // Create config with callbacks
   const config = useMemo(
-    () => createProductsConfig({
-      onEdit: handleEdit,
-      onDelete: handleDelete,
-    }),
+    () =>
+      createProductsConfig({
+        onEdit: handleEdit,
+        onDelete: handleDelete,
+      }),
     []
   );
 
@@ -351,11 +365,11 @@ The table exposes methods via `ref` for external control.
 
 ```typescript
 interface PaginationTableRef {
-  refresh: () => void;              // Reload current page
-  resetPage: () => void;            // Go to page 1
-  getTotalCount: () => number;      // Get total items count
-  getCurrentPage: () => number;     // Get current page
-  isLoading: () => boolean;         // Check loading state
+  refresh: () => void; // Reload current page
+  resetPage: () => void; // Go to page 1
+  getTotalCount: () => number; // Get total items count
+  getCurrentPage: () => number; // Get current page
+  isLoading: () => boolean; // Check loading state
 }
 ```
 
@@ -377,9 +391,7 @@ export default function ProductsPage() {
     <div className="flex flex-1 min-h-0 flex-col p-8">
       <div className="mb-6 flex justify-between">
         <h1>Products</h1>
-        <Button onPress={handleAdd}>
-          Add Product
-        </Button>
+        <Button onPress={handleAdd}>Add Product</Button>
       </div>
 
       <PaginationTable ref={tableRef} {...config} />
@@ -415,35 +427,36 @@ export default function ProductsPage() {
 
 ```javascript
 // routes/orders.js
-app.get('/api/orders', async (req, res) => {
+app.get("/api/orders", async (req, res) => {
   const {
     page = 1,
     pageSize = 10,
-    search = '',
-    status = '',
-    sortBy = 'createdAt',
-    sortOrder = 'desc',
+    search = "",
+    status = "",
+    sortBy = "createdAt",
+    sortOrder = "desc",
   } = req.query;
 
   // Build query
-  let query = db('orders');
+  let query = db("orders");
 
   // Apply search
   if (search) {
-    query = query.where('customerName', 'like', `%${search}%`)
-                 .orWhere('id', 'like', `%${search}%`);
+    query = query
+      .where("customerName", "like", `%${search}%`)
+      .orWhere("id", "like", `%${search}%`);
   }
 
   // Apply filters
   if (status) {
-    query = query.where('status', status);
+    query = query.where("status", status);
   }
 
   // Apply sorting
   query = query.orderBy(sortBy, sortOrder);
 
   // Get total count
-  const totalCount = await query.clone().count('* as count').first();
+  const totalCount = await query.clone().count("* as count").first();
 
   // Apply pagination
   const offset = (page - 1) * pageSize;
@@ -466,17 +479,17 @@ app.get('/api/orders', async (req, res) => {
 
 ```typescript
 // app/api/orders/route.ts
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
 
-  const page = parseInt(searchParams.get('page') || '1');
-  const pageSize = parseInt(searchParams.get('pageSize') || '10');
-  const search = searchParams.get('search') || '';
-  const status = searchParams.get('status') || '';
-  const sortBy = searchParams.get('sortBy') || 'createdAt';
-  const sortOrder = searchParams.get('sortOrder') || 'desc';
+  const page = parseInt(searchParams.get("page") || "1");
+  const pageSize = parseInt(searchParams.get("pageSize") || "10");
+  const search = searchParams.get("search") || "";
+  const status = searchParams.get("status") || "";
+  const sortBy = searchParams.get("sortBy") || "createdAt";
+  const sortOrder = searchParams.get("sortOrder") || "desc";
 
   // Your database query logic here
   const { data, totalCount } = await fetchOrdersFromDB({
@@ -577,10 +590,7 @@ export function getPaginatedProducts(params: {
 You can pass custom classes to the table:
 
 ```tsx
-<PaginationTable
-  {...config}
-  className="custom-table-class"
-/>
+<PaginationTable {...config} className="custom-table-class" />
 ```
 
 ### Multiple Filters
@@ -618,9 +628,9 @@ export const config: PaginationTableConfig<Product> = {
 ```tsx
 export const config: PaginationTableConfig<Product> = {
   // ...
-  enableSearch: false,  // Disable search entirely
+  enableSearch: false, // Disable search entirely
   // OR
-  searchPlaceholder: "Search by name or SKU...",  // Custom placeholder
+  searchPlaceholder: "Search by name or SKU...", // Custom placeholder
 };
 ```
 
@@ -693,7 +703,9 @@ export default function UsersPage() {
   const { isOpen, onOpen, onClose } = useDisclosure();
 
   const handleAdd = () => onOpen();
-  const handleEdit = (user) => { /* ... */ };
+  const handleEdit = (user) => {
+    /* ... */
+  };
   const handleDelete = (id) => {
     deleteUser(id);
     tableRef.current?.refresh();
@@ -781,9 +793,7 @@ Check that your API response matches the expected format exactly:
 Make sure your page wrapper has the correct classes:
 
 ```tsx
-<div className="flex flex-1 min-h-0 flex-col p-8">
-  {/* ... */}
-</div>
+<div className="flex flex-1 min-h-0 flex-col p-8">{/* ... */}</div>
 ```
 
 The key classes are `flex-1 min-h-0` which allow the flex layout to work properly.
@@ -795,7 +805,7 @@ Always call `tableRef.current?.refresh()` after mutations:
 ```tsx
 const handleDelete = (id: string) => {
   deleteProduct(id);
-  tableRef.current?.refresh();  // Don't forget this!
+  tableRef.current?.refresh(); // Don't forget this!
 };
 ```
 

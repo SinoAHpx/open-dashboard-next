@@ -1,0 +1,444 @@
+"use client";
+
+import { useEffect, useState, forwardRef, useImperativeHandle } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableColumn,
+  TableRow,
+  TableCell,
+  Pagination,
+  Select,
+  SelectItem,
+  Spinner,
+  Input,
+  Button,
+  Checkbox,
+} from "@heroui/react";
+import {
+  useReactTable,
+  getCoreRowModel,
+  flexRender,
+  type ColumnDef,
+  type Row,
+} from "@tanstack/react-table";
+import { MagnifyingGlass, CaretUp, CaretDown, ArrowClockwise } from "@phosphor-icons/react";
+
+// Reuse types from pagination-table
+import type {
+  PaginationRequest,
+  PaginationResponse,
+  FilterConfig,
+} from "./pagination-table";
+
+export interface SelectableTableConfig<TData> {
+  columns: ColumnDef<TData>[];
+  fetchData: (params: PaginationRequest) => Promise<PaginationResponse<TData>>;
+  filters?: FilterConfig[];
+  pageSizeOptions?: number[];
+  defaultPageSize?: number;
+  enableSearch?: boolean;
+  searchPlaceholder?: string;
+  emptyMessage?: string;
+  className?: string;
+  getRowId?: (row: TData) => string; // Function to get unique ID from row data
+}
+
+export interface SelectableTableRef {
+  refresh: () => void;
+  resetPage: () => void;
+  getTotalCount: () => number;
+  getCurrentPage: () => number;
+  isLoading: () => boolean;
+  getSelectedKeys: () => Set<string>;
+  clearSelection: () => void;
+  selectAll: () => void;
+}
+
+const DEFAULT_PAGE_SIZE_OPTIONS = [5, 10, 15, 20, 25, 50];
+
+function SelectableTableInner<TData extends { id?: string }>(
+  {
+    columns,
+    fetchData,
+    filters = [],
+    pageSizeOptions = DEFAULT_PAGE_SIZE_OPTIONS,
+    defaultPageSize = 10,
+    enableSearch = true,
+    searchPlaceholder = "Search all columns...",
+    emptyMessage = "No data found",
+    className = "",
+    getRowId = (row) => (row as TData & { id: string }).id,
+  }: SelectableTableConfig<TData>,
+  ref: React.Ref<SelectableTableRef>
+) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const [data, setData] = useState<TData[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(defaultPageSize);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+
+  const [search, setSearch] = useState("");
+  const [filterValues, setFilterValues] = useState<Record<string, string>>({});
+  const [sortBy, setSortBy] = useState("");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+
+  // Selection state
+  const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
+
+  // Initialize from URL on mount
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+  useEffect(() => {
+    const pageParam = searchParams.get("page");
+    const pageSizeParam = searchParams.get("pageSize");
+    const searchParam = searchParams.get("search");
+    const sortByParam = searchParams.get("sortBy");
+    const sortOrderParam = searchParams.get("sortOrder");
+
+    if (pageParam) setPage(Number.parseInt(pageParam, 10));
+    if (pageSizeParam) setPageSize(Number.parseInt(pageSizeParam, 10));
+    if (searchParam) setSearch(searchParam);
+    if (sortByParam) setSortBy(sortByParam);
+    if (sortOrderParam) setSortOrder(sortOrderParam as "asc" | "desc");
+
+    // Initialize filter values from URL
+    const initialFilterValues: Record<string, string> = {};
+    for (const filter of filters) {
+      const filterParam = searchParams.get(filter.key);
+      if (filterParam) {
+        initialFilterValues[filter.key] = filterParam;
+      }
+    }
+    setFilterValues(initialFilterValues);
+  }, []);
+
+  const table = useReactTable({
+    data,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    manualSorting: true,
+    manualFiltering: true,
+    getRowId: (row) => getRowId(row),
+  });
+
+  // Expose methods via ref
+  useImperativeHandle(ref, () => ({
+    refresh: handleRefresh,
+    resetPage: () => setPage(1),
+    getTotalCount: () => totalCount,
+    getCurrentPage: () => page,
+    isLoading: () => isLoading,
+    getSelectedKeys: () => selectedKeys,
+    clearSelection: () => setSelectedKeys(new Set()),
+    selectAll: () => {
+      const allIds = new Set(data.map((row) => getRowId(row)));
+      setSelectedKeys(allIds);
+    },
+  }));
+
+  // Sync URL with state
+  useEffect(() => {
+    const params = new URLSearchParams();
+    params.set("page", page.toString());
+    params.set("pageSize", pageSize.toString());
+    if (search) {
+      params.set("search", search);
+    }
+    if (sortBy) {
+      params.set("sortBy", sortBy);
+      params.set("sortOrder", sortOrder);
+    }
+    // Add filter values to URL
+    for (const [key, value] of Object.entries(filterValues)) {
+      if (value) {
+        params.set(key, value);
+      }
+    }
+    router.replace(`?${params.toString()}`, { scroll: false });
+  }, [page, pageSize, search, filterValues, sortBy, sortOrder, router]);
+
+  // Fetch data from server
+  useEffect(() => {
+    const loadData = async () => {
+      setIsLoading(true);
+      try {
+        const requestParams: PaginationRequest = {
+          page,
+          pageSize,
+          search,
+          sortBy,
+          sortOrder,
+          ...filterValues,
+        };
+        const response = await fetchData(requestParams);
+        setData(response.data);
+        setTotalPages(response.pagination.totalPages);
+        setTotalCount(response.pagination.totalCount);
+      } catch (error) {
+        console.error("Failed to load data:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadData();
+  }, [page, pageSize, search, filterValues, sortBy, sortOrder, fetchData]);
+
+  const handlePageSizeChange = (value: string) => {
+    const newPageSize = Number.parseInt(value, 10);
+    setPageSize(newPageSize);
+    setPage(1);
+  };
+
+  const handleSort = (columnId: string) => {
+    if (sortBy === columnId) {
+      // Toggle sort order or clear
+      if (sortOrder === "asc") {
+        setSortOrder("desc");
+      } else {
+        setSortBy("");
+        setSortOrder("asc");
+      }
+    } else {
+      setSortBy(columnId);
+      setSortOrder("asc");
+    }
+    setPage(1); // Reset to first page when sorting changes
+  };
+
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
+    setPage(1); // Reset to first page when search changes
+  };
+
+  const handleFilterChange = (key: string, value: string) => {
+    setFilterValues((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
+    setPage(1); // Reset to first page when filter changes
+  };
+
+  const handleRefresh = async () => {
+    setIsLoading(true);
+    try {
+      const requestParams: PaginationRequest = {
+        page,
+        pageSize,
+        search,
+        sortBy,
+        sortOrder,
+        ...filterValues,
+      };
+      const response = await fetchData(requestParams);
+      setData(response.data);
+      setTotalPages(response.pagination.totalPages);
+      setTotalCount(response.pagination.totalCount);
+    } catch (error) {
+      console.error("Failed to refresh data:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Selection handlers
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      const allIds = new Set(data.map((row) => getRowId(row)));
+      setSelectedKeys(allIds);
+    } else {
+      setSelectedKeys(new Set());
+    }
+  };
+
+  const handleSelectRow = (rowId: string, checked: boolean) => {
+    const newSelectedKeys = new Set(selectedKeys);
+    if (checked) {
+      newSelectedKeys.add(rowId);
+    } else {
+      newSelectedKeys.delete(rowId);
+    }
+    setSelectedKeys(newSelectedKeys);
+  };
+
+  const isAllSelected = data.length > 0 && selectedKeys.size === data.length;
+  const isSomeSelected = selectedKeys.size > 0 && selectedKeys.size < data.length;
+
+  return (
+    <div className={`flex flex-1 min-h-0 flex-col ${className}`}>
+      <div className="mb-4 flex shrink-0 items-center gap-4 overflow-hidden">
+        {enableSearch && (
+          <Input
+            isClearable
+            placeholder={searchPlaceholder}
+            startContent={<MagnifyingGlass size={18} />}
+            value={search}
+            onValueChange={handleSearchChange}
+            className="flex-1"
+          />
+        )}
+        {filters.map((filter) => (
+          <Select
+            key={filter.key}
+            size="md"
+            placeholder={filter.placeholder}
+            selectedKeys={filterValues[filter.key] ? [filterValues[filter.key]] : []}
+            onChange={(e) => handleFilterChange(filter.key, e.target.value)}
+            className="w-48"
+            aria-label={filter.label}
+          >
+            {filter.options.map((option) => (
+              <SelectItem key={option.key}>{option.label}</SelectItem>
+            ))}
+          </Select>
+        ))}
+        <Button
+          isIconOnly
+          variant="flat"
+          onPress={handleRefresh}
+          isLoading={isLoading}
+          aria-label="Refresh"
+        >
+          <ArrowClockwise size={20} />
+        </Button>
+      </div>
+
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
+        <div className="flex-1 overflow-auto">
+          <table className="w-full">
+            <thead className="sticky top-0 z-10 backdrop-blur-md bg-gray-50/80 dark:bg-gray-800/80">
+              {table.getHeaderGroups().map((headerGroup) => (
+                <tr key={headerGroup.id}>
+                  <th className="px-4 py-3 w-12">
+                    <Checkbox
+                      isSelected={isAllSelected}
+                      isIndeterminate={isSomeSelected}
+                      onValueChange={handleSelectAll}
+                      aria-label="Select all rows"
+                    />
+                  </th>
+                  {headerGroup.headers.map((header) => (
+                    <th
+                      key={header.id}
+                      className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300"
+                    >
+                      {header.isPlaceholder ? null : (
+                        <div
+                          className="flex items-center gap-2 cursor-pointer select-none"
+                          onClick={() => handleSort(header.column.id)}
+                        >
+                          {flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
+                          <span className="text-gray-400">
+                            {sortBy === header.column.id && sortOrder === "asc" ? (
+                              <CaretUp size={16} weight="fill" />
+                            ) : sortBy === header.column.id && sortOrder === "desc" ? (
+                              <CaretDown size={16} weight="fill" />
+                            ) : (
+                              <div className="flex flex-col">
+                                <CaretUp size={12} />
+                                <CaretDown size={12} className="-mt-1" />
+                              </div>
+                            )}
+                          </span>
+                        </div>
+                      )}
+                    </th>
+                  ))}
+                </tr>
+              ))}
+            </thead>
+            <tbody>
+              {isLoading ? (
+                <tr>
+                  <td colSpan={columns.length + 1} className="py-20 text-center">
+                    <Spinner color="default" />
+                  </td>
+                </tr>
+              ) : table.getRowModel().rows.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={columns.length + 1}
+                    className="py-20 text-center text-gray-500 dark:text-gray-400"
+                  >
+                    {emptyMessage}
+                  </td>
+                </tr>
+              ) : (
+                table.getRowModel().rows.map((row) => {
+                  const rowId = getRowId(row.original);
+                  const isSelected = selectedKeys.has(rowId);
+                  return (
+                    <tr
+                      key={row.id}
+                      className={`border-t border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50 ${
+                        isSelected ? "bg-primary-50 dark:bg-primary-900/20" : ""
+                      }`}
+                    >
+                      <td className="px-4 py-3 w-12">
+                        <Checkbox
+                          isSelected={isSelected}
+                          onValueChange={(checked) => handleSelectRow(rowId, checked)}
+                          aria-label={`Select row ${rowId}`}
+                        />
+                      </td>
+                      {row.getVisibleCells().map((cell) => (
+                        <td key={cell.id} className="px-4 py-3 text-sm">
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext()
+                          )}
+                        </td>
+                      ))}
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div className="mt-6 flex shrink-0 items-center justify-between overflow-hidden">
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-gray-600 dark:text-gray-400">
+            Rows per page:
+          </span>
+          <Select
+            size="sm"
+            selectedKeys={[pageSize.toString()]}
+            onChange={(e) => handlePageSizeChange(e.target.value)}
+            className="w-20"
+            aria-label="Select page size"
+          >
+            {pageSizeOptions.map((option) => (
+              <SelectItem key={option.toString()}>{option.toString()}</SelectItem>
+            ))}
+          </Select>
+        </div>
+
+        <Pagination
+          total={totalPages}
+          page={page}
+          onChange={setPage}
+          showControls
+          color="primary"
+        />
+      </div>
+    </div>
+  );
+}
+
+// Export with forwardRef for generic component
+export const SelectableTable = forwardRef(SelectableTableInner) as <TData extends { id?: string }>(
+  props: SelectableTableConfig<TData> & { ref?: React.Ref<SelectableTableRef> }
+) => ReturnType<typeof SelectableTableInner>;

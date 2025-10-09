@@ -8,7 +8,7 @@ export default function PaginationPage() {
   const tableRef = useRef<PaginationTableRef>(null);
 
   return (
-    <div className="flex h-full flex-col p-8">
+    <div className="flex flex-1 min-h-0 flex-col p-8">
       <div className="mb-6 shrink-0">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
           Pagination Table

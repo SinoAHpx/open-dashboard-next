@@ -63,6 +63,7 @@ export interface PaginationTableConfig<TData> {
   enableSearch?: boolean;
   searchPlaceholder?: string;
   emptyMessage?: string;
+  className?: string;
 }
 
 export interface PaginationTableRef {
@@ -85,6 +86,7 @@ function PaginationTableInner<TData>(
     enableSearch = true,
     searchPlaceholder = "Search all columns...",
     emptyMessage = "No data found",
+    className = "",
   }: PaginationTableConfig<TData>,
   ref: React.Ref<PaginationTableRef>
 ) {
@@ -253,8 +255,8 @@ function PaginationTableInner<TData>(
   };
 
   return (
-    <div className="flex h-full flex-col">
-      <div className="mb-4 flex shrink-0 items-center gap-4">
+    <div className={`flex flex-1 min-h-0 flex-col ${className}`}>
+      <div className="mb-4 flex shrink-0 items-center gap-4 overflow-hidden">
         {enableSearch && (
           <Input
             isClearable
@@ -368,7 +370,7 @@ function PaginationTableInner<TData>(
         </div>
       </div>
 
-      <div className="mt-6 flex shrink-0 items-center justify-between">
+      <div className="mt-6 flex shrink-0 items-center justify-between overflow-hidden">
         <div className="flex items-center gap-2">
           <span className="text-sm text-gray-600 dark:text-gray-400">
             Rows per page:

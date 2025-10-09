@@ -34,7 +34,6 @@ export const mainMenuItems: MenuGroup[] = [
       { label: "Actions", href: "/actions", icon: TableIcon },
       { label: "Rich Cell", href: "/rich-cell", icon: TableIcon },
       { label: "Selectables", href: "/selectables", icon: TableIcon },
-      { label: "Compound", href: "/compound", icon: TableIcon },
     ],
   },
 ];

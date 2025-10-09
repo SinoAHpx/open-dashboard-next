@@ -5,10 +5,8 @@ import {
   PaginationTable,
   type PaginationTableRef,
 } from "@/components/pagination-table";
-import {
-  createRichCellsConfig,
-  type RichCellTask,
-} from "@/lib/config/pagination-richcells.config";
+import { createRichCellsConfig } from "@/lib/config/pagination-richcells.config";
+import { type RichCellTask } from "@/lib/api-wrapper/richcell";
 import { Button, useDisclosure } from "@heroui/react";
 import { Plus } from "@phosphor-icons/react";
 
@@ -60,14 +58,15 @@ export default function RichCellPage() {
 
   return (
     <div className="flex flex-1 min-h-0 flex-col p-8">
-      <div className="mb-6 shrink-0 flex justify-between items-start">
+      <div className="mb-6 shrink-0 flex justify-between items-end  ">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
             Rich Cell Table
           </h1>
           <p className="mt-2 text-gray-600 dark:text-gray-400">
-            Advanced table with avatars, editable inputs, progress bars, and more interactive components.
-            Total tasks: {tableRef.current?.getTotalCount() || 0}
+            Advanced table with avatars, editable inputs, progress bars, and
+            more interactive components. Total tasks:{" "}
+            {tableRef.current?.getTotalCount() || 0}
           </p>
         </div>
         <Button

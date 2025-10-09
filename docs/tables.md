@@ -5,50 +5,300 @@ This guide explains how to use the universal pagination table boilerplate to qui
 ## Table of Contents
 
 - [Overview](#overview)
+- [Architecture](#architecture)
 - [Quick Start](#quick-start)
 - [API Contract](#api-contract)
-- [Creating a Simple Table](#creating-a-simple-table)
+- [Step-by-Step Guide](#step-by-step-guide)
+  - [Step 1: API Wrapper & Types](#step-1-api-wrapper--types)
+  - [Step 2: Table Configuration](#step-2-table-configuration)
+  - [Step 3: Page Component](#step-3-page-component)
 - [Adding Row Actions](#adding-row-actions)
 - [External Controls](#external-controls)
 - [Backend Implementation](#backend-implementation)
 - [Advanced Customization](#advanced-customization)
+- [Common Patterns](#common-patterns)
+- [Troubleshooting](#troubleshooting)
 
 ---
 
 ## Overview
 
-The pagination table system consists of three main parts:
-
-1. **PaginationTable Component** \- The reusable table component \(in `src/components/pagination-table.tsx`)
-2. **Table Configuration** \- Column definitions and API integration \(in `src/lib/config/`)
-3. **Page Wrapper** \- The page that uses the table with custom headers and actions
+The pagination table system is a reusable, type-safe solution for creating paginated tables with sorting, searching, and filtering capabilities.
 
 ### Why This Approach?
 
 - **Universal**: Works with any data type using TypeScript generics
-- **Reusable**: Write the config once, use it anywhere
-- **Modular**: Easy to compose with other components (modals, buttons, etc.)
-- **Type-safe**: Full TypeScript support
+- **Reusable**: Write once, use anywhere
+- **Modular**: Each concern is separated into its own file
+- **Type-safe**: Full TypeScript support across all layers
 - **Consistent**: Same patterns across all tables
+- **Maintainable**: Clear separation of concerns makes updates easy
+
+---
+
+## Architecture
+
+The pagination table system is divided into **three separate parts**, each in its own file:
+
+### 1. API Wrapper & Types (`src/lib/api-wrapper/*.ts`)
+- TypeScript interfaces for your data
+- API request/response types
+- Functions to fetch data from backend
+- Mock data generation (optional, for development)
+
+### 2. Table Configuration (`src/lib/config/pagination-*.config.tsx`)
+- Column definitions (what to display and how)
+- Adapter function (connects API wrapper to table component)
+- Filter configurations
+- Table settings (search, pagination options)
+
+### 3. Page Component (`src/app/(dashboard)/*/page.tsx`)
+- The actual page that renders the table
+- Custom headers and descriptions
+- Action buttons (Add, Export, etc.)
+- Event handlers (Edit, Delete, etc.)
+
+### Data Flow
+
+```
+Backend API → API Wrapper → Config Adapter → PaginationTable Component → Page
+```
 
 ---
 
 ## Quick Start
 
-### 1\. Create Your Configuration File
+Here's a minimal example to create a paginated users table:
 
-Create a new file in `src/lib/config/` for your table config:
+### 1. API Wrapper & Types
+
+```typescript
+// src/lib/api-wrapper/users.ts
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  status: "active" | "pending" | "inactive";
+}
+
+export interface UsersPaginationResponse {
+  data: User[];
+  pagination: {
+    page: number;
+    pageSize: number;
+    totalCount: number;
+    totalPages: number;
+  };
+}
+
+export async function getUsers(params: {
+  page: number;
+  pageSize: number;
+  search?: string;
+  status?: string;
+  sortBy?: string;
+  sortOrder?: "asc" | "desc";
+}): Promise<UsersPaginationResponse> {
+  const queryParams = new URLSearchParams({
+    page: params.page.toString(),
+    pageSize: params.pageSize.toString(),
+    ...(params.search && { search: params.search }),
+    ...(params.status && { status: params.status }),
+    ...(params.sortBy && { sortBy: params.sortBy }),
+    ...(params.sortOrder && { sortOrder: params.sortOrder }),
+  });
+
+  const response = await fetch(`/api/users?${queryParams}`);
+  if (!response.ok) throw new Error("Failed to fetch users");
+
+  return response.json();
+}
+```
+
+### 2. Table Configuration
 
 ```tsx
-// src/lib/config/pagination-orders.config.tsx
+// src/lib/config/pagination-users.config.tsx
+import { Chip } from "@heroui/react";
 import type { ColumnDef } from "@tanstack/react-table";
 import type {
   PaginationTableConfig,
   PaginationRequest,
   PaginationResponse,
 } from "@/components/pagination-table";
+import { getUsers, type User } from "@/lib/api-wrapper/users";
 
-// Your data type
+// Adapter function
+async function fetchUsers(
+  params: PaginationRequest
+): Promise<PaginationResponse<User>> {
+  const response = await getUsers({
+    page: params.page,
+    pageSize: params.pageSize,
+    search: params.search,
+    status: params.status as string | undefined,
+    sortBy: params.sortBy,
+    sortOrder: params.sortOrder,
+  });
+
+  return {
+    data: response.data,
+    pagination: {
+      totalPages: response.pagination.totalPages,
+      totalCount: response.pagination.totalCount,
+      currentPage: response.pagination.page,
+      pageSize: response.pagination.pageSize,
+    },
+  };
+}
+
+// Column definitions
+const columns: ColumnDef<User>[] = [
+  {
+    accessorKey: "name",
+    header: "Name",
+    cell: (info) => <span className="font-medium">{info.getValue() as string}</span>,
+  },
+  {
+    accessorKey: "email",
+    header: "Email",
+    cell: (info) => <span>{info.getValue() as string}</span>,
+  },
+  {
+    accessorKey: "status",
+    header: "Status",
+    cell: (info) => {
+      const status = info.getValue() as User["status"];
+      const colorMap = { active: "success", pending: "warning", inactive: "danger" };
+      return (
+        <Chip color={colorMap[status]} size="sm" variant="flat">
+          {status}
+        </Chip>
+      );
+    },
+  },
+];
+
+// Export configuration
+export const usersTableConfig: PaginationTableConfig<User> = {
+  columns,
+  fetchData: fetchUsers,
+  filters: [
+    {
+      key: "status",
+      label: "Filter by status",
+      placeholder: "Filter by status",
+      options: [
+        { key: "active", label: "Active" },
+        { key: "pending", label: "Pending" },
+        { key: "inactive", label: "Inactive" },
+      ],
+    },
+  ],
+  enableSearch: true,
+  searchPlaceholder: "Search users...",
+  emptyMessage: "No users found",
+};
+```
+
+### 3. Page Component
+
+```tsx
+// src/app/(dashboard)/users/page.tsx
+"use client";
+
+import { useRef } from "react";
+import { PaginationTable, type PaginationTableRef } from "@/components/pagination-table";
+import { usersTableConfig } from "@/lib/config/pagination-users.config";
+
+export default function UsersPage() {
+  const tableRef = useRef<PaginationTableRef>(null);
+
+  return (
+    <div className="flex flex-1 min-h-0 flex-col p-8">
+      <div className="mb-6 shrink-0">
+        <h1 className="text-3xl font-bold">Users</h1>
+        <p className="mt-2 text-gray-600">Manage user accounts</p>
+      </div>
+
+      <PaginationTable ref={tableRef} {...usersTableConfig} />
+    </div>
+  );
+}
+```
+
+That's it! You now have a fully functional paginated table.
+
+---
+
+## API Contract
+
+Your backend API must follow this contract for the table to work properly.
+
+### Request Parameters
+
+The table sends these query parameters:
+
+```typescript
+{
+  page: number;          // Current page (1-based)
+  pageSize: number;      // Items per page
+  search?: string;       // Search query (if enabled)
+  sortBy?: string;       // Column to sort by
+  sortOrder?: "asc" | "desc";  // Sort direction
+  [filterKey]?: string;  // Any additional filters you defined
+}
+```
+
+### Response Format
+
+Your API must return this structure:
+
+```typescript
+{
+  data: T[];  // Array of items for current page
+  pagination: {
+    totalPages: number;    // Total number of pages
+    totalCount: number;    // Total number of items
+    page: number;          // Current page number (or currentPage)
+    pageSize: number;      // Items per page
+  };
+}
+```
+
+### Example API Response
+
+```json
+{
+  "data": [
+    {
+      "id": "1",
+      "name": "John Doe",
+      "email": "john@example.com",
+      "status": "active"
+    }
+  ],
+  "pagination": {
+    "totalPages": 10,
+    "totalCount": 100,
+    "page": 1,
+    "pageSize": 10
+  }
+}
+```
+
+---
+
+## Step-by-Step Guide
+
+### Step 1: API Wrapper & Types
+
+Create a new file in `src/lib/api-wrapper/` for your data operations.
+
+**File: `src/lib/api-wrapper/orders.ts`**
+
+```typescript
+// 1. Define your data interface
 export interface Order {
   id: string;
   customerName: string;
@@ -57,25 +307,136 @@ export interface Order {
   createdAt: string;
 }
 
-// API adapter function
-async function fetchOrders(
-  params: PaginationRequest
-): Promise<PaginationResponse<Order>> {
-  const response = await fetch(
-    `/api/orders?${new URLSearchParams({
-      page: params.page.toString(),
-      pageSize: params.pageSize.toString(),
-      search: params.search || "",
-      status: (params.status as string) || "",
-      sortBy: params.sortBy || "",
-      sortOrder: params.sortOrder || "",
-    })}`
-  );
+// 2. Define response interface
+export interface OrdersPaginationResponse {
+  data: Order[];
+  pagination: {
+    page: number;
+    pageSize: number;
+    totalCount: number;
+    totalPages: number;
+  };
+}
+
+// 3. Define request parameters interface
+export interface GetOrdersParams {
+  page: number;
+  pageSize: number;
+  search?: string;
+  status?: string;
+  sortBy?: string;
+  sortOrder?: "asc" | "desc";
+}
+
+// 4. Create fetch function
+export async function getOrders(
+  params: GetOrdersParams
+): Promise<OrdersPaginationResponse> {
+  const queryParams = new URLSearchParams({
+    page: params.page.toString(),
+    pageSize: params.pageSize.toString(),
+  });
+
+  if (params.search) queryParams.append("search", params.search);
+  if (params.status) queryParams.append("status", params.status);
+  if (params.sortBy) {
+    queryParams.append("sortBy", params.sortBy);
+    queryParams.append("sortOrder", params.sortOrder || "asc");
+  }
+
+  const response = await fetch(`/api/orders?${queryParams}`);
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch orders");
+  }
 
   return response.json();
 }
+```
 
-// Column definitions
+**Optional: Mock Data for Development**
+
+```typescript
+// Add to the same file
+import { faker } from "@faker-js/faker";
+
+function generateMockOrders(count: number): Order[] {
+  return Array.from({ length: count }, () => ({
+    id: faker.string.uuid(),
+    customerName: faker.person.fullName(),
+    total: faker.number.float({ min: 10, max: 1000, fractionDigits: 2 }),
+    status: faker.helpers.arrayElement(["pending", "completed", "cancelled"]),
+    createdAt: faker.date.recent({ days: 90 }).toISOString().split("T")[0],
+  }));
+}
+
+// Export mock function for development
+export async function getOrdersMock(
+  params: GetOrdersParams
+): Promise<OrdersPaginationResponse> {
+  await new Promise((resolve) => setTimeout(resolve, 300)); // Simulate delay
+
+  let filtered = generateMockOrders(100);
+
+  // Apply search, filter, sort, pagination logic here...
+  // (See richcell.ts for a complete example)
+
+  return {
+    data: filtered.slice(0, params.pageSize),
+    pagination: {
+      page: params.page,
+      pageSize: params.pageSize,
+      totalCount: filtered.length,
+      totalPages: Math.ceil(filtered.length / params.pageSize),
+    },
+  };
+}
+```
+
+---
+
+### Step 2: Table Configuration
+
+Create a new file in `src/lib/config/` for your table configuration.
+
+**File: `src/lib/config/pagination-orders.config.tsx`**
+
+```tsx
+import type { ColumnDef } from "@tanstack/react-table";
+import type {
+  PaginationTableConfig,
+  PaginationRequest,
+  PaginationResponse,
+} from "@/components/pagination-table";
+import { getOrders, type Order } from "@/lib/api-wrapper/orders";
+// Or use getOrdersMock for development
+
+// 1. Adapter function - bridges API wrapper and table component
+async function fetchOrders(
+  params: PaginationRequest
+): Promise<PaginationResponse<Order>> {
+  const response = await getOrders({
+    page: params.page,
+    pageSize: params.pageSize,
+    search: params.search,
+    status: params.status as string | undefined,
+    sortBy: params.sortBy,
+    sortOrder: params.sortOrder,
+  });
+
+  // Transform API response to match table's expected format
+  return {
+    data: response.data,
+    pagination: {
+      totalPages: response.pagination.totalPages,
+      totalCount: response.pagination.totalCount,
+      currentPage: response.pagination.page,
+      pageSize: response.pagination.pageSize,
+    },
+  };
+}
+
+// 2. Column definitions - what to display and how
 const columns: ColumnDef<Order>[] = [
   {
     accessorKey: "customerName",
@@ -101,7 +462,7 @@ const columns: ColumnDef<Order>[] = [
   },
 ];
 
-// Export configuration
+// 3. Export configuration object
 export const ordersTableConfig: PaginationTableConfig<Order> = {
   columns,
   fetchData: fetchOrders,
@@ -123,120 +484,36 @@ export const ordersTableConfig: PaginationTableConfig<Order> = {
 };
 ```
 
-### 2\. Use It In Your Page
+---
+
+### Step 3: Page Component
+
+Create a new page in `src/app/(dashboard)/` for your table.
+
+**File: `src/app/(dashboard)/orders/page.tsx`**
 
 ```tsx
-// src/app/(dashboard)/orders/page.tsx
 "use client";
 
-import { PaginationTable } from "@/components/pagination-table";
+import { useRef } from "react";
+import { PaginationTable, type PaginationTableRef } from "@/components/pagination-table";
 import { ordersTableConfig } from "@/lib/config/pagination-orders.config";
 
 export default function OrdersPage() {
+  const tableRef = useRef<PaginationTableRef>(null);
+
   return (
     <div className="flex flex-1 min-h-0 flex-col p-8">
       <div className="mb-6 shrink-0">
         <h1 className="text-3xl font-bold">Orders</h1>
-        <p className="mt-2 text-gray-600">Manage customer orders</p>
+        <p className="mt-2 text-gray-600">
+          Manage customer orders. Total: {tableRef.current?.getTotalCount() || 0}
+        </p>
       </div>
 
-      <PaginationTable {...ordersTableConfig} />
+      <PaginationTable ref={tableRef} {...ordersTableConfig} />
     </div>
   );
-}
-```
-
-That's it! You now have a fully functional paginated table with search, filtering, and sorting.
-
----
-
-## API Contract
-
-Your backend API must follow this contract for the table to work properly.
-
-### Request Parameters
-
-The table will send these query parameters:
-
-```typescript
-{
-  page: number;          // Current page (1-based)
-  pageSize: number;      // Items per page
-  search?: string;       // Search query (if enabled)
-  sortBy?: string;       // Column to sort by
-  sortOrder?: "asc" | "desc";  // Sort direction
-  [filterKey]?: string;  // Any additional filters you defined
-}
-```
-
-### Response Format
-
-Your API must return this structure:
-
-```typescript
-{
-  data: T[];  // Array of items for current page
-  pagination: {
-    totalPages: number;    // Total number of pages
-    totalCount: number;    // Total number of items
-    currentPage: number;   // Current page number
-    pageSize: number;      // Items per page
-  };
-}
-```
-
-### Example API Response
-
-```json
-{
-  "data": [
-    {
-      "id": "1",
-      "customerName": "John Doe",
-      "total": 299.99,
-      "status": "completed",
-      "createdAt": "2024-01-15"
-    }
-  ],
-  "pagination": {
-    "totalPages": 10,
-    "totalCount": 100,
-    "currentPage": 1,
-    "pageSize": 10
-  }
-}
-```
-
----
-
-## Creating a Simple Table
-
-For a read-only table without actions, use the pattern shown in Quick Start.
-
-### Key Points
-
-1. **Define your data type** \- TypeScript interface for your data
-2. **Create fetch function** \- Adapter that calls your API
-3. **Define columns** \- What data to display and how
-4. **Configure filters** (optional) - Dropdown filters for your data
-5. **Export config** \- Single object with all settings
-
-### Column Customization
-
-You can customize how each column displays data:
-
-```tsx
-{
-  accessorKey: "price",
-  header: "Price",
-  cell: (info) => {
-    const price = info.getValue() as number;
-    return (
-      <span className="font-bold text-green-600">
-        ${price.toFixed(2)}
-      </span>
-    );
-  },
 }
 ```
 
@@ -244,12 +521,13 @@ You can customize how each column displays data:
 
 ## Adding Row Actions
 
-For tables with edit/delete/view actions (like the Products table), use a factory function pattern.
+For tables with edit/delete/view actions, use a factory function pattern.
 
-### Configuration with Actions
+### Updated Configuration (Factory Pattern)
+
+**File: `src/lib/config/pagination-products.config.tsx`**
 
 ```tsx
-// src/lib/config/pagination-products.config.tsx
 import {
   Button,
   Dropdown,
@@ -258,6 +536,7 @@ import {
   DropdownItem,
 } from "@heroui/react";
 import { DotsThreeVertical, PencilSimple, Trash } from "@phosphor-icons/react";
+// ... other imports
 
 export function createProductsConfig(options: {
   onEdit: (product: Product) => void;
@@ -308,16 +587,15 @@ export function createProductsConfig(options: {
 }
 ```
 
-### Using the Factory Config
+### Updated Page Component
+
+**File: `src/app/(dashboard)/products/page.tsx`**
 
 ```tsx
 "use client";
 
 import { useRef, useMemo } from "react";
-import {
-  PaginationTable,
-  type PaginationTableRef,
-} from "@/components/pagination-table";
+import { PaginationTable, type PaginationTableRef } from "@/components/pagination-table";
 import { createProductsConfig } from "@/lib/config/pagination-products.config";
 import { deleteProduct } from "@/lib/api-wrapper/products";
 
@@ -325,14 +603,14 @@ export default function ProductsPage() {
   const tableRef = useRef<PaginationTableRef>(null);
 
   const handleEdit = (product: Product) => {
-    // Handle edit logic
     console.log("Editing:", product);
+    // Open modal or navigate to edit page
   };
 
   const handleDelete = (id: string) => {
     if (confirm("Are you sure?")) {
       deleteProduct(id);
-      tableRef.current?.refresh(); // Refresh table after deletion
+      tableRef.current?.refresh();
     }
   };
 
@@ -365,11 +643,11 @@ The table exposes methods via `ref` for external control.
 
 ```typescript
 interface PaginationTableRef {
-  refresh: () => void; // Reload current page
-  resetPage: () => void; // Go to page 1
+  refresh: () => void;         // Reload current page
+  resetPage: () => void;       // Go to page 1
   getTotalCount: () => number; // Get total items count
-  getCurrentPage: () => number; // Get current page
-  isLoading: () => boolean; // Check loading state
+  getCurrentPage: () => number;// Get current page
+  isLoading: () => boolean;    // Check loading state
 }
 ```
 
@@ -380,10 +658,7 @@ export default function ProductsPage() {
   const tableRef = useRef<PaginationTableRef>(null);
 
   const handleAdd = () => {
-    // Add product logic here
     addProduct(newProduct);
-
-    // Refresh table to show new product
     tableRef.current?.refresh();
   };
 
@@ -400,33 +675,52 @@ export default function ProductsPage() {
 }
 ```
 
-### Example: Display Total Count
-
-```tsx
-export default function ProductsPage() {
-  const tableRef = useRef<PaginationTableRef>(null);
-
-  return (
-    <div className="flex flex-1 min-h-0 flex-col p-8">
-      <div className="mb-6">
-        <h1>Products</h1>
-        <p>Total products: {tableRef.current?.getTotalCount() || 0}</p>
-      </div>
-
-      <PaginationTable ref={tableRef} {...config} />
-    </div>
-  );
-}
-```
-
 ---
 
 ## Backend Implementation
 
+### Next.js API Route Example
+
+**File: `src/app/api/orders/route.ts`**
+
+```typescript
+import { NextRequest, NextResponse } from "next/server";
+
+export async function GET(request: NextRequest) {
+  const searchParams = request.nextUrl.searchParams;
+
+  const page = parseInt(searchParams.get("page") || "1");
+  const pageSize = parseInt(searchParams.get("pageSize") || "10");
+  const search = searchParams.get("search") || "";
+  const status = searchParams.get("status") || "";
+  const sortBy = searchParams.get("sortBy") || "createdAt";
+  const sortOrder = searchParams.get("sortOrder") || "desc";
+
+  // Your database query logic here
+  const { data, totalCount } = await fetchOrdersFromDB({
+    page,
+    pageSize,
+    search,
+    status,
+    sortBy,
+    sortOrder,
+  });
+
+  return NextResponse.json({
+    data,
+    pagination: {
+      totalPages: Math.ceil(totalCount / pageSize),
+      totalCount,
+      page,
+      pageSize,
+    },
+  });
+}
+```
+
 ### Node.js/Express Example
 
 ```javascript
-// routes/orders.js
 app.get("/api/orders", async (req, res) => {
   const {
     page = 1,
@@ -468,134 +762,18 @@ app.get("/api/orders", async (req, res) => {
     pagination: {
       totalPages: Math.ceil(totalCount.count / pageSize),
       totalCount: totalCount.count,
-      currentPage: parseInt(page),
+      page: parseInt(page),
       pageSize: parseInt(pageSize),
     },
   });
 });
 ```
 
-### Next.js API Route Example
-
-```typescript
-// app/api/orders/route.ts
-import { NextRequest, NextResponse } from "next/server";
-
-export async function GET(request: NextRequest) {
-  const searchParams = request.nextUrl.searchParams;
-
-  const page = parseInt(searchParams.get("page") || "1");
-  const pageSize = parseInt(searchParams.get("pageSize") || "10");
-  const search = searchParams.get("search") || "";
-  const status = searchParams.get("status") || "";
-  const sortBy = searchParams.get("sortBy") || "createdAt";
-  const sortOrder = searchParams.get("sortOrder") || "desc";
-
-  // Your database query logic here
-  const { data, totalCount } = await fetchOrdersFromDB({
-    page,
-    pageSize,
-    search,
-    status,
-    sortBy,
-    sortOrder,
-  });
-
-  return NextResponse.json({
-    data,
-    pagination: {
-      totalPages: Math.ceil(totalCount / pageSize),
-      totalCount,
-      currentPage: page,
-      pageSize,
-    },
-  });
-}
-```
-
-### Client-Side Only (LocalStorage) Example
-
-```typescript
-// lib/api-wrapper/products.ts
-export function getPaginatedProducts(params: {
-  page: number;
-  pageSize: number;
-  search?: string;
-  status?: string;
-  sortBy?: string;
-  sortOrder?: "asc" | "desc";
-}) {
-  let products = getProducts(); // Get from localStorage
-
-  // Filter by search
-  if (params.search) {
-    const searchLower = params.search.toLowerCase();
-    products = products.filter(
-      (p) =>
-        p.name.toLowerCase().includes(searchLower) ||
-        p.sku.toLowerCase().includes(searchLower)
-    );
-  }
-
-  // Filter by status
-  if (params.status) {
-    products = products.filter((p) => p.status === params.status);
-  }
-
-  // Sort
-  if (params.sortBy) {
-    products.sort((a, b) => {
-      const aVal = a[params.sortBy as keyof Product];
-      const bVal = b[params.sortBy as keyof Product];
-
-      if (typeof aVal === "string" && typeof bVal === "string") {
-        return params.sortOrder === "asc"
-          ? aVal.localeCompare(bVal)
-          : bVal.localeCompare(aVal);
-      }
-
-      if (typeof aVal === "number" && typeof bVal === "number") {
-        return params.sortOrder === "asc" ? aVal - bVal : bVal - aVal;
-      }
-
-      return 0;
-    });
-  }
-
-  // Paginate
-  const totalCount = products.length;
-  const totalPages = Math.ceil(totalCount / params.pageSize);
-  const start = (params.page - 1) * params.pageSize;
-  const end = start + params.pageSize;
-  const paginatedData = products.slice(start, end);
-
-  return {
-    data: paginatedData,
-    pagination: {
-      totalPages,
-      totalCount,
-      currentPage: params.page,
-      pageSize: params.pageSize,
-    },
-  };
-}
-```
-
 ---
 
 ## Advanced Customization
 
-### Custom Styling
-
-You can pass custom classes to the table:
-
-```tsx
-<PaginationTable {...config} className="custom-table-class" />
-```
-
 ### Multiple Filters
-
-Add as many filters as you need:
 
 ```tsx
 export const config: PaginationTableConfig<Product> = {
@@ -623,17 +801,6 @@ export const config: PaginationTableConfig<Product> = {
 };
 ```
 
-### Disable Search or Change Placeholder
-
-```tsx
-export const config: PaginationTableConfig<Product> = {
-  // ...
-  enableSearch: false, // Disable search entirely
-  // OR
-  searchPlaceholder: "Search by name or SKU...", // Custom placeholder
-};
-```
-
 ### Custom Page Sizes
 
 ```tsx
@@ -644,12 +811,12 @@ export const config: PaginationTableConfig<Product> = {
 };
 ```
 
-### Custom Empty Message
+### Disable Search
 
 ```tsx
 export const config: PaginationTableConfig<Product> = {
   // ...
-  emptyMessage: "No products available. Add your first product to get started.",
+  enableSearch: false,
 };
 ```
 
@@ -659,114 +826,37 @@ export const config: PaginationTableConfig<Product> = {
 
 ### Pattern 1: Simple Read-Only Table
 
-Use when you just need to display data with pagination and search.
+Best for: Logs, reports, view-only data
 
-**Best for**: Logs, reports, view-only data
-
-```tsx
-// Config
-export const logsConfig: PaginationTableConfig<Log> = {
-  columns,
-  fetchData: fetchLogs,
-  enableSearch: true,
-};
-
-// Page
-export default function LogsPage() {
-  return (
-    <div className="flex flex-1 min-h-0 flex-col p-8">
-      <h1>Logs</h1>
-      <PaginationTable {...logsConfig} />
-    </div>
-  );
-}
-```
+**Files:**
+- `src/lib/api-wrapper/logs.ts` - Data types & fetch function
+- `src/lib/config/pagination-logs.config.tsx` - Column definitions
+- `src/app/(dashboard)/logs/page.tsx` - Page component
 
 ### Pattern 2: Table with CRUD Operations
 
-Use when you need to create, edit, and delete items.
+Best for: Product management, user management
 
-**Best for**: Product management, user management, content management
+**Files:**
+- `src/lib/api-wrapper/products.ts` - CRUD operations
+- `src/lib/config/pagination-products.config.tsx` - Factory function
+- `src/app/(dashboard)/products/page.tsx` - Page with handlers
 
-```tsx
-// Config with factory
-export function createUsersConfig(options: {
-  onEdit: (user: User) => void;
-  onDelete: (id: string) => void;
-}) {
-  // ... config with actions column
-}
+### Pattern 3: Rich Interactive Cells
 
-// Page with modal and external controls
-export default function UsersPage() {
-  const tableRef = useRef<PaginationTableRef>(null);
-  const { isOpen, onOpen, onClose } = useDisclosure();
+Best for: Task management, project boards
 
-  const handleAdd = () => onOpen();
-  const handleEdit = (user) => {
-    /* ... */
-  };
-  const handleDelete = (id) => {
-    deleteUser(id);
-    tableRef.current?.refresh();
-  };
+**Files:**
+- `src/lib/api-wrapper/tasks.ts` - Task operations
+- `src/lib/config/pagination-tasks.config.tsx` - Rich cell components
+- `src/app/(dashboard)/tasks/page.tsx` - Interactive page
 
-  const config = useMemo(
-    () => createUsersConfig({ onEdit: handleEdit, onDelete: handleDelete }),
-    []
-  );
-
-  return (
-    <div className="flex flex-1 min-h-0 flex-col p-8">
-      <div className="mb-6 flex justify-between">
-        <h1>Users</h1>
-        <Button onPress={handleAdd}>Add User</Button>
-      </div>
-
-      <PaginationTable ref={tableRef} {...config} />
-
-      <Modal isOpen={isOpen} onClose={onClose}>
-        {/* Add/Edit form */}
-      </Modal>
-    </div>
-  );
-}
-```
-
-### Pattern 3: Table with Bulk Actions
-
-Use when you need to perform actions on multiple items.
-
-**Best for**: Email campaigns, bulk delete, batch operations
-
-```tsx
-export default function EmailsPage() {
-  const tableRef = useRef<PaginationTableRef>(null);
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
-
-  const handleBulkDelete = () => {
-    bulkDeleteEmails(selectedIds);
-    setSelectedIds([]);
-    tableRef.current?.refresh();
-  };
-
-  return (
-    <div className="flex flex-1 min-h-0 flex-col p-8">
-      <div className="mb-6 flex justify-between">
-        <h1>Emails</h1>
-        <Button
-          onPress={handleBulkDelete}
-          isDisabled={selectedIds.length === 0}
-        >
-          Delete Selected ({selectedIds.length})
-        </Button>
-      </div>
-
-      <PaginationTable ref={tableRef} {...config} />
-    </div>
-  );
-}
-```
+See `src/app/(dashboard)/rich-cell/page.tsx` for a complete example with:
+- Avatars
+- Editable inputs
+- Progress bars
+- Multiple filters
+- Action menus
 
 ---
 
@@ -774,62 +864,62 @@ export default function EmailsPage() {
 
 ### Table shows no data but API returns data
 
-Check that your API response matches the expected format exactly:
-
-```typescript
-{
-  data: [...],           // Must be called "data"
-  pagination: {          // Must be called "pagination"
-    totalPages: number,
-    totalCount: number,
-    currentPage: number,
-    pageSize: number,
-  }
-}
-```
+Check that your API response matches the expected format exactly with `data` and `pagination` fields.
 
 ### Page scrolls instead of table scrolling
 
-Make sure your page wrapper has the correct classes:
-
-```tsx
-<div className="flex flex-1 min-h-0 flex-col p-8">{/* ... */}</div>
-```
-
-The key classes are `flex-1 min-h-0` which allow the flex layout to work properly.
+Make sure your page wrapper has: `className="flex flex-1 min-h-0 flex-col p-8"`
 
 ### Refresh not working after CRUD operations
 
-Always call `tableRef.current?.refresh()` after mutations:
-
-```tsx
-const handleDelete = (id: string) => {
-  deleteProduct(id);
-  tableRef.current?.refresh(); // Don't forget this!
-};
-```
+Always call `tableRef.current?.refresh()` after mutations.
 
 ### Filters not working
 
-Make sure your backend reads all filter parameters from the query string and applies them to your database query. The table will send any filter with its `key` as the query parameter name.
+Make sure your backend reads all filter parameters from the query string.
 
 ---
 
 ## Migration Checklist
 
-When creating a new table, follow this checklist:
+When creating a new table:
 
-- [ ] Define your TypeScript data interface
-- [ ] Create API endpoint that follows the contract
-- [ ] Create config file in `src/lib/config/`
-- [ ] Write fetch adapter function
+**Step 1: API Wrapper**
+- [ ] Create file in `src/lib/api-wrapper/`
+- [ ] Define TypeScript data interface
+- [ ] Define response interface
+- [ ] Create fetch function
+- [ ] (Optional) Add mock data function
+
+**Step 2: Configuration**
+- [ ] Create file in `src/lib/config/`
+- [ ] Import API wrapper and types
+- [ ] Create adapter function
 - [ ] Define columns with proper types
 - [ ] Add filters if needed
-- [ ] Export config object (or factory function for actions)
-- [ ] Create page component
+- [ ] Export config (or factory function for actions)
+
+**Step 3: Page Component**
+- [ ] Create page in `src/app/(dashboard)/`
+- [ ] Import config
 - [ ] Add page wrapper with proper flex classes
-- [ ] Import and spread config into PaginationTable
+- [ ] Spread config into PaginationTable
 - [ ] Add ref if you need external controls
-- [ ] Test pagination, search, sorting, and filters
+- [ ] (Optional) Add action handlers for CRUD
+
+**Step 4: Backend (if not using mock)**
+- [ ] Create API route
+- [ ] Implement pagination logic
+- [ ] Implement search logic
+- [ ] Implement filter logic
+- [ ] Implement sort logic
+- [ ] Return correct response format
+
+**Step 5: Testing**
+- [ ] Test pagination
+- [ ] Test search
+- [ ] Test sorting
+- [ ] Test filters
+- [ ] Test CRUD operations (if applicable)
 
 That's it! You now have a complete understanding of the pagination table system.

@@ -25,139 +25,32 @@ import type {
   PaginationResponse,
 } from "@/components/pagination-table";
 import { useState } from "react";
+import {
+  getRichCellTasksMock,
+  type RichCellTask,
+} from "@/lib/api-wrapper/richcell";
 
-// Data type for rich cells
-export interface RichCellTask {
-  id: string;
-  name: string;
-  avatar: string;
-  email: string;
-  progress: number;
-  status: "in-progress" | "completed" | "pending" | "blocked";
-  priority: "low" | "medium" | "high" | "urgent";
-  assignee: string;
-  dueDate: string;
-  tags: string[];
-}
-
-// Mock data generator
-function generateMockTasks(count: number): RichCellTask[] {
-  const names = [
-    "Alice Johnson",
-    "Bob Smith",
-    "Charlie Davis",
-    "Diana Prince",
-    "Eve Chen",
-    "Frank Miller",
-    "Grace Lee",
-    "Henry Wilson",
-  ];
-  const statuses: RichCellTask["status"][] = [
-    "in-progress",
-    "completed",
-    "pending",
-    "blocked",
-  ];
-  const priorities: RichCellTask["priority"][] = [
-    "low",
-    "medium",
-    "high",
-    "urgent",
-  ];
-  const tagOptions = [
-    "Frontend",
-    "Backend",
-    "Design",
-    "Testing",
-    "Urgent",
-    "Bug",
-    "Feature",
-  ];
-
-  return Array.from({ length: count }, (_, i) => ({
-    id: `task-${i + 1}`,
-    name: `Task ${i + 1}: Implement feature ${i + 1}`,
-    avatar: `https://i.pravatar.cc/150?img=${(i % 70) + 1}`,
-    email: names[i % names.length].toLowerCase().replace(" ", ".") + "@company.com",
-    progress: Math.floor(Math.random() * 100),
-    status: statuses[Math.floor(Math.random() * statuses.length)],
-    priority: priorities[Math.floor(Math.random() * priorities.length)],
-    assignee: names[i % names.length],
-    dueDate: new Date(
-      Date.now() + Math.random() * 30 * 24 * 60 * 60 * 1000
-    ).toISOString().split("T")[0],
-    tags: Array.from(
-      { length: Math.floor(Math.random() * 3) + 1 },
-      () => tagOptions[Math.floor(Math.random() * tagOptions.length)]
-    ).filter((v, i, a) => a.indexOf(v) === i),
-  }));
-}
-
-// Generate mock data
-const MOCK_TASKS = generateMockTasks(50);
-
-// Fetch function with client-side pagination
+// Adapter function to convert API response to generic format
 async function fetchRichCellTasks(
   params: PaginationRequest
 ): Promise<PaginationResponse<RichCellTask>> {
-  // Simulate API delay
-  await new Promise((resolve) => setTimeout(resolve, 300));
-
-  let filtered = [...MOCK_TASKS];
-
-  // Apply search
-  if (params.search) {
-    const searchLower = params.search.toLowerCase();
-    filtered = filtered.filter(
-      (task) =>
-        task.name.toLowerCase().includes(searchLower) ||
-        task.assignee.toLowerCase().includes(searchLower) ||
-        task.email.toLowerCase().includes(searchLower)
-    );
-  }
-
-  // Apply filters
-  if (params.status) {
-    filtered = filtered.filter((task) => task.status === params.status);
-  }
-  if (params.priority) {
-    filtered = filtered.filter((task) => task.priority === params.priority);
-  }
-
-  // Apply sorting
-  if (params.sortBy) {
-    filtered.sort((a, b) => {
-      const aVal = a[params.sortBy as keyof RichCellTask];
-      const bVal = b[params.sortBy as keyof RichCellTask];
-
-      if (typeof aVal === "string" && typeof bVal === "string") {
-        return params.sortOrder === "asc"
-          ? aVal.localeCompare(bVal)
-          : bVal.localeCompare(aVal);
-      }
-
-      if (typeof aVal === "number" && typeof bVal === "number") {
-        return params.sortOrder === "asc" ? aVal - bVal : bVal - aVal;
-      }
-
-      return 0;
-    });
-  }
-
-  // Paginate
-  const totalCount = filtered.length;
-  const totalPages = Math.ceil(totalCount / params.pageSize);
-  const start = (params.page - 1) * params.pageSize;
-  const end = start + params.pageSize;
-  const paginatedData = filtered.slice(start, end);
+  const response = await getRichCellTasksMock({
+    page: params.page,
+    pageSize: params.pageSize,
+    search: params.search,
+    status: params.status as string | undefined,
+    priority: params.priority as string | undefined,
+    sortBy: params.sortBy,
+    sortOrder: params.sortOrder,
+  });
 
   return {
-    data: paginatedData,
+    data: response.data,
     pagination: {
-      totalPages,
-      totalCount,
-      currentPage: params.page,
-      pageSize: params.pageSize,
+      totalPages: response.pagination.totalPages,
+      totalCount: response.pagination.totalCount,
+      currentPage: response.pagination.page,
+      pageSize: response.pagination.pageSize,
     },
   };
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, forwardRef, useImperativeHandle } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   Table,
@@ -55,8 +55,6 @@ export interface FilterConfig {
 }
 
 export interface PaginationTableConfig<TData> {
-  title: string;
-  description: string;
   columns: ColumnDef<TData>[];
   fetchData: (params: PaginationRequest) => Promise<PaginationResponse<TData>>;
   filters?: FilterConfig[];
@@ -64,21 +62,32 @@ export interface PaginationTableConfig<TData> {
   defaultPageSize?: number;
   enableSearch?: boolean;
   searchPlaceholder?: string;
+  emptyMessage?: string;
+}
+
+export interface PaginationTableRef {
+  refresh: () => void;
+  resetPage: () => void;
+  getTotalCount: () => number;
+  getCurrentPage: () => number;
+  isLoading: () => boolean;
 }
 
 const DEFAULT_PAGE_SIZE_OPTIONS = [5, 10, 15, 20, 25, 50];
 
-export function PaginationTable<TData>({
-  title,
-  description,
-  columns,
-  fetchData,
-  filters = [],
-  pageSizeOptions = DEFAULT_PAGE_SIZE_OPTIONS,
-  defaultPageSize = 10,
-  enableSearch = true,
-  searchPlaceholder = "Search all columns...",
-}: PaginationTableConfig<TData>) {
+function PaginationTableInner<TData>(
+  {
+    columns,
+    fetchData,
+    filters = [],
+    pageSizeOptions = DEFAULT_PAGE_SIZE_OPTIONS,
+    defaultPageSize = 10,
+    enableSearch = true,
+    searchPlaceholder = "Search all columns...",
+    emptyMessage = "No data found",
+  }: PaginationTableConfig<TData>,
+  ref: React.Ref<PaginationTableRef>
+) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -128,6 +137,15 @@ export function PaginationTable<TData>({
     manualSorting: true,
     manualFiltering: true,
   });
+
+  // Expose methods via ref
+  useImperativeHandle(ref, () => ({
+    refresh: handleRefresh,
+    resetPage: () => setPage(1),
+    getTotalCount: () => totalCount,
+    getCurrentPage: () => page,
+    isLoading: () => isLoading,
+  }));
 
   // Sync URL with state
   useEffect(() => {
@@ -235,16 +253,7 @@ export function PaginationTable<TData>({
   };
 
   return (
-    <div className="flex h-full flex-col p-8">
-      <div className="mb-6 shrink-0">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-          {title}
-        </h1>
-        <p className="mt-2 text-gray-600 dark:text-gray-400">
-          {description} Total records: {totalCount}
-        </p>
-      </div>
-
+    <div className="flex h-full flex-col">
       <div className="mb-4 flex shrink-0 items-center gap-4">
         {enableSearch && (
           <Input
@@ -334,7 +343,7 @@ export function PaginationTable<TData>({
                     colSpan={columns.length}
                     className="py-20 text-center text-gray-500 dark:text-gray-400"
                   >
-                    No data found
+                    {emptyMessage}
                   </td>
                 </tr>
               ) : (
@@ -388,3 +397,8 @@ export function PaginationTable<TData>({
     </div>
   );
 }
+
+// Export with forwardRef for generic component
+export const PaginationTable = forwardRef(PaginationTableInner) as <TData>(
+  props: PaginationTableConfig<TData> & { ref?: React.Ref<PaginationTableRef> }
+) => ReturnType<typeof PaginationTableInner>;

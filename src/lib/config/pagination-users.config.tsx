@@ -102,8 +102,6 @@ const columns: ColumnDef<PaginationUser>[] = [
 
 // Export the configuration
 export const paginationUsersConfig: PaginationTableConfig<PaginationUser> = {
-  title: "Pagination Table",
-  description: "Server-side pagination with TanStack Table and Hero UI.",
   columns,
   fetchData: fetchPaginationUsers,
   filters: [
@@ -122,4 +120,5 @@ export const paginationUsersConfig: PaginationTableConfig<PaginationUser> = {
   defaultPageSize: 10,
   enableSearch: true,
   searchPlaceholder: "Search all columns...",
+  emptyMessage: "No users found",
 };

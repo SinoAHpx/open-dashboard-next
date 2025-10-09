@@ -1,13 +1,24 @@
 import { Chip } from "@heroui/react";
+import {
+  Trash,
+  Export,
+  CheckCircle,
+  XCircle,
+  Package,
+} from "@phosphor-icons/react";
 import type { ColumnDef } from "@tanstack/react-table";
 import type {
   PaginationRequest,
   PaginationResponse,
 } from "@/components/pagination-table";
 import type { SelectableTableConfig } from "@/components/selectable-table";
+import type { FloatingAction } from "@/components/floating-action-menu";
 import {
   getSelectableProductsMock,
   type SelectableProduct,
+  bulkDeleteProducts,
+  bulkUpdateStatus,
+  bulkExportProducts,
 } from "@/lib/api-wrapper/selectables";
 
 // Adapter function to convert API response to generic format
@@ -167,3 +178,77 @@ export const selectableProductsConfig: SelectableTableConfig<SelectableProduct> 
     emptyMessage: "No products found",
     getRowId: (row) => row.id,
   };
+
+// Floating action menu configuration factory
+export function createFloatingActionsConfig(options: {
+  selectedIds: string[];
+  onClear: () => void;
+  onRefresh: () => void;
+}): FloatingAction[] {
+  const { selectedIds, onClear, onRefresh } = options;
+
+  return [
+    {
+      key: "mark-active",
+      label: "Active",
+      icon: <CheckCircle size={16} weight="bold" />,
+      color: "success",
+      variant: "flat",
+      onClick: async () => {
+        await bulkUpdateStatus(selectedIds, "active");
+        onClear();
+        onRefresh();
+      },
+    },
+    {
+      key: "mark-out-of-stock",
+      label: "Out of Stock",
+      icon: <Package size={16} weight="bold" />,
+      color: "warning",
+      variant: "flat",
+      onClick: async () => {
+        await bulkUpdateStatus(selectedIds, "out-of-stock");
+        onClear();
+        onRefresh();
+      },
+    },
+    {
+      key: "mark-discontinued",
+      label: "Discontinue",
+      icon: <XCircle size={16} weight="bold" />,
+      color: "default",
+      variant: "flat",
+      onClick: async () => {
+        await bulkUpdateStatus(selectedIds, "discontinued");
+        onClear();
+        onRefresh();
+      },
+    },
+    {
+      key: "export",
+      label: "Export",
+      icon: <Export size={16} weight="bold" />,
+      color: "primary",
+      variant: "flat",
+      onClick: async () => {
+        await bulkExportProducts(selectedIds);
+      },
+    },
+    {
+      key: "delete",
+      label: "Delete",
+      icon: <Trash size={16} weight="bold" />,
+      color: "danger",
+      variant: "flat",
+      onClick: async () => {
+        if (
+          confirm(`Are you sure you want to delete ${selectedIds.length} product(s)?`)
+        ) {
+          await bulkDeleteProducts(selectedIds);
+          onClear();
+          onRefresh();
+        }
+      },
+    },
+  ];
+}

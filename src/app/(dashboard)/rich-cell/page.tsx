@@ -12,7 +12,7 @@ import { Plus } from "@phosphor-icons/react";
 
 export default function RichCellPage() {
   const tableRef = useRef<PaginationTableRef>(null);
-  const { isOpen, onOpen, onClose } = useDisclosure();
+  const { onOpen } = useDisclosure();
 
   const handleEdit = (task: RichCellTask) => {
     console.log("Editing task:", task);
@@ -45,6 +45,7 @@ export default function RichCellPage() {
     onOpen();
   };
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   const config = useMemo(
     () =>
       createRichCellsConfig({

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useEffect, useState, useMemo } from "react";
+import { useRef, useEffect, useState, useMemo, Suspense } from "react";
 import {
   SelectableTable,
   type SelectableTableRef,
@@ -10,6 +10,7 @@ import {
   selectableProductsConfig,
   createFloatingActionsConfig,
 } from "@/lib/config/selectable-products.config";
+import { Spinner } from "@heroui/react";
 
 export default function SelectablesPage() {
   const tableRef = useRef<SelectableTableRef>(null);
@@ -59,7 +60,9 @@ export default function SelectablesPage() {
         </p>
       </div>
 
-      <SelectableTable ref={tableRef} {...selectableProductsConfig} />
+      <Suspense fallback={<div className="flex items-center justify-center py-20"><Spinner /></div>}>
+        <SelectableTable ref={tableRef} {...selectableProductsConfig} />
+      </Suspense>
 
       <FloatingActionMenu
         selectedCount={selectedCount}

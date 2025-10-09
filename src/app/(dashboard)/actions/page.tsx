@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useMemo } from "react";
+import { useRef, useState, useMemo, Suspense } from "react";
 import {
   Button,
   Modal,
@@ -12,6 +12,7 @@ import {
   Input,
   Select,
   SelectItem,
+  Spinner,
 } from "@heroui/react";
 import { Plus, Sparkle } from "@phosphor-icons/react";
 import { PaginationTable, type PaginationTableRef } from "@/components/pagination-table";
@@ -136,7 +137,9 @@ export default function ActionsPage() {
         </div>
       </div>
 
-      <PaginationTable ref={tableRef} {...productsConfig} />
+      <Suspense fallback={<div className="flex items-center justify-center py-20"><Spinner /></div>}>
+        <PaginationTable ref={tableRef} {...productsConfig} />
+      </Suspense>
 
       <Modal isOpen={isOpen} onClose={onClose} size="2xl">
         <ModalContent>

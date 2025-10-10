@@ -7,6 +7,7 @@ import {
   HouseIcon,
   TableIcon,
   UserIcon,
+  TextboxIcon,
 } from "@phosphor-icons/react";
 
 export interface MenuItem {
@@ -34,6 +35,16 @@ export const mainMenuItems: MenuGroup[] = [
       { label: "Actions", href: "/actions", icon: TableIcon },
       { label: "Rich Cell", href: "/rich-cell", icon: TableIcon },
       { label: "Selectables", href: "/selectables", icon: TableIcon },
+    ],
+  },
+  {
+    groupLabel: "Forms",
+    items: [
+      { label: "Authentication", href: "/forms/authentication", icon: TextboxIcon },
+      { label: "User & Profile", href: "/forms/user-profile", icon: TextboxIcon },
+      { label: "Data Management", href: "/forms/data-management", icon: TextboxIcon },
+      { label: "Settings & Config", href: "/forms/settings-config", icon: TextboxIcon },
+      { label: "Interaction & Filtering", href: "/forms/interaction-filtering", icon: TextboxIcon },
     ],
   },
 ];

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, Suspense } from "react";
+import { Suspense, useCallback, useRef, useState } from "react";
 import {
   PaginationTable,
   type PaginationTableRef,
@@ -9,7 +9,15 @@ import { paginationUsersConfig } from "@/lib/config/pagination-users.config";
 import { Spinner } from "@heroui/react";
 
 export default function PaginationPage() {
-  const tableRef = useRef<PaginationTableRef>(null);
+  const tableRef = useRef<PaginationTableRef | null>(null);
+  const [totalCount, setTotalCount] = useState(0);
+
+  const handleTableRef = useCallback((instance: PaginationTableRef | null) => {
+    tableRef.current = instance;
+
+    const nextTotal = instance?.getTotalCount() ?? 0;
+    setTotalCount((prev) => (prev === nextTotal ? prev : nextTotal));
+  }, []);
 
   return (
     <div className="flex flex-1 min-h-0 flex-col p-8">
@@ -19,7 +27,7 @@ export default function PaginationPage() {
         </h1>
         <p className="mt-2 text-gray-600 dark:text-gray-400">
           Server-side pagination with TanStack Table and Hero UI. Total records:{" "}
-          {tableRef.current?.getTotalCount() || 0}
+          {totalCount}
         </p>
       </div>
 
@@ -30,7 +38,7 @@ export default function PaginationPage() {
           </div>
         }
       >
-        <PaginationTable ref={tableRef} {...paginationUsersConfig} />
+        <PaginationTable ref={handleTableRef} {...paginationUsersConfig} />
       </Suspense>
     </div>
   );

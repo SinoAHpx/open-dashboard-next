@@ -7,7 +7,7 @@ import { MagnifyingGlassIcon } from "@phosphor-icons/react";
 
 export default function NotFoundDemoPage() {
   return (
-    <Card className="w-full max-w-md">
+    <Card className="w-full max-w-md p-4">
       <CardBody className="flex flex-col items-center space-y-6 py-8">
         <div className="flex items-center justify-center w-20 h-20 rounded-full bg-primary/10">
           <MagnifyingGlassIcon className="w-10 h-10 text-primary" weight="bold" />

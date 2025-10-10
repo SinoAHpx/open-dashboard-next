@@ -19,7 +19,7 @@ import {
   PaginationTable,
   type PaginationTableRef,
 } from "@/components/PaginationTable";
-import { createProductsConfig } from "@/lib/config/pagination-products.config";
+import { createProductsConfig } from "@/lib/config/actions-products.config";
 import {
   addProduct,
   updateProduct,

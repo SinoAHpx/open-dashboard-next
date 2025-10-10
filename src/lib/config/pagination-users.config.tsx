@@ -10,6 +10,8 @@ import {
   type PaginationUser,
 } from "@/lib/api-wrapper/pagination";
 
+export type { PaginationUser };
+
 // Adapter function to convert API response to generic format
 async function fetchPaginationUsers(
   params: PaginationRequest

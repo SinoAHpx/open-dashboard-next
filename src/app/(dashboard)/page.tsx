@@ -4,7 +4,7 @@ import { Card, CardBody, CardHeader } from "@heroui/card";
 import { Button } from "@heroui/button";
 import { Progress } from "@heroui/progress";
 import { Chip } from "@heroui/chip";
-import { useAuthStore } from "@/stores/authStore";
+import { useAuthStore } from "@/stores/auth";
 import {
   LineChart,
   Line,
@@ -25,7 +25,14 @@ import {
   categoryData,
   trafficSourceData,
 } from "@/lib/dashboard/chart-data";
-import { TrendUp, TrendDown, Users, CurrencyDollar, Clock, ChartLine } from "@phosphor-icons/react";
+import {
+  TrendUp,
+  TrendDown,
+  Users,
+  CurrencyDollar,
+  Clock,
+  ChartLine,
+} from "@phosphor-icons/react";
 import { useThemeColors } from "@/lib/color-theme";
 
 export default function DashboardPage() {
@@ -37,7 +44,9 @@ export default function DashboardPage() {
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-3xl font-bold">Dashboard Overview</h1>
-          <p className="text-gray-500 mt-1">Welcome back, {user?.name || user?.email}</p>
+          <p className="text-gray-500 mt-1">
+            Welcome back, {user?.name || user?.email}
+          </p>
         </div>
         <div className="flex gap-3">
           <Button variant="bordered">Export Report</Button>
@@ -55,7 +64,12 @@ export default function DashboardPage() {
                 </div>
                 <p className="text-sm text-gray-500">Total Users</p>
               </div>
-              <Chip size="sm" color="success" variant="flat" startContent={<TrendUp size={14} />}>
+              <Chip
+                size="sm"
+                color="success"
+                variant="flat"
+                startContent={<TrendUp size={14} />}
+              >
                 12%
               </Chip>
             </div>
@@ -74,7 +88,12 @@ export default function DashboardPage() {
                 </div>
                 <p className="text-sm text-gray-500">Revenue</p>
               </div>
-              <Chip size="sm" color="success" variant="flat" startContent={<TrendUp size={14} />}>
+              <Chip
+                size="sm"
+                color="success"
+                variant="flat"
+                startContent={<TrendUp size={14} />}
+              >
                 8%
               </Chip>
             </div>
@@ -93,7 +112,12 @@ export default function DashboardPage() {
                 </div>
                 <p className="text-sm text-gray-500">Active Sessions</p>
               </div>
-              <Chip size="sm" color="success" variant="flat" startContent={<TrendUp size={14} />}>
+              <Chip
+                size="sm"
+                color="success"
+                variant="flat"
+                startContent={<TrendUp size={14} />}
+              >
                 5%
               </Chip>
             </div>
@@ -112,7 +136,12 @@ export default function DashboardPage() {
                 </div>
                 <p className="text-sm text-gray-500">Conversion Rate</p>
               </div>
-              <Chip size="sm" color="danger" variant="flat" startContent={<TrendDown size={14} />}>
+              <Chip
+                size="sm"
+                color="danger"
+                variant="flat"
+                startContent={<TrendDown size={14} />}
+              >
                 2%
               </Chip>
             </div>
@@ -127,7 +156,9 @@ export default function DashboardPage() {
         <Card>
           <CardHeader className="flex justify-between items-center">
             <h3 className="text-lg font-semibold">Revenue & Users Trend</h3>
-            <Chip size="sm" variant="flat">Last 7 months</Chip>
+            <Chip size="sm" variant="flat">
+              Last 7 months
+            </Chip>
           </CardHeader>
           <CardBody>
             <ResponsiveContainer width="100%" height={300}>
@@ -135,7 +166,10 @@ export default function DashboardPage() {
                 data={monthlyRevenueData}
                 margin={{ top: 5, right: 20, bottom: 5, left: 0 }}
               >
-                <CartesianGrid strokeDasharray="3 3" stroke={themeColors.chartColors.grid} />
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke={themeColors.chartColors.grid}
+                />
                 <XAxis dataKey="name" stroke={themeColors.chartColors.axis} />
                 <YAxis stroke={themeColors.chartColors.axis} />
                 <Tooltip />
@@ -162,7 +196,9 @@ export default function DashboardPage() {
         <Card>
           <CardHeader className="flex justify-between items-center">
             <h3 className="text-lg font-semibold">Product Performance</h3>
-            <Chip size="sm" variant="flat">Top 5 Products</Chip>
+            <Chip size="sm" variant="flat">
+              Top 5 Products
+            </Chip>
           </CardHeader>
           <CardBody>
             <ResponsiveContainer width="100%" height={300}>
@@ -170,11 +206,18 @@ export default function DashboardPage() {
                 data={categoryData}
                 margin={{ top: 5, right: 20, bottom: 5, left: 0 }}
               >
-                <CartesianGrid strokeDasharray="3 3" stroke={themeColors.chartColors.grid} />
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke={themeColors.chartColors.grid}
+                />
                 <XAxis dataKey="name" stroke={themeColors.chartColors.axis} />
                 <YAxis stroke={themeColors.chartColors.axis} />
                 <Tooltip />
-                <Bar dataKey="value" fill={themeColors.chartColors.primary} radius={[8, 8, 0, 0]} />
+                <Bar
+                  dataKey="value"
+                  fill={themeColors.chartColors.primary}
+                  radius={[8, 8, 0, 0]}
+                />
               </BarChart>
             </ResponsiveContainer>
           </CardBody>
@@ -203,7 +246,11 @@ export default function DashboardPage() {
                   {trafficSourceData.map((entry, index) => (
                     <Cell
                       key={`cell-${entry.name}`}
-                      fill={themeColors.chartPalette[index % themeColors.chartPalette.length]}
+                      fill={
+                        themeColors.chartPalette[
+                          index % themeColors.chartPalette.length
+                        ]
+                      }
                     />
                   ))}
                 </Pie>
@@ -219,20 +266,46 @@ export default function DashboardPage() {
           </CardHeader>
           <CardBody className="gap-4">
             {[
-              { user: "John Doe", action: "Created new project", time: "2 min ago" },
-              { user: "Jane Smith", action: "Updated dashboard", time: "15 min ago" },
-              { user: "Bob Wilson", action: "Added new users", time: "1 hour ago" },
-              { user: "Alice Brown", action: "Generated report", time: "2 hours ago" },
+              {
+                user: "John Doe",
+                action: "Created new project",
+                time: "2 min ago",
+              },
+              {
+                user: "Jane Smith",
+                action: "Updated dashboard",
+                time: "15 min ago",
+              },
+              {
+                user: "Bob Wilson",
+                action: "Added new users",
+                time: "1 hour ago",
+              },
+              {
+                user: "Alice Brown",
+                action: "Generated report",
+                time: "2 hours ago",
+              },
             ].map((activity, idx) => (
-              <div key={idx} className="flex items-start gap-3 pb-3 border-b last:border-b-0 border-gray-200 dark:border-gray-800">
+              <div
+                key={idx}
+                className="flex items-start gap-3 pb-3 border-b last:border-b-0 border-gray-200 dark:border-gray-800"
+              >
                 <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs font-semibold">
-                  {activity.user.split(" ").map(n => n[0]).join("")}
+                  {activity.user
+                    .split(" ")
+                    .map((n) => n[0])
+                    .join("")}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{activity.user}</p>
+                  <p className="text-sm font-medium truncate">
+                    {activity.user}
+                  </p>
                   <p className="text-xs text-gray-500">{activity.action}</p>
                 </div>
-                <span className="text-xs text-gray-400 whitespace-nowrap">{activity.time}</span>
+                <span className="text-xs text-gray-400 whitespace-nowrap">
+                  {activity.time}
+                </span>
               </div>
             ))}
           </CardBody>
@@ -243,25 +316,39 @@ export default function DashboardPage() {
             <h3 className="text-lg font-semibold">Quick Actions</h3>
           </CardHeader>
           <CardBody className="gap-3">
-            <Button fullWidth variant="flat">Generate Report</Button>
-            <Button fullWidth variant="flat">Invite Team Member</Button>
-            <Button fullWidth variant="flat">View Analytics</Button>
-            <Button fullWidth variant="flat">Manage Settings</Button>
+            <Button fullWidth variant="flat">
+              Generate Report
+            </Button>
+            <Button fullWidth variant="flat">
+              Invite Team Member
+            </Button>
+            <Button fullWidth variant="flat">
+              View Analytics
+            </Button>
+            <Button fullWidth variant="flat">
+              Manage Settings
+            </Button>
 
             <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
               <p className="text-sm font-semibold mb-2">System Status</p>
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
                   <span className="text-xs text-gray-600">API Status</span>
-                  <Chip size="sm" color="success" variant="dot">Operational</Chip>
+                  <Chip size="sm" color="success" variant="dot">
+                    Operational
+                  </Chip>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-xs text-gray-600">Database</span>
-                  <Chip size="sm" color="success" variant="dot">Healthy</Chip>
+                  <Chip size="sm" color="success" variant="dot">
+                    Healthy
+                  </Chip>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-xs text-gray-600">Storage</span>
-                  <Chip size="sm" color="warning" variant="dot">72% Used</Chip>
+                  <Chip size="sm" color="warning" variant="dot">
+                    72% Used
+                  </Chip>
                 </div>
               </div>
             </div>

@@ -7,7 +7,7 @@ import { Input } from "@heroui/input";
 import { Link } from "@heroui/link";
 import { useRouter } from "next/navigation";
 import { registerSchema } from "@/lib/schemas";
-import { useAuthStore } from "@/stores/authStore";
+import { useAuthStore } from "@/stores/auth";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -108,7 +108,12 @@ export default function RegisterPage() {
               isInvalid={!!errors.confirmPassword}
               errorMessage={errors.confirmPassword}
             />
-            <Button type="submit" color="primary" variant="solid" className="w-full">
+            <Button
+              type="submit"
+              color="primary"
+              variant="solid"
+              className="w-full"
+            >
               Create Account
             </Button>
           </form>

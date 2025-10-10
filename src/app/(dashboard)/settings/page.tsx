@@ -4,7 +4,7 @@ import { Card, CardBody, CardHeader } from "@heroui/card";
 import { Input } from "@heroui/input";
 import { Button } from "@heroui/button";
 import { Switch } from "@heroui/switch";
-import { useAuthStore } from "@/stores/authStore";
+import { useAuthStore } from "@/stores/auth";
 
 export default function SettingsPage() {
   const user = useAuthStore((state) => state.user);
@@ -13,7 +13,9 @@ export default function SettingsPage() {
     <div className="p-8">
       <div className="mb-8">
         <h1 className="text-4xl font-bold mb-2">Settings</h1>
-        <p className="text-gray-600">Manage your account settings and preferences</p>
+        <p className="text-gray-600">
+          Manage your account settings and preferences
+        </p>
       </div>
 
       <div className="space-y-6">
@@ -54,7 +56,9 @@ export default function SettingsPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="font-medium">Push Notifications</p>
-                <p className="text-sm text-gray-500">Receive push notifications</p>
+                <p className="text-sm text-gray-500">
+                  Receive push notifications
+                </p>
               </div>
               <Switch />
             </div>

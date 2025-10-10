@@ -7,14 +7,16 @@ import { Input } from "@heroui/input";
 import { Link } from "@heroui/link";
 import { useRouter } from "next/navigation";
 import { loginSchema } from "@/lib/schemas";
-import { useAuthStore } from "@/stores/authStore";
+import { useAuthStore } from "@/stores/auth";
 
 export default function LoginPage() {
   const router = useRouter();
   const login = useAuthStore((state) => state.login);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [errors, setErrors] = useState<{ email?: string; password?: string }>(
+    {}
+  );
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,7 +74,12 @@ export default function LoginPage() {
               errorMessage={errors.password}
             />
             <Link className="justify-end text-sm">Forget password? </Link>
-            <Button type="submit" color="primary" variant="solid" className="w-full">
+            <Button
+              type="submit"
+              color="primary"
+              variant="solid"
+              className="w-full"
+            >
               Sign In
             </Button>
           </form>

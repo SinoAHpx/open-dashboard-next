@@ -5,6 +5,7 @@ import { Button } from "@heroui/button";
 import { Card, CardBody } from "@heroui/card";
 import { Input } from "@heroui/input";
 import { Link } from "@heroui/link";
+import { Checkbox } from "@heroui/checkbox";
 import { useRouter } from "next/navigation";
 import { loginSchema } from "@/lib/schemas";
 import { useAuthStore } from "@/stores/auth";
@@ -14,12 +15,15 @@ export default function LoginPage() {
   const login = useAuthStore((state) => state.login);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>(
     {}
   );
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
 
     const result = loginSchema.safeParse({ email, password });
 
@@ -30,12 +34,16 @@ export default function LoginPage() {
         if (err.path[0] === "password") fieldErrors.password = err.message;
       });
       setErrors(fieldErrors);
+      setIsLoading(false);
       return;
     }
 
     setErrors({});
     login({ email });
-    router.push("/");
+    setTimeout(() => {
+      setIsLoading(false);
+      router.push("/");
+    }, 500);
   };
 
   return (
@@ -54,35 +62,54 @@ export default function LoginPage() {
         <CardBody className="space-y-4">
           <form onSubmit={handleSubmit} className="flex flex-col space-y-4">
             <Input
+              isRequired
               type="email"
               label="Email"
               placeholder="Enter your email"
-              variant="underlined"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               isInvalid={!!errors.email}
               errorMessage={errors.email}
             />
             <Input
+              isRequired
               type="password"
               label="Password"
               placeholder="Enter your password"
-              variant="underlined"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               isInvalid={!!errors.password}
               errorMessage={errors.password}
             />
-            <Link className="justify-end text-sm">Forget password? </Link>
+            <div className="flex justify-end items-center">
+              <Link href="/forgot-password" size="sm" className="text-primary">
+                Forgot password?
+              </Link>
+            </div>
             <Button
               type="submit"
               color="primary"
               variant="solid"
+              isLoading={isLoading}
               className="w-full"
             >
               Sign In
             </Button>
           </form>
+          <div className="relative mb-4">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-white text-gray-500">
+                Or continue with
+              </span>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <Button variant="bordered">Google</Button>
+            <Button variant="bordered">GitHub</Button>
+          </div>
         </CardBody>
       </Card>
     </>

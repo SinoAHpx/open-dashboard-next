@@ -5,6 +5,7 @@ import { Button } from "@heroui/button";
 import { Card, CardBody } from "@heroui/card";
 import { Input } from "@heroui/input";
 import { Link } from "@heroui/link";
+import { Checkbox } from "@heroui/checkbox";
 import { useRouter } from "next/navigation";
 import { registerSchema } from "@/lib/schemas";
 import { useAuthStore } from "@/stores/auth";
@@ -16,6 +17,8 @@ export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [agreeToTerms, setAgreeToTerms] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<{
     name?: string;
     email?: string;
@@ -23,8 +26,33 @@ export default function RegisterPage() {
     confirmPassword?: string;
   }>({});
 
+  const validatePassword = (pwd: string) => {
+    const validationErrors: string[] = [];
+    if (pwd.length < 8) {
+      validationErrors.push("Password must be at least 8 characters");
+    }
+    if (!/[A-Z]/.test(pwd)) {
+      validationErrors.push("Must include at least 1 uppercase letter");
+    }
+    if (!/[a-z]/.test(pwd)) {
+      validationErrors.push("Must include at least 1 lowercase letter");
+    }
+    if (!/[0-9]/.test(pwd)) {
+      validationErrors.push("Must include at least 1 number");
+    }
+    if (!/[^A-Za-z0-9]/.test(pwd)) {
+      validationErrors.push("Must include at least 1 special character");
+    }
+    return validationErrors;
+  };
+
+  const passwordErrors = password ? validatePassword(password) : [];
+  const passwordStrength =
+    password.length > 0 ? 5 - passwordErrors.length : 0;
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
 
     const result = registerSchema.safeParse({
       name,
@@ -45,12 +73,21 @@ export default function RegisterPage() {
         fieldErrors[field] = err.message;
       });
       setErrors(fieldErrors);
+      setIsLoading(false);
+      return;
+    }
+
+    if (!agreeToTerms) {
+      setIsLoading(false);
       return;
     }
 
     setErrors({});
     login({ email, name });
-    router.push("/");
+    setTimeout(() => {
+      setIsLoading(false);
+      router.push("/");
+    }, 500);
   };
 
   return (
@@ -69,49 +106,110 @@ export default function RegisterPage() {
         <CardBody className="space-y-4">
           <form onSubmit={handleSubmit} className="space-y-4">
             <Input
+              isRequired
               type="text"
               label="Full Name"
               placeholder="Enter your full name"
-              variant="underlined"
               value={name}
               onChange={(e) => setName(e.target.value)}
               isInvalid={!!errors.name}
               errorMessage={errors.name}
             />
             <Input
+              isRequired
               type="email"
               label="Email"
               placeholder="Enter your email"
-              variant="underlined"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               isInvalid={!!errors.email}
               errorMessage={errors.email}
             />
+            <div>
+              <Input
+                isRequired
+                type="password"
+                label="Password"
+                placeholder="Create a password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                isInvalid={!!errors.password}
+                errorMessage={errors.password}
+                description={
+                  password.length > 0 && (
+                    <div className="mt-2">
+                      <div className="flex gap-1 mb-1">
+                        {[...Array(5)].map((_, i) => (
+                          <div
+                            key={i}
+                            className={`h-1 flex-1 rounded ${
+                              i < passwordStrength
+                                ? passwordStrength <= 2
+                                  ? "bg-red-500"
+                                  : passwordStrength === 3
+                                    ? "bg-yellow-500"
+                                    : "bg-green-500"
+                                : "bg-gray-200"
+                            }`}
+                          />
+                        ))}
+                      </div>
+                      <p className="text-xs text-gray-500">
+                        Password strength:{" "}
+                        {passwordStrength <= 2
+                          ? "Weak"
+                          : passwordStrength === 3
+                            ? "Medium"
+                            : "Strong"}
+                      </p>
+                      {passwordErrors.length > 0 && (
+                        <ul className="list-disc list-inside text-xs text-gray-500 mt-1">
+                          {passwordErrors.map((err, i) => (
+                            <li key={i}>{err}</li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  )
+                }
+              />
+            </div>
             <Input
-              type="password"
-              label="Password"
-              placeholder="Create a password"
-              variant="underlined"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              isInvalid={!!errors.password}
-              errorMessage={errors.password}
-            />
-            <Input
+              isRequired
               type="password"
               label="Confirm Password"
               placeholder="Confirm your password"
-              variant="underlined"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              isInvalid={!!errors.confirmPassword}
-              errorMessage={errors.confirmPassword}
+              isInvalid={
+                confirmPassword.length > 0 && password !== confirmPassword
+              }
+              errorMessage={
+                confirmPassword.length > 0 && password !== confirmPassword
+                  ? "Passwords do not match"
+                  : errors.confirmPassword
+              }
             />
+            <Checkbox
+              isSelected={agreeToTerms}
+              onValueChange={setAgreeToTerms}
+              size="sm"
+              className="mb-2"
+            >
+              I agree to the{" "}
+              <Link href="#" size="sm" className="text-primary">
+                Terms of Service
+              </Link>{" "}
+              and{" "}
+              <Link href="#" size="sm" className="text-primary">
+                Privacy Policy
+              </Link>
+            </Checkbox>
             <Button
               type="submit"
               color="primary"
               variant="solid"
+              isLoading={isLoading}
               className="w-full"
             >
               Create Account

@@ -1,19 +1,41 @@
-# Open Dashboard Next
+# Open Dashboard
 
-A modern, production-ready dashboard starter template built with Next.js 15, designed to help you ship your SaaS or application backend faster.
+> Stop building the same backend dashboard for the hundredth time. Start shipping faster.
 
-[中文文档](./README.zh-CN.md)
+If you're like most developers, you've probably built the backend dashboard for a SaaS/App a dozen times. It's always the same stuff: auth, data tables, settings, user profiles... It gets repetitive, and most starters out there are either just pretty UI kits with no real logic, or they look incredibly... well, cliche.
 
-## Features
+**Open Dashboard** is different. It's an open-source, production-ready starter designed to give you a massive head start, not just a design file.
 
-- **Modern Stack**: Built on Next.js 15 with App Router, React 19, and Turbopack for blazing-fast development
-- **Beautiful UI**: Pre-configured with Tailwind CSS v4, Hero UI components, and Phosphor Icons
-- **Type-Safe**: Full TypeScript support with strict mode enabled
-- **State Management**: Zustand for efficient client-side state management
-- **Data Visualization**: Recharts integration for charts and graphs
-- **Database Ready**: TypeORM configured for database operations
-- **Code Quality**: Biome for linting and formatting
-- **Developer Experience**: Bun runtime for faster package management and execution
+![picture 0](https://s2.loli.net/2025/10/10/KyioHSd8blFvTjA.png)  
+
+
+## Why Another Dashboard Template?
+
+### This is NOT just a pretty frontend
+
+We're not just giving you some static HTML/CSS components. This is a **production-ready foundation** with real, working features. The goal is to get you from idea to launch faster, without sacrificing quality or features.
+
+### Modular design that feels like LEGO
+
+We designed it so that building complex UIs is dead simple. Want a feature-rich table with server-side pagination, filtering, and sorting? It's basically like crafting a toy. You just plug in the module and connect your data.
+
+### A UI you won't get sick of
+
+We put a ton of effort into making an interface that is aesthetically designed, clean, and modern. You can finally have a backend that looks as good as your marketing site. No more boring, cookie-cutter admin panels.
+
+## Features Already Baked In
+
+- **Comprehensive Dashboard Overview** with charts and key metrics
+- **Multiple Table Variations**:
+  - Simple tables for basic data display
+  - Server-side pagination for large datasets
+  - Selectable rows for bulk actions
+  - "Rich Cell" tables with progress bars, avatars, and interactive elements
+- **Full CRUD Operations** on a Product Management page example
+- **Command Palette** (⌘+K) for fast navigation and actions
+- **Auth & Error Pages** (Login, Register, 403 Forbidden, etc.) ready to go
+- **Type-safe** with full TypeScript support
+- **Production-ready** architecture with Next.js 15 App Router
 
 ## Quick Start
 
@@ -25,7 +47,7 @@ A modern, production-ready dashboard starter template built with Next.js 15, des
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/open-dashboard-next.git
+git clone https://github.com/SinoAHpx/open-dashboard-next.git
 cd open-dashboard-next
 
 # Install dependencies
@@ -37,14 +59,34 @@ bun run dev
 
 Open [http://localhost:3000](http://localhost:3000) in your browser to see the dashboard.
 
-## Available Scripts
+## Tech Stack
 
-- `bun run dev` - Start development server with Turbopack
-- `bun run build` - Build for production with Turbopack
-- `bun run start` - Start production server
-- `bun run lint` - Run Biome linter
-- `bun run format` - Format code with Biome
-- `bun run create-page` - Scaffold a new page (custom script)
+This is a modern Next.js 15 application built with:
+
+### Core Framework
+- **Next.js 15.5.4** - React framework with App Router
+- **React 19.1.0** - Latest React version
+- **TypeScript 5** - Full type safety with strict mode
+- **Bun** - Fast runtime and package manager
+- **Turbopack** - Next-generation bundler for blazing-fast development
+
+### Styling & UI
+- **Tailwind CSS v4** - Utility-first CSS framework
+- **Hero UI** - Beautiful component library
+- **Phosphor Icons** - Modern icon system
+- **Framer Motion** - Smooth animations
+
+### Data & State
+- **Zustand** - Simple, efficient state management
+- **TanStack Table** - Powerful table component with sorting, filtering, pagination
+- **Recharts** - Beautiful, composable charts
+- **Zod** - Schema validation
+- **TypeORM** - Database ORM ready to connect
+
+### Developer Tools
+- **Biome** - Fast linter and formatter
+- Strict TypeScript configuration
+- Path mapping (`@/*` for clean imports)
 
 ## Project Structure
 
@@ -63,76 +105,27 @@ open-dashboard-next/
 └── config files          # Configuration files (Next.js, Tailwind, TypeScript, etc.)
 ```
 
-## Tech Stack
+## Available Scripts
 
-### Core Framework
-- **Next.js 15.5.4** - React framework with App Router
-- **React 19.1.0** - UI library
-- **TypeScript 5** - Type safety
+- `bun run dev` - Start development server with Turbopack
+- `bun run build` - Build for production
+- `bun run start` - Start production server
+- `bun run lint` - Run Biome linter
+- `bun run format` - Format code with Biome
+- `bun run create-page` - Scaffold a new page (custom script)
 
-### Styling & UI
-- **Tailwind CSS v4** - Utility-first CSS framework
-- **Hero UI** - Component library
-- **Phosphor Icons** - Icon system
-- **Framer Motion** - Animation library
+## Dashboard Pages
 
-### Data & State
-- **Zustand** - State management
-- **TanStack Table** - Powerful table component
-- **Recharts** - Chart library
-- **Zod** - Schema validation
-- **TypeORM** - Database ORM
+The template includes several example pages demonstrating common patterns:
 
-### Developer Tools
-- **Bun** - Fast runtime and package manager
-- **Turbopack** - Next-generation bundler
-- **Biome** - Fast linter and formatter
-
-## Configuration
-
-### Path Mapping
-
-TypeScript is configured with path mapping for cleaner imports:
-
-```typescript
-import { Component } from '@/components/Component'
-import { util } from '@/lib/util'
-```
-
-### Styling
-
-Tailwind CSS v4 is configured with Hero UI integration. Global styles are in `src/app/globals.css`.
-
-### Linting
-
-Biome is configured for Next.js and React best practices. Configuration is in `biome.json`.
-
-## Development Guidelines
-
-- Use the App Router pattern for all new pages
-- Place shared components in `src/components/`
-- Use Zustand stores for global state management
-- Follow the existing code structure and naming conventions
-- Run `bun run lint` before committing code
-
-## Authentication Routes
-
-The template includes pre-built authentication pages:
-
-- `/login` - User login page
-- `/register` - User registration page
-
-## Dashboard Features
-
-The dashboard includes several example pages demonstrating common patterns:
-
-- **Main Dashboard** - Overview with charts and metrics
+- **Main Dashboard** - Overview with charts and key metrics
 - **Simple Table** - Basic data table implementation
 - **Pagination** - Table with server-side pagination
 - **Actions** - Table with row actions
 - **Compound** - Complex table with multiple features
-- **Selectables** - Table with row selection
-- **Rich Cell** - Table with custom cell rendering
+- **Selectables** - Table with row selection and bulk actions
+- **Rich Cell** - Table with custom cell rendering (progress bars, avatars, etc.)
+- **Product Management** - Full CRUD example
 - **Settings** - User settings page
 
 ## Customization
@@ -153,6 +146,15 @@ Edit `src/lib/sidebar-items.ts` to add or remove sidebar navigation items.
 
 Modify `tailwind.config.ts` and `src/lib/color-theme.ts` for theme customization.
 
+### Path Mapping
+
+TypeScript is configured with path mapping for cleaner imports:
+
+```typescript
+import { Component } from '@/components/Component'
+import { util } from '@/lib/util'
+```
+
 ## Deployment
 
 ### Build for Production
@@ -166,11 +168,29 @@ bun run start
 
 The easiest way to deploy is using [Vercel](https://vercel.com):
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/yourusername/open-dashboard-next)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/SinoAHpx/open-dashboard-next)
+
+## What's Next?
+
+We're actively developing this project and looking for ideas. **What's the one feature you always hate building over and over in a dashboard?** Let us know by opening an issue or starting a discussion.
+
+Some ideas we're considering:
+- Role-based access control (RBAC)
+- File upload with preview
+- Advanced filtering and search
+- Real-time notifications
+- Email templates
+- Audit logs
+- Multi-tenancy support
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions are welcome! This is a real tool meant to help the developer community. Please feel free to:
+
+- Open issues for bugs or feature requests
+- Submit Pull Requests
+- Star the repo if you find it useful
+- Share it with others who might benefit
 
 ## License
 
@@ -179,3 +199,7 @@ This project is open source and available under the MIT License.
 ## Support
 
 If you have any questions or run into issues, please open an issue on GitHub.
+
+---
+
+**Give it a star if you like it!** Your support helps us continue improving and adding new features.

@@ -6,9 +6,11 @@ import { Card, CardBody } from "@heroui/card";
 import { Input } from "@heroui/input";
 import { Link } from "@heroui/link";
 import { Checkbox } from "@heroui/checkbox";
+import { Avatar } from "@heroui/avatar";
 import { useRouter } from "next/navigation";
 import { registerSchema } from "@/lib/schemas";
 import { useAuthStore } from "@/stores/auth";
+import { Camera } from "@phosphor-icons/react";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -19,6 +21,7 @@ export default function RegisterPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [agreeToTerms, setAgreeToTerms] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [errors, setErrors] = useState<{
     name?: string;
     email?: string;
@@ -49,6 +52,17 @@ export default function RegisterPage() {
   const passwordErrors = password ? validatePassword(password) : [];
   const passwordStrength =
     password.length > 0 ? 5 - passwordErrors.length : 0;
+
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAvatarPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -105,6 +119,28 @@ export default function RegisterPage() {
       <Card className="w-full max-w-md">
         <CardBody className="space-y-4">
           <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="flex justify-center">
+              <div className="relative">
+                <input
+                  type="file"
+                  id="avatar-upload"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleAvatarChange}
+                />
+                <label htmlFor="avatar-upload" className="cursor-pointer">
+                  <Avatar
+                    src={avatarPreview || undefined}
+                    showFallback
+                    name={name || undefined}
+                    className="w-24 h-24"
+                  />
+                  <div className="absolute bottom-0 right-0 bg-primary rounded-full p-2 shadow-lg">
+                    <Camera size={16} weight="fill" className="text-white" />
+                  </div>
+                </label>
+              </div>
+            </div>
             <Input
               isRequired
               type="text"

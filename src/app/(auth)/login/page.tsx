@@ -9,6 +9,7 @@ import { Checkbox } from "@heroui/checkbox";
 import { useRouter } from "next/navigation";
 import { loginSchema } from "@/lib/schemas";
 import { useAuthStore } from "@/stores/auth";
+import { GithubLogoIcon, GoogleLogoIcon } from "@phosphor-icons/react/dist/ssr";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -107,8 +108,12 @@ export default function LoginPage() {
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <Button variant="bordered">Google</Button>
-            <Button variant="bordered">GitHub</Button>
+            <Button variant="bordered" startContent={<GoogleLogoIcon />}>
+              Google
+            </Button>
+            <Button variant="bordered" startContent={<GithubLogoIcon />}>
+              GitHub
+            </Button>
           </div>
         </CardBody>
       </Card>

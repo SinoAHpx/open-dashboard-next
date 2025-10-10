@@ -8,6 +8,7 @@ import {
   TableIcon,
   UserIcon,
   TextboxIcon,
+  WarningIcon,
 } from "@phosphor-icons/react";
 
 export interface MenuItem {
@@ -39,11 +40,6 @@ export const mainMenuItems: MenuGroup[] = [
     groupLabel: "Forms",
     items: [
       {
-        label: "Authentication",
-        href: "/forms/authentication",
-        icon: TextboxIcon,
-      },
-      {
         label: "User & Profile",
         href: "/forms/user-profile",
         icon: TextboxIcon,
@@ -63,6 +59,16 @@ export const mainMenuItems: MenuGroup[] = [
         href: "/forms/interaction-filtering",
         icon: TextboxIcon,
       },
+    ],
+  },
+  {
+    groupLabel: "Error Pages",
+    items: [
+      { label: "Unauthorized", href: "/errors/401", icon: WarningIcon },
+      { label: "Forbidden", href: "/errors/403", icon: WarningIcon },
+      { label: "Not Found", href: "/errors/404", icon: WarningIcon },
+      { label: "Server Error", href: "/errors/500", icon: WarningIcon },
+      { label: "Maintenance", href: "/errors/503", icon: WarningIcon },
     ],
   },
 ];

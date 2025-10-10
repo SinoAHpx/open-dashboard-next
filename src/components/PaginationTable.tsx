@@ -1,21 +1,8 @@
 "use client";
 
-import { useEffect, useState, forwardRef, useImperativeHandle } from "react";
+import { useCallback, useEffect, forwardRef, useImperativeHandle } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableColumn,
-  TableRow,
-  TableCell,
-  Pagination,
-  Select,
-  SelectItem,
-  Spinner,
-  Input,
-  Button,
-} from "@heroui/react";
+import { Pagination, Select, SelectItem, Spinner, Input, Button } from "@heroui/react";
 import {
   useReactTable,
   getCoreRowModel,
@@ -23,6 +10,10 @@ import {
   type ColumnDef,
 } from "@tanstack/react-table";
 import { MagnifyingGlass, CaretUp, CaretDown, ArrowClockwise } from "@phosphor-icons/react";
+import type {
+  PaginationStoreHook,
+  PaginationStoreState,
+} from "@/stores/dashboard/pagination-store";
 
 // Generic types for pagination
 export interface PaginationRequest {
@@ -66,6 +57,10 @@ export interface PaginationTableConfig<TData> {
   className?: string;
 }
 
+export interface PaginationTableProps<TData> extends PaginationTableConfig<TData> {
+  store: PaginationStoreHook<TData>;
+}
+
 export interface PaginationTableRef {
   refresh: () => void;
   resetPage: () => void;
@@ -87,41 +82,48 @@ function PaginationTableInner<TData>(
     searchPlaceholder = "Search all columns...",
     emptyMessage = "No data found",
     className = "",
-  }: PaginationTableConfig<TData>,
+    store,
+  }: PaginationTableProps<TData>,
   ref: React.Ref<PaginationTableRef>
 ) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const [data, setData] = useState<TData[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(defaultPageSize);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalCount, setTotalCount] = useState(0);
-
-  const [search, setSearch] = useState("");
-  const [filterValues, setFilterValues] = useState<Record<string, string>>({});
-  const [sortBy, setSortBy] = useState("");
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+  const data = store((state) => state.data);
+  const isLoading = store((state) => state.isLoading);
+  const page = store((state) => state.page);
+  const pageSize = store((state) => state.pageSize);
+  const totalPages = store((state) => state.totalPages);
+  const totalCount = store((state) => state.totalCount);
+  const search = store((state) => state.search);
+  const filterValues = store((state) => state.filterValues);
+  const sortBy = store((state) => state.sortBy);
+  const sortOrder = store((state) => state.sortOrder);
+  const mergeState = store((state) => state.mergeState);
+  const updateState = store((state) => state.updateState);
+  const resetState = store((state) => state.resetState);
 
   // Initialize from URL on mount
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+  // biome-ignore lint/correctness/useExhaustiveDependencies: run once per mount to hydrate initial state
   useEffect(() => {
+    resetState();
+
+    const updates: Partial<PaginationStoreState<TData>> = {
+      pageSize: defaultPageSize,
+    };
+
     const pageParam = searchParams.get("page");
     const pageSizeParam = searchParams.get("pageSize");
     const searchParam = searchParams.get("search");
     const sortByParam = searchParams.get("sortBy");
     const sortOrderParam = searchParams.get("sortOrder");
 
-    if (pageParam) setPage(Number.parseInt(pageParam, 10));
-    if (pageSizeParam) setPageSize(Number.parseInt(pageSizeParam, 10));
-    if (searchParam) setSearch(searchParam);
-    if (sortByParam) setSortBy(sortByParam);
-    if (sortOrderParam) setSortOrder(sortOrderParam as "asc" | "desc");
+    if (pageParam) updates.page = Number.parseInt(pageParam, 10);
+    if (pageSizeParam) updates.pageSize = Number.parseInt(pageSizeParam, 10);
+    if (searchParam) updates.search = searchParam;
+    if (sortByParam) updates.sortBy = sortByParam;
+    if (sortOrderParam) updates.sortOrder = sortOrderParam as "asc" | "desc";
 
-    // Initialize filter values from URL
     const initialFilterValues: Record<string, string> = {};
     for (const filter of filters) {
       const filterParam = searchParams.get(filter.key);
@@ -129,27 +131,49 @@ function PaginationTableInner<TData>(
         initialFilterValues[filter.key] = filterParam;
       }
     }
-    setFilterValues(initialFilterValues);
+
+    if (Object.keys(initialFilterValues).length > 0) {
+      updates.filterValues = initialFilterValues;
+    }
+
+    mergeState(updates);
+
+    return () => {
+      resetState();
+    };
   }, []);
 
-  const table = useReactTable({
-    data,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-    manualSorting: true,
-    manualFiltering: true,
-  });
+  const fetchAndUpdate = useCallback(async () => {
+    const current = store.getState();
+    mergeState({ isLoading: true });
 
-  // Expose methods via ref
-  useImperativeHandle(ref, () => ({
-    refresh: handleRefresh,
-    resetPage: () => setPage(1),
-    getTotalCount: () => totalCount,
-    getCurrentPage: () => page,
-    isLoading: () => isLoading,
-  }));
+    try {
+      const requestParams: PaginationRequest = {
+        page: current.page,
+        pageSize: current.pageSize,
+        search: current.search,
+        sortBy: current.sortBy,
+        sortOrder: current.sortOrder,
+        ...current.filterValues,
+      };
 
-  // Sync URL with state
+      const response = await fetchData(requestParams);
+
+      mergeState({
+        data: response.data,
+        totalPages: response.pagination.totalPages,
+        totalCount: response.pagination.totalCount,
+        page: response.pagination.currentPage,
+        pageSize: response.pagination.pageSize,
+        isLoading: false,
+      });
+    } catch (error) {
+      console.error("Failed to load data:", error);
+      mergeState({ isLoading: false });
+    }
+  }, [fetchData, mergeState, store]);
+
+  // Keep URL in sync with store state
   useEffect(() => {
     const params = new URLSearchParams();
     params.set("page", page.toString());
@@ -161,98 +185,91 @@ function PaginationTableInner<TData>(
       params.set("sortBy", sortBy);
       params.set("sortOrder", sortOrder);
     }
-    // Add filter values to URL
     for (const [key, value] of Object.entries(filterValues)) {
       if (value) {
         params.set(key, value);
       }
     }
+
     router.replace(`?${params.toString()}`, { scroll: false });
-  }, [page, pageSize, search, filterValues, sortBy, sortOrder, router]);
+  }, [filterValues, page, pageSize, router, search, sortBy, sortOrder]);
 
-  // Fetch data from server
+  // Trigger data fetching when state changes
   useEffect(() => {
-    const loadData = async () => {
-      setIsLoading(true);
-      try {
-        const requestParams: PaginationRequest = {
-          page,
-          pageSize,
-          search,
-          sortBy,
-          sortOrder,
-          ...filterValues,
-        };
-        const response = await fetchData(requestParams);
-        setData(response.data);
-        setTotalPages(response.pagination.totalPages);
-        setTotalCount(response.pagination.totalCount);
-      } catch (error) {
-        console.error("Failed to load data:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadData();
-  }, [page, pageSize, search, filterValues, sortBy, sortOrder, fetchData]);
+    void fetchAndUpdate();
+  }, [fetchAndUpdate, filterValues, page, pageSize, search, sortBy, sortOrder]);
 
   const handlePageSizeChange = (value: string) => {
     const newPageSize = Number.parseInt(value, 10);
-    setPageSize(newPageSize);
-    setPage(1);
+    mergeState({ pageSize: newPageSize, page: 1 });
   };
 
   const handleSort = (columnId: string) => {
-    if (sortBy === columnId) {
-      // Toggle sort order or clear
-      if (sortOrder === "asc") {
-        setSortOrder("desc");
-      } else {
-        setSortBy("");
-        setSortOrder("asc");
+    updateState((current) => {
+      if (current.sortBy === columnId) {
+        if (current.sortOrder === "asc") {
+          return {
+            sortOrder: "desc",
+            page: 1,
+          };
+        }
+
+        return {
+          sortBy: "",
+          sortOrder: "asc",
+          page: 1,
+        };
       }
-    } else {
-      setSortBy(columnId);
-      setSortOrder("asc");
-    }
-    setPage(1); // Reset to first page when sorting changes
+
+      return {
+        sortBy: columnId,
+        sortOrder: "asc",
+        page: 1,
+      };
+    });
   };
 
   const handleSearchChange = (value: string) => {
-    setSearch(value);
-    setPage(1); // Reset to first page when search changes
+    mergeState({ search: value, page: 1 });
   };
 
   const handleFilterChange = (key: string, value: string) => {
-    setFilterValues((prev) => ({
-      ...prev,
-      [key]: value,
+    updateState((current) => ({
+      filterValues: {
+        ...current.filterValues,
+        [key]: value,
+      },
+      page: 1,
     }));
-    setPage(1); // Reset to first page when filter changes
   };
 
-  const handleRefresh = async () => {
-    setIsLoading(true);
-    try {
-      const requestParams: PaginationRequest = {
-        page,
-        pageSize,
-        search,
-        sortBy,
-        sortOrder,
-        ...filterValues,
-      };
-      const response = await fetchData(requestParams);
-      setData(response.data);
-      setTotalPages(response.pagination.totalPages);
-      setTotalCount(response.pagination.totalCount);
-    } catch (error) {
-      console.error("Failed to refresh data:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const handleRefresh = useCallback(() => {
+    void fetchAndUpdate();
+  }, [fetchAndUpdate]);
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      refresh: () => {
+        void fetchAndUpdate();
+      },
+      resetPage: () => {
+        mergeState({ page: 1 });
+      },
+      getTotalCount: () => store.getState().totalCount,
+      getCurrentPage: () => store.getState().page,
+      isLoading: () => store.getState().isLoading,
+    }),
+    [fetchAndUpdate, mergeState, store]
+  );
+
+  const table = useReactTable({
+    data,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    manualSorting: true,
+    manualFiltering: true,
+  });
 
   return (
     <div className={`flex flex-1 min-h-0 flex-col ${className}`}>
@@ -309,10 +326,7 @@ function PaginationTableInner<TData>(
                           className="flex items-center gap-2 cursor-pointer select-none"
                           onClick={() => handleSort(header.column.id)}
                         >
-                          {flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
+                          {flexRender(header.column.columnDef.header, header.getContext())}
                           <span className="text-gray-400">
                             {sortBy === header.column.id && sortOrder === "asc" ? (
                               <CaretUp size={16} weight="fill" />
@@ -356,10 +370,7 @@ function PaginationTableInner<TData>(
                   >
                     {row.getVisibleCells().map((cell) => (
                       <td key={cell.id} className="px-4 py-3 text-sm">
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
-                        )}
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
                       </td>
                     ))}
                   </tr>
@@ -372,9 +383,7 @@ function PaginationTableInner<TData>(
 
       <div className="mt-6 flex shrink-0 items-center justify-between overflow-hidden">
         <div className="flex items-center gap-2">
-          <span className="text-sm text-gray-600 dark:text-gray-400">
-            Rows per page:
-          </span>
+          <span className="text-sm text-gray-600 dark:text-gray-400">Rows per page:</span>
           <Select
             size="sm"
             selectedKeys={[pageSize.toString()]}
@@ -391,7 +400,7 @@ function PaginationTableInner<TData>(
         <Pagination
           total={totalPages}
           page={page}
-          onChange={setPage}
+          onChange={(nextPage) => mergeState({ page: nextPage })}
           showControls
           color="primary"
         />
@@ -402,5 +411,6 @@ function PaginationTableInner<TData>(
 
 // Export with forwardRef for generic component
 export const PaginationTable = forwardRef(PaginationTableInner) as <TData>(
-  props: PaginationTableConfig<TData> & { ref?: React.Ref<PaginationTableRef> }
+  props: PaginationTableProps<TData> & { ref?: React.Ref<PaginationTableRef> }
 ) => ReturnType<typeof PaginationTableInner>;
+

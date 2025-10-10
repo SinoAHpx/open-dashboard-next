@@ -9,10 +9,12 @@ import { createRichCellsConfig } from "@/lib/config/richcells-tasks.config";
 import { type RichCellTask } from "@/lib/api-wrapper/richcell";
 import { Button, useDisclosure, Spinner } from "@heroui/react";
 import { Plus } from "@phosphor-icons/react";
+import { useRichCellTasksStore } from "@/stores/dashboard/richcell-tasks-store";
 
 export default function RichCellPage() {
   const tableRef = useRef<PaginationTableRef>(null);
   const { onOpen } = useDisclosure();
+  const totalCount = useRichCellTasksStore((state) => state.totalCount);
 
   const handleEdit = (task: RichCellTask) => {
     console.log("Editing task:", task);
@@ -67,7 +69,7 @@ export default function RichCellPage() {
           <p className="mt-2 text-gray-600 dark:text-gray-400">
             Advanced table with avatars, editable inputs, progress bars, and
             more interactive components. Total tasks:{" "}
-            {tableRef.current?.getTotalCount() || 0}
+            {totalCount}
           </p>
         </div>
         <Button
@@ -86,7 +88,11 @@ export default function RichCellPage() {
           </div>
         }
       >
-        <PaginationTable ref={tableRef} {...config} />
+        <PaginationTable
+          ref={tableRef}
+          store={useRichCellTasksStore}
+          {...config}
+        />
       </Suspense>
     </div>
   );

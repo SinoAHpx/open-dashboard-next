@@ -1,23 +1,13 @@
 "use client";
 
-import { Suspense, useCallback, useRef, useState } from "react";
-import {
-  PaginationTable,
-  type PaginationTableRef,
-} from "@/components/PaginationTable";
+import { Suspense } from "react";
+import { PaginationTable } from "@/components/PaginationTable";
 import { paginationUsersConfig } from "@/lib/config/pagination-users.config";
+import { usePaginationUsersStore } from "@/stores/dashboard/pagination-users-store";
 import { Spinner } from "@heroui/react";
 
 export default function PaginationPage() {
-  const tableRef = useRef<PaginationTableRef | null>(null);
-  const [totalCount, setTotalCount] = useState(0);
-
-  const handleTableRef = useCallback((instance: PaginationTableRef | null) => {
-    tableRef.current = instance;
-
-    const nextTotal = instance?.getTotalCount() ?? 0;
-    setTotalCount((prev) => (prev === nextTotal ? prev : nextTotal));
-  }, []);
+  const totalCount = usePaginationUsersStore((state) => state.totalCount);
 
   return (
     <div className="flex flex-1 min-h-0 flex-col p-8">
@@ -38,7 +28,10 @@ export default function PaginationPage() {
           </div>
         }
       >
-        <PaginationTable ref={handleTableRef} {...paginationUsersConfig} />
+        <PaginationTable
+          store={usePaginationUsersStore}
+          {...paginationUsersConfig}
+        />
       </Suspense>
     </div>
   );

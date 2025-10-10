@@ -27,11 +27,13 @@ import {
   generateSampleProducts,
   type Product,
 } from "@/lib/api-wrapper/products";
+import { useProductsPaginationStore } from "@/stores/dashboard/actions-products-store";
 
 type ProductFormData = Omit<Product, "id" | "createdAt">;
 
 export default function ActionsPage() {
   const tableRef = useRef<PaginationTableRef>(null);
+  const totalCount = useProductsPaginationStore((state) => state.totalCount);
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [formData, setFormData] = useState<ProductFormData>({
@@ -121,7 +123,7 @@ export default function ActionsPage() {
           </h1>
           <p className="mt-2 text-gray-600 dark:text-gray-400">
             Manage your products with full CRUD operations. Total products:{" "}
-            {tableRef.current?.getTotalCount() || 0}
+            {totalCount}
           </p>
         </div>
         <div className="flex gap-2">
@@ -150,7 +152,11 @@ export default function ActionsPage() {
           </div>
         }
       >
-        <PaginationTable ref={tableRef} {...productsConfig} />
+        <PaginationTable
+          ref={tableRef}
+          store={useProductsPaginationStore}
+          {...productsConfig}
+        />
       </Suspense>
 
       <Modal isOpen={isOpen} onClose={onClose} size="2xl">

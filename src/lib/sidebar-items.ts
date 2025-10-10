@@ -23,28 +23,46 @@ export interface MenuGroup {
 
 export const mainMenuItems: MenuGroup[] = [
   {
-    items: [
-      { label: "Dashboard", href: "/", icon: HouseIcon },
-    ],
+    items: [{ label: "Dashboard", href: "/", icon: HouseIcon }],
   },
   {
     groupLabel: "Table",
     items: [
-      { label: "Simple", href: "/simple", icon: TableIcon },
-      { label: "Pagination", href: "/pagination", icon: TableIcon },
-      { label: "Actions", href: "/actions", icon: TableIcon },
-      { label: "Rich Cell", href: "/rich-cell", icon: TableIcon },
-      { label: "Selectables", href: "/selectables", icon: TableIcon },
+      { label: "Simple", href: "/tables/simple", icon: TableIcon },
+      { label: "Pagination", href: "/tables/pagination", icon: TableIcon },
+      { label: "Actions", href: "/tables/actions", icon: TableIcon },
+      { label: "Rich Cell", href: "/tables/rich-cell", icon: TableIcon },
+      { label: "Selectables", href: "/tables/selectables", icon: TableIcon },
     ],
   },
   {
     groupLabel: "Forms",
     items: [
-      { label: "Authentication", href: "/forms/authentication", icon: TextboxIcon },
-      { label: "User & Profile", href: "/forms/user-profile", icon: TextboxIcon },
-      { label: "Data Management", href: "/forms/data-management", icon: TextboxIcon },
-      { label: "Settings & Config", href: "/forms/settings-config", icon: TextboxIcon },
-      { label: "Interaction & Filtering", href: "/forms/interaction-filtering", icon: TextboxIcon },
+      {
+        label: "Authentication",
+        href: "/forms/authentication",
+        icon: TextboxIcon,
+      },
+      {
+        label: "User & Profile",
+        href: "/forms/user-profile",
+        icon: TextboxIcon,
+      },
+      {
+        label: "Data Management",
+        href: "/forms/data-management",
+        icon: TextboxIcon,
+      },
+      {
+        label: "Settings & Config",
+        href: "/forms/settings-config",
+        icon: TextboxIcon,
+      },
+      {
+        label: "Interaction & Filtering",
+        href: "/forms/interaction-filtering",
+        icon: TextboxIcon,
+      },
     ],
   },
 ];

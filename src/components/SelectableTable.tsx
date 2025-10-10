@@ -24,14 +24,19 @@ import {
   type ColumnDef,
   type Row,
 } from "@tanstack/react-table";
-import { MagnifyingGlass, CaretUp, CaretDown, ArrowClockwise } from "@phosphor-icons/react";
+import {
+  MagnifyingGlass,
+  CaretUp,
+  CaretDown,
+  ArrowClockwise,
+} from "@phosphor-icons/react";
 
 // Reuse types from pagination-table
 import type {
   PaginationRequest,
   PaginationResponse,
   FilterConfig,
-} from "./pagination-table";
+} from "./PaginationTable";
 
 export interface SelectableTableConfig<TData> {
   columns: ColumnDef<TData>[];
@@ -269,7 +274,8 @@ function SelectableTableInner<TData extends { id?: string }>(
   };
 
   const isAllSelected = data.length > 0 && selectedKeys.size === data.length;
-  const isSomeSelected = selectedKeys.size > 0 && selectedKeys.size < data.length;
+  const isSomeSelected =
+    selectedKeys.size > 0 && selectedKeys.size < data.length;
 
   return (
     <div className={`flex flex-1 min-h-0 flex-col ${className}`}>
@@ -289,7 +295,9 @@ function SelectableTableInner<TData extends { id?: string }>(
             key={filter.key}
             size="md"
             placeholder={filter.placeholder}
-            selectedKeys={filterValues[filter.key] ? [filterValues[filter.key]] : []}
+            selectedKeys={
+              filterValues[filter.key] ? [filterValues[filter.key]] : []
+            }
             onChange={(e) => handleFilterChange(filter.key, e.target.value)}
             className="w-48"
             aria-label={filter.label}
@@ -339,9 +347,11 @@ function SelectableTableInner<TData extends { id?: string }>(
                             header.getContext()
                           )}
                           <span className="text-gray-400">
-                            {sortBy === header.column.id && sortOrder === "asc" ? (
+                            {sortBy === header.column.id &&
+                            sortOrder === "asc" ? (
                               <CaretUp size={16} weight="fill" />
-                            ) : sortBy === header.column.id && sortOrder === "desc" ? (
+                            ) : sortBy === header.column.id &&
+                              sortOrder === "desc" ? (
                               <CaretDown size={16} weight="fill" />
                             ) : (
                               <div className="flex flex-col">
@@ -360,7 +370,10 @@ function SelectableTableInner<TData extends { id?: string }>(
             <tbody>
               {isLoading ? (
                 <tr>
-                  <td colSpan={columns.length + 1} className="py-20 text-center">
+                  <td
+                    colSpan={columns.length + 1}
+                    className="py-20 text-center"
+                  >
                     <Spinner color="default" />
                   </td>
                 </tr>
@@ -387,7 +400,9 @@ function SelectableTableInner<TData extends { id?: string }>(
                       <td className="px-4 py-3 w-12">
                         <Checkbox
                           isSelected={isSelected}
-                          onValueChange={(checked) => handleSelectRow(rowId, checked)}
+                          onValueChange={(checked) =>
+                            handleSelectRow(rowId, checked)
+                          }
                           aria-label={`Select row ${rowId}`}
                         />
                       </td>
@@ -421,7 +436,9 @@ function SelectableTableInner<TData extends { id?: string }>(
             aria-label="Select page size"
           >
             {pageSizeOptions.map((option) => (
-              <SelectItem key={option.toString()}>{option.toString()}</SelectItem>
+              <SelectItem key={option.toString()}>
+                {option.toString()}
+              </SelectItem>
             ))}
           </Select>
         </div>
@@ -439,6 +456,8 @@ function SelectableTableInner<TData extends { id?: string }>(
 }
 
 // Export with forwardRef for generic component
-export const SelectableTable = forwardRef(SelectableTableInner) as <TData extends { id?: string }>(
+export const SelectableTable = forwardRef(SelectableTableInner) as <
+  TData extends { id?: string }
+>(
   props: SelectableTableConfig<TData> & { ref?: React.Ref<SelectableTableRef> }
 ) => ReturnType<typeof SelectableTableInner>;

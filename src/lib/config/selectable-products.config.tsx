@@ -10,9 +10,9 @@ import type { ColumnDef } from "@tanstack/react-table";
 import type {
   PaginationRequest,
   PaginationResponse,
-} from "@/components/pagination-table";
-import type { SelectableTableConfig } from "@/components/selectable-table";
-import type { FloatingAction } from "@/components/floating-action-menu";
+} from "@/components/PaginationTable";
+import type { SelectableTableConfig } from "@/components/SelectableTable";
+import type { FloatingAction } from "@/components/FloatingActionMenu";
 import {
   getSelectableProductsMock,
   type SelectableProduct,
@@ -64,9 +64,7 @@ const columns: ColumnDef<SelectableProduct>[] = [
     cell: (info) => (
       <div className="flex flex-col">
         <span className="font-medium">{info.getValue() as string}</span>
-        <span className="text-xs text-gray-500">
-          {info.row.original.sku}
-        </span>
+        <span className="text-xs text-gray-500">{info.row.original.sku}</span>
       </div>
     ),
   },
@@ -83,7 +81,9 @@ const columns: ColumnDef<SelectableProduct>[] = [
     accessorKey: "price",
     header: "Price",
     cell: (info) => (
-      <span className="font-medium">${(info.getValue() as number).toFixed(2)}</span>
+      <span className="font-medium">
+        ${(info.getValue() as number).toFixed(2)}
+      </span>
     ),
   },
   {
@@ -97,8 +97,8 @@ const columns: ColumnDef<SelectableProduct>[] = [
             stock === 0
               ? "text-red-600"
               : stock < 50
-                ? "text-orange-600"
-                : "text-green-600"
+              ? "text-orange-600"
+              : "text-green-600"
           }
         >
           {stock} units
@@ -113,8 +113,7 @@ const columns: ColumnDef<SelectableProduct>[] = [
       const status = info.getValue() as SelectableProduct["status"];
       return (
         <Chip color={statusColorMap[status]} size="sm" variant="flat">
-          {status.charAt(0).toUpperCase() +
-            status.slice(1).replace("-", " ")}
+          {status.charAt(0).toUpperCase() + status.slice(1).replace("-", " ")}
         </Chip>
       );
     },
@@ -242,7 +241,9 @@ export function createFloatingActionsConfig(options: {
       variant: "flat",
       onClick: async () => {
         if (
-          confirm(`Are you sure you want to delete ${selectedIds.length} product(s)?`)
+          confirm(
+            `Are you sure you want to delete ${selectedIds.length} product(s)?`
+          )
         ) {
           await bulkDeleteProducts(selectedIds);
           onClear();

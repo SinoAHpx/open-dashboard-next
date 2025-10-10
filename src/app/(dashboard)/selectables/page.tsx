@@ -18,8 +18,8 @@ import { Plus, Sparkle } from "@phosphor-icons/react";
 import {
   SelectableTable,
   type SelectableTableRef,
-} from "@/components/selectable-table";
-import { FloatingActionMenu } from "@/components/floating-action-menu";
+} from "@/components/SelectableTable";
+import { FloatingActionMenu } from "@/components/FloatingActionMenu";
 import {
   selectableProductsConfig,
   createFloatingActionsConfig,
@@ -39,7 +39,8 @@ export default function SelectablesPage() {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [selectedCount, setSelectedCount] = useState(0);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [editingProduct, setEditingProduct] = useState<SelectableProduct | null>(null);
+  const [editingProduct, setEditingProduct] =
+    useState<SelectableProduct | null>(null);
   const [formData, setFormData] = useState<ProductFormData>({
     name: "",
     sku: "",
@@ -107,7 +108,10 @@ export default function SelectablesPage() {
     tableRef.current?.refresh();
   };
 
-  const handleFormChange = (field: keyof ProductFormData, value: string | number) => {
+  const handleFormChange = (
+    field: keyof ProductFormData,
+    value: string | number
+  ) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -166,7 +170,13 @@ export default function SelectablesPage() {
         </div>
       </div>
 
-      <Suspense fallback={<div className="flex items-center justify-center py-20"><Spinner /></div>}>
+      <Suspense
+        fallback={
+          <div className="flex items-center justify-center py-20">
+            <Spinner />
+          </div>
+        }
+      >
         <SelectableTable ref={tableRef} {...selectableProductsConfig} />
       </Suspense>
 
@@ -212,7 +222,9 @@ export default function SelectablesPage() {
                   type="number"
                   placeholder="0.00"
                   value={formData.price.toString()}
-                  onValueChange={(value) => handleFormChange("price", Number.parseFloat(value) || 0)}
+                  onValueChange={(value) =>
+                    handleFormChange("price", Number.parseFloat(value) || 0)
+                  }
                   startContent={<span className="text-gray-500">$</span>}
                   isRequired
                 />
@@ -221,7 +233,9 @@ export default function SelectablesPage() {
                   type="number"
                   placeholder="0"
                   value={formData.stock.toString()}
-                  onValueChange={(value) => handleFormChange("stock", Number.parseInt(value) || 0)}
+                  onValueChange={(value) =>
+                    handleFormChange("stock", Number.parseInt(value) || 0)
+                  }
                   isRequired
                 />
               </div>

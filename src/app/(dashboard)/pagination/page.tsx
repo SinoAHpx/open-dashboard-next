@@ -1,7 +1,10 @@
 "use client";
 
 import { useRef, Suspense } from "react";
-import { PaginationTable, type PaginationTableRef } from "@/components/pagination-table";
+import {
+  PaginationTable,
+  type PaginationTableRef,
+} from "@/components/PaginationTable";
 import { paginationUsersConfig } from "@/lib/config/pagination-users.config";
 import { Spinner } from "@heroui/react";
 
@@ -20,7 +23,13 @@ export default function PaginationPage() {
         </p>
       </div>
 
-      <Suspense fallback={<div className="flex items-center justify-center py-20"><Spinner /></div>}>
+      <Suspense
+        fallback={
+          <div className="flex items-center justify-center py-20">
+            <Spinner />
+          </div>
+        }
+      >
         <PaginationTable ref={tableRef} {...paginationUsersConfig} />
       </Suspense>
     </div>

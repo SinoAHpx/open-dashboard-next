@@ -4,7 +4,7 @@ import { useRef, useMemo, Suspense } from "react";
 import {
   PaginationTable,
   type PaginationTableRef,
-} from "@/components/pagination-table";
+} from "@/components/PaginationTable";
 import { createRichCellsConfig } from "@/lib/config/pagination-richcells.config";
 import { type RichCellTask } from "@/lib/api-wrapper/richcell";
 import { Button, useDisclosure, Spinner } from "@heroui/react";
@@ -79,7 +79,13 @@ export default function RichCellPage() {
         </Button>
       </div>
 
-      <Suspense fallback={<div className="flex items-center justify-center py-20"><Spinner /></div>}>
+      <Suspense
+        fallback={
+          <div className="flex items-center justify-center py-20">
+            <Spinner />
+          </div>
+        }
+      >
         <PaginationTable ref={tableRef} {...config} />
       </Suspense>
     </div>

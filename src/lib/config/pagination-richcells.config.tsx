@@ -23,7 +23,7 @@ import type {
   PaginationTableConfig,
   PaginationRequest,
   PaginationResponse,
-} from "@/components/pagination-table";
+} from "@/components/PaginationTable";
 import { useState } from "react";
 import {
   getRichCellTasksMock,
@@ -200,8 +200,8 @@ export function createRichCellsConfig(options: {
                 progress === 100
                   ? "success"
                   : progress >= 50
-                    ? "primary"
-                    : "warning"
+                  ? "primary"
+                  : "warning"
               }
               size="sm"
               showValueLabel
@@ -212,7 +212,9 @@ export function createRichCellsConfig(options: {
                 size="sm"
                 variant="flat"
                 color="primary"
-                onPress={() => onUpdateProgress(task.id, Math.min(100, progress + 10))}
+                onPress={() =>
+                  onUpdateProgress(task.id, Math.min(100, progress + 10))
+                }
                 className="text-xs h-6"
               >
                 +10%
@@ -221,7 +223,9 @@ export function createRichCellsConfig(options: {
                 size="sm"
                 variant="flat"
                 color="default"
-                onPress={() => onUpdateProgress(task.id, Math.max(0, progress - 10))}
+                onPress={() =>
+                  onUpdateProgress(task.id, Math.max(0, progress - 10))
+                }
                 className="text-xs h-6"
               >
                 -10%

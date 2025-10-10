@@ -12,7 +12,7 @@ import type {
   PaginationTableConfig,
   PaginationRequest,
   PaginationResponse,
-} from "@/components/pagination-table";
+} from "@/components/PaginationTable";
 import { getPaginatedProducts, type Product } from "@/lib/api-wrapper/products";
 
 // Adapter function to convert API response to generic format
@@ -107,7 +107,8 @@ export function createProductsConfig(options: {
         const status = info.getValue() as Product["status"];
         return (
           <Chip color={statusColorMap[status]} size="sm" variant="flat">
-            {status.replace("_", " ").charAt(0).toUpperCase() + status.slice(1).replace("_", " ")}
+            {status.replace("_", " ").charAt(0).toUpperCase() +
+              status.slice(1).replace("_", " ")}
           </Chip>
         );
       },
@@ -120,12 +121,7 @@ export function createProductsConfig(options: {
         return (
           <Dropdown>
             <DropdownTrigger>
-              <Button
-                isIconOnly
-                size="sm"
-                variant="light"
-                aria-label="Actions"
-              >
+              <Button isIconOnly size="sm" variant="light" aria-label="Actions">
                 <DotsThreeVertical size={18} weight="bold" />
               </Button>
             </DropdownTrigger>

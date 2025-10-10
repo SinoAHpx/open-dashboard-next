@@ -4,8 +4,11 @@ import type {
   PaginationTableConfig,
   PaginationRequest,
   PaginationResponse,
-} from "@/components/pagination-table";
-import { getPaginationUsers, type PaginationUser } from "@/lib/api-wrapper/pagination";
+} from "@/components/PaginationTable";
+import {
+  getPaginationUsers,
+  type PaginationUser,
+} from "@/lib/api-wrapper/pagination";
 
 // Adapter function to convert API response to generic format
 async function fetchPaginationUsers(

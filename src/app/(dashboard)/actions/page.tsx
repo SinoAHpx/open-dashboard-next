@@ -15,7 +15,10 @@ import {
   Spinner,
 } from "@heroui/react";
 import { Plus, Sparkle } from "@phosphor-icons/react";
-import { PaginationTable, type PaginationTableRef } from "@/components/pagination-table";
+import {
+  PaginationTable,
+  type PaginationTableRef,
+} from "@/components/PaginationTable";
 import { createProductsConfig } from "@/lib/config/pagination-products.config";
 import {
   addProduct,
@@ -86,7 +89,10 @@ export default function ActionsPage() {
     tableRef.current?.refresh();
   };
 
-  const handleFormChange = (field: keyof ProductFormData, value: string | number) => {
+  const handleFormChange = (
+    field: keyof ProductFormData,
+    value: string | number
+  ) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -97,7 +103,7 @@ export default function ActionsPage() {
 
   // Create config with callbacks
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
-    const productsConfig = useMemo(
+  const productsConfig = useMemo(
     () =>
       createProductsConfig({
         onEdit: handleEdit,
@@ -137,7 +143,13 @@ export default function ActionsPage() {
         </div>
       </div>
 
-      <Suspense fallback={<div className="flex items-center justify-center py-20"><Spinner /></div>}>
+      <Suspense
+        fallback={
+          <div className="flex items-center justify-center py-20">
+            <Spinner />
+          </div>
+        }
+      >
         <PaginationTable ref={tableRef} {...productsConfig} />
       </Suspense>
 
@@ -177,7 +189,9 @@ export default function ActionsPage() {
                   type="number"
                   placeholder="0.00"
                   value={formData.price.toString()}
-                  onValueChange={(value) => handleFormChange("price", Number.parseFloat(value) || 0)}
+                  onValueChange={(value) =>
+                    handleFormChange("price", Number.parseFloat(value) || 0)
+                  }
                   startContent={<span className="text-gray-500">$</span>}
                   isRequired
                 />
@@ -186,7 +200,9 @@ export default function ActionsPage() {
                   type="number"
                   placeholder="0"
                   value={formData.stock.toString()}
-                  onValueChange={(value) => handleFormChange("stock", Number.parseInt(value) || 0)}
+                  onValueChange={(value) =>
+                    handleFormChange("stock", Number.parseInt(value) || 0)
+                  }
                   isRequired
                 />
               </div>
@@ -205,7 +221,9 @@ export default function ActionsPage() {
                 label="Description"
                 placeholder="Enter product description"
                 value={formData.description}
-                onValueChange={(value) => handleFormChange("description", value)}
+                onValueChange={(value) =>
+                  handleFormChange("description", value)
+                }
               />
             </div>
           </ModalBody>

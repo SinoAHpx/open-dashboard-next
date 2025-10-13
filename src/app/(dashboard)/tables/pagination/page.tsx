@@ -1,26 +1,23 @@
 "use client";
 
-import { Suspense } from "react";
-import { PaginationTable } from "@/components/PaginationTable";
-import { paginationUsersConfig } from "@/lib/config/pagination-users.config";
-import { usePaginationUsersStore } from "@/stores/dashboard/pagination-users-store";
+import { Suspense, useMemo } from "react";
 import { Spinner } from "@heroui/react";
+import { PaginationTable } from "@/components/PaginationTable";
+import { TablePage } from "@/components/table/TablePage";
+import { paginationUsersModule } from "@/modules/tables/pagination-users.module";
 
 export default function PaginationPage() {
-  const totalCount = usePaginationUsersStore((state) => state.totalCount);
+  const { store, config } = useMemo(
+    () => paginationUsersModule.createInstance(undefined),
+    []
+  );
+  const totalCount = store((state) => state.totalCount);
 
   return (
-    <div className="flex flex-1 min-h-0 flex-col p-8">
-      <div className="mb-6 shrink-0">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-          Pagination Table
-        </h1>
-        <p className="mt-2 text-gray-600 dark:text-gray-400">
-          Server-side pagination with TanStack Table and Hero UI. Total records:{" "}
-          {totalCount}
-        </p>
-      </div>
-
+    <TablePage
+      title={paginationUsersModule.meta.title}
+      description={`${paginationUsersModule.meta.description} Total records: ${totalCount}`}
+    >
       <Suspense
         fallback={
           <div className="flex items-center justify-center py-20">
@@ -28,11 +25,8 @@ export default function PaginationPage() {
           </div>
         }
       >
-        <PaginationTable
-          store={usePaginationUsersStore}
-          {...paginationUsersConfig}
-        />
+        <PaginationTable store={store} {...config} />
       </Suspense>
-    </div>
+    </TablePage>
   );
 }

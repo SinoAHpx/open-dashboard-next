@@ -1,6 +1,7 @@
+/** biome-ignore-all lint/correctness/useExhaustiveDependencies: <explanation> */
 "use client";
 
-import { useRef, useState, useMemo, Suspense } from "react";
+import { useRef, useState, useMemo, useCallback, Suspense } from "react";
 import {
   Button,
   Modal,
@@ -19,7 +20,8 @@ import {
   PaginationTable,
   type PaginationTableRef,
 } from "@/components/PaginationTable";
-import { createProductsConfig } from "@/lib/config/actions-products.config";
+import { TablePage } from "@/components/table/TablePage";
+import { productsTableModule } from "@/modules/tables/products-table.module";
 import {
   addProduct,
   updateProduct,
@@ -27,13 +29,11 @@ import {
   generateSampleProducts,
   type Product,
 } from "@/lib/api-wrapper/products";
-import { useProductsPaginationStore } from "@/stores/dashboard/actions-products-store";
 
 type ProductFormData = Omit<Product, "id" | "createdAt">;
 
 export default function ActionsPage() {
   const tableRef = useRef<PaginationTableRef>(null);
-  const totalCount = useProductsPaginationStore((state) => state.totalCount);
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [formData, setFormData] = useState<ProductFormData>({
@@ -46,7 +46,7 @@ export default function ActionsPage() {
     sku: "",
   });
 
-  const handleAddNew = () => {
+  const handleAddNew = useCallback(() => {
     setEditingProduct(null);
     setFormData({
       name: "",
@@ -58,30 +58,36 @@ export default function ActionsPage() {
       sku: "",
     });
     onOpen();
-  };
+  }, [onOpen]);
 
-  const handleEdit = (product: Product) => {
-    setEditingProduct(product);
-    setFormData({
-      name: product.name,
-      category: product.category,
-      price: product.price,
-      stock: product.stock,
-      status: product.status,
-      description: product.description,
-      sku: product.sku,
-    });
-    onOpen();
-  };
+  const handleEdit = useCallback(
+    (product: Product) => {
+      setEditingProduct(product);
+      setFormData({
+        name: product.name,
+        category: product.category,
+        price: product.price,
+        stock: product.stock,
+        status: product.status,
+        description: product.description,
+        sku: product.sku,
+      });
+      onOpen();
+    },
+    [onOpen]
+  );
 
-  const handleDelete = (id: string) => {
-    if (confirm("Are you sure you want to delete this product?")) {
-      deleteProduct(id);
-      tableRef.current?.refresh();
-    }
-  };
+  const handleDelete = useCallback(
+    (id: string) => {
+      if (confirm("Are you sure you want to delete this product?")) {
+        deleteProduct(id);
+        tableRef.current?.refresh();
+      }
+    },
+    [tableRef]
+  );
 
-  const handleSubmit = () => {
+  const handleSubmit = useCallback(() => {
     if (editingProduct) {
       updateProduct(editingProduct.id, formData);
     } else {
@@ -89,44 +95,41 @@ export default function ActionsPage() {
     }
     onClose();
     tableRef.current?.refresh();
-  };
+  }, [editingProduct, formData, onClose, tableRef]);
 
-  const handleFormChange = (
-    field: keyof ProductFormData,
-    value: string | number
-  ) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-  };
-
-  const handleGenerateSamples = () => {
-    generateSampleProducts(50);
-    tableRef.current?.refresh();
-  };
-
-  // Create config with callbacks
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
-  const productsConfig = useMemo(
-    () =>
-      createProductsConfig({
-        onEdit: handleEdit,
-        onDelete: handleDelete,
-      }),
+  const handleFormChange = useCallback(
+    (field: keyof ProductFormData, value: string | number) => {
+      setFormData((previous) => ({ ...previous, [field]: value }));
+    },
     []
   );
 
+  const handleGenerateSamples = useCallback(() => {
+    generateSampleProducts(50);
+    tableRef.current?.refresh();
+  }, [tableRef]);
+
+  const { store, config } = useMemo(
+    () =>
+      productsTableModule.createInstance({
+        onEdit: handleEdit,
+        onDelete: handleDelete,
+      }),
+    [handleDelete, handleEdit]
+  );
+
+  const totalCount = store((state) => state.totalCount);
+
   return (
-    <div className="flex flex-1 min-h-0 flex-col p-8">
-      <div className="mb-6 shrink-0 flex items-end justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-            Product Management
-          </h1>
-          <p className="mt-2 text-gray-600 dark:text-gray-400">
-            Manage your products with full CRUD operations. Total products:{" "}
-            {totalCount}
-          </p>
-        </div>
-        <div className="flex gap-2">
+    <TablePage
+      title={productsTableModule.meta.title}
+      description={
+        <>
+          {productsTableModule.meta.description} Total products: {totalCount}
+        </>
+      }
+      actions={
+        <>
           <Button
             color="secondary"
             variant="flat"
@@ -142,9 +145,9 @@ export default function ActionsPage() {
           >
             Add Product
           </Button>
-        </div>
-      </div>
-
+        </>
+      }
+    >
       <Suspense
         fallback={
           <div className="flex items-center justify-center py-20">
@@ -152,11 +155,7 @@ export default function ActionsPage() {
           </div>
         }
       >
-        <PaginationTable
-          ref={tableRef}
-          store={useProductsPaginationStore}
-          {...productsConfig}
-        />
+        <PaginationTable ref={tableRef} store={store} {...config} />
       </Suspense>
 
       <Modal isOpen={isOpen} onClose={onClose} size="2xl">
@@ -207,7 +206,7 @@ export default function ActionsPage() {
                   placeholder="0"
                   value={formData.stock.toString()}
                   onValueChange={(value) =>
-                    handleFormChange("stock", Number.parseInt(value) || 0)
+                    handleFormChange("stock", Number.parseInt(value, 10) || 0)
                   }
                   isRequired
                 />
@@ -216,7 +215,9 @@ export default function ActionsPage() {
                 label="Status"
                 placeholder="Select status"
                 selectedKeys={[formData.status]}
-                onChange={(e) => handleFormChange("status", e.target.value)}
+                onChange={(event) =>
+                  handleFormChange("status", event.target.value)
+                }
                 isRequired
               >
                 <SelectItem key="available">Available</SelectItem>
@@ -243,6 +244,6 @@ export default function ActionsPage() {
           </ModalFooter>
         </ModalContent>
       </Modal>
-    </div>
+    </TablePage>
   );
 }

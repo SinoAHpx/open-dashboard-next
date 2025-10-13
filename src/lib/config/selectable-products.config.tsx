@@ -5,6 +5,7 @@ import {
   CheckCircle,
   XCircle,
   Package,
+  PencilSimple,
 } from "@phosphor-icons/react";
 import type { ColumnDef } from "@tanstack/react-table";
 import type {
@@ -183,10 +184,26 @@ export function createFloatingActionsConfig(options: {
   selectedIds: string[];
   onClear: () => void;
   onRefresh: () => void;
+  onEdit?: (id: string) => void;
 }): FloatingAction[] {
-  const { selectedIds, onClear, onRefresh } = options;
+  const { selectedIds, onClear, onRefresh, onEdit } = options;
 
-  return [
+  const actions: FloatingAction[] = [];
+
+  if (selectedIds.length === 1 && onEdit) {
+    actions.push({
+      key: "edit",
+      label: "Edit",
+      icon: <PencilSimple size={16} weight="bold" />,
+      color: "primary",
+      variant: "flat",
+      onClick: () => {
+        onEdit(selectedIds[0]);
+      },
+    });
+  }
+
+  actions.push(
     {
       key: "mark-active",
       label: "Active",
@@ -250,6 +267,8 @@ export function createFloatingActionsConfig(options: {
           onRefresh();
         }
       },
-    },
-  ];
+    }
+  );
+
+  return actions;
 }

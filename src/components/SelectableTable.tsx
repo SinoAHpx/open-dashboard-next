@@ -1,42 +1,22 @@
 "use client";
 
-import { useEffect, useState, forwardRef, useImperativeHandle } from "react";
+import { useCallback, useEffect, useState, forwardRef, useImperativeHandle } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableColumn,
-  TableRow,
-  TableCell,
-  Pagination,
-  Select,
-  SelectItem,
-  Spinner,
-  Input,
-  Button,
-  Checkbox,
-} from "@heroui/react";
+import { Checkbox, Spinner } from "@heroui/react";
 import {
   useReactTable,
   getCoreRowModel,
   flexRender,
   type ColumnDef,
-  type Row,
 } from "@tanstack/react-table";
-import {
-  MagnifyingGlass,
-  CaretUp,
-  CaretDown,
-  ArrowClockwise,
-} from "@phosphor-icons/react";
-
-// Reuse types from pagination-table
+import { CaretUp, CaretDown } from "@phosphor-icons/react";
+import { TableToolbar } from "@/components/table/TableToolbar";
+import { TablePaginationControls } from "@/components/table/TablePaginationControls";
 import type {
   PaginationRequest,
   PaginationResponse,
-  FilterConfig,
 } from "./PaginationTable";
+import type { FilterConfig, TableStateSnapshot } from "./table/types";
 
 export interface SelectableTableConfig<TData> {
   columns: ColumnDef<TData>[];
@@ -51,6 +31,11 @@ export interface SelectableTableConfig<TData> {
   getRowId?: (row: TData) => string; // Function to get unique ID from row data
 }
 
+export interface SelectionChangePayload<TData> {
+  ids: string[];
+  rows: TData[];
+}
+
 export interface SelectableTableRef {
   refresh: () => void;
   resetPage: () => void;
@@ -60,6 +45,12 @@ export interface SelectableTableRef {
   getSelectedKeys: () => Set<string>;
   clearSelection: () => void;
   selectAll: () => void;
+}
+
+export interface SelectableTableProps<TData>
+  extends SelectableTableConfig<TData> {
+  onStateChange?: (snapshot: TableStateSnapshot) => void;
+  onSelectionChange?: (payload: SelectionChangePayload<TData>) => void;
 }
 
 const DEFAULT_PAGE_SIZE_OPTIONS = [5, 10, 15, 20, 25, 50];
@@ -76,7 +67,9 @@ function SelectableTableInner<TData extends { id?: string }>(
     emptyMessage = "No data found",
     className = "",
     getRowId = (row) => (row as TData & { id: string }).id,
-  }: SelectableTableConfig<TData>,
+    onStateChange,
+    onSelectionChange,
+  }: SelectableTableProps<TData>,
   ref: React.Ref<SelectableTableRef>
 ) {
   const router = useRouter();
@@ -97,6 +90,35 @@ function SelectableTableInner<TData extends { id?: string }>(
 
   // Selection state
   const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
+
+  const emitSelectionChange = useCallback(
+    (nextSelected: Set<string>) => {
+      if (!onSelectionChange) {
+        return;
+      }
+
+      const selectedRows = data.filter((row) =>
+        nextSelected.has(getRowId(row))
+      );
+
+      onSelectionChange({
+        ids: Array.from(nextSelected),
+        rows: selectedRows,
+      });
+    },
+    [data, getRowId, onSelectionChange]
+  );
+
+  const updateSelection = useCallback(
+    (updater: (current: Set<string>) => Set<string>) => {
+      setSelectedKeys((previous) => {
+        const next = updater(new Set(previous));
+        emitSelectionChange(next);
+        return next;
+      });
+    },
+    [emitSelectionChange]
+  );
 
   // Initialize from URL on mount
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
@@ -133,21 +155,6 @@ function SelectableTableInner<TData extends { id?: string }>(
     getRowId: (row) => getRowId(row),
   });
 
-  // Expose methods via ref
-  useImperativeHandle(ref, () => ({
-    refresh: handleRefresh,
-    resetPage: () => setPage(1),
-    getTotalCount: () => totalCount,
-    getCurrentPage: () => page,
-    isLoading: () => isLoading,
-    getSelectedKeys: () => selectedKeys,
-    clearSelection: () => setSelectedKeys(new Set()),
-    selectAll: () => {
-      const allIds = new Set(data.map((row) => getRowId(row)));
-      setSelectedKeys(allIds);
-    },
-  }));
-
   // Sync URL with state
   useEffect(() => {
     const params = new URLSearchParams();
@@ -169,38 +176,19 @@ function SelectableTableInner<TData extends { id?: string }>(
     router.replace(`?${params.toString()}`, { scroll: false });
   }, [page, pageSize, search, filterValues, sortBy, sortOrder, router]);
 
-  // Fetch data from server
   useEffect(() => {
-    const loadData = async () => {
-      setIsLoading(true);
-      try {
-        const requestParams: PaginationRequest = {
-          page,
-          pageSize,
-          search,
-          sortBy,
-          sortOrder,
-          ...filterValues,
-        };
-        const response = await fetchData(requestParams);
-        setData(response.data);
-        setTotalPages(response.pagination.totalPages);
-        setTotalCount(response.pagination.totalCount);
-      } catch (error) {
-        console.error("Failed to load data:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+    onStateChange?.({
+      page,
+      pageSize,
+      totalPages,
+      totalCount,
+      isLoading,
+    });
+  }, [isLoading, onStateChange, page, pageSize, totalCount, totalPages]);
 
-    loadData();
-  }, [page, pageSize, search, filterValues, sortBy, sortOrder, fetchData]);
-
-  const handlePageSizeChange = (value: string) => {
-    const newPageSize = Number.parseInt(value, 10);
-    setPageSize(newPageSize);
-    setPage(1);
-  };
+  useEffect(() => {
+    emitSelectionChange(selectedKeys);
+  }, [emitSelectionChange, selectedKeys]);
 
   const handleSort = (columnId: string) => {
     if (sortBy === columnId) {
@@ -231,7 +219,7 @@ function SelectableTableInner<TData extends { id?: string }>(
     setPage(1); // Reset to first page when filter changes
   };
 
-  const handleRefresh = async () => {
+  const handleRefresh = useCallback(async () => {
     setIsLoading(true);
     try {
       const requestParams: PaginationRequest = {
@@ -251,27 +239,56 @@ function SelectableTableInner<TData extends { id?: string }>(
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [fetchData, filterValues, page, pageSize, search, sortBy, sortOrder]);
+
+  // Fetch data on parameter change
+  useEffect(() => {
+    void handleRefresh();
+  }, [handleRefresh]);
 
   // Selection handlers
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
       const allIds = new Set(data.map((row) => getRowId(row)));
-      setSelectedKeys(allIds);
+      updateSelection(() => allIds);
     } else {
-      setSelectedKeys(new Set());
+      updateSelection(() => new Set());
     }
   };
 
   const handleSelectRow = (rowId: string, checked: boolean) => {
-    const newSelectedKeys = new Set(selectedKeys);
-    if (checked) {
-      newSelectedKeys.add(rowId);
-    } else {
-      newSelectedKeys.delete(rowId);
-    }
-    setSelectedKeys(newSelectedKeys);
+    updateSelection((current) => {
+      if (checked) {
+        current.add(rowId);
+      } else {
+        current.delete(rowId);
+      }
+      return current;
+    });
   };
+
+  // Expose methods via ref
+  useImperativeHandle(
+    ref,
+    () => ({
+      refresh: () => {
+        void handleRefresh();
+      },
+      resetPage: () => setPage(1),
+      getTotalCount: () => totalCount,
+      getCurrentPage: () => page,
+      isLoading: () => isLoading,
+      getSelectedKeys: () => selectedKeys,
+      clearSelection: () => {
+        updateSelection(() => new Set());
+      },
+      selectAll: () => {
+        const allIds = new Set(data.map((row) => getRowId(row)));
+        updateSelection(() => allIds);
+      },
+    }),
+    [data, getRowId, handleRefresh, isLoading, page, selectedKeys, totalCount, updateSelection]
+  );
 
   const isAllSelected = data.length > 0 && selectedKeys.size === data.length;
   const isSomeSelected =
@@ -279,44 +296,19 @@ function SelectableTableInner<TData extends { id?: string }>(
 
   return (
     <div className={`flex flex-1 min-h-0 flex-col ${className}`}>
-      <div className="mb-4 flex shrink-0 items-center gap-4 overflow-hidden">
-        {enableSearch && (
-          <Input
-            isClearable
-            placeholder={searchPlaceholder}
-            startContent={<MagnifyingGlass size={18} />}
-            value={search}
-            onValueChange={handleSearchChange}
-            className="flex-1"
-          />
-        )}
-        {filters.map((filter) => (
-          <Select
-            key={filter.key}
-            size="md"
-            placeholder={filter.placeholder}
-            selectedKeys={
-              filterValues[filter.key] ? [filterValues[filter.key]] : []
-            }
-            onChange={(e) => handleFilterChange(filter.key, e.target.value)}
-            className="w-48"
-            aria-label={filter.label}
-          >
-            {filter.options.map((option) => (
-              <SelectItem key={option.key}>{option.label}</SelectItem>
-            ))}
-          </Select>
-        ))}
-        <Button
-          isIconOnly
-          variant="flat"
-          onPress={handleRefresh}
-          isLoading={isLoading}
-          aria-label="Refresh"
-        >
-          <ArrowClockwise size={20} />
-        </Button>
-      </div>
+      <TableToolbar
+        enableSearch={enableSearch}
+        searchValue={search}
+        onSearchChange={handleSearchChange}
+        searchPlaceholder={searchPlaceholder}
+        filters={filters}
+        filterValues={filterValues}
+        onFilterChange={handleFilterChange}
+        onRefresh={() => {
+          void handleRefresh();
+        }}
+        isLoading={isLoading}
+      />
 
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
         <div className="flex-1 overflow-auto">
@@ -423,34 +415,17 @@ function SelectableTableInner<TData extends { id?: string }>(
         </div>
       </div>
 
-      <div className="mt-6 flex shrink-0 items-center justify-between overflow-hidden">
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-gray-600 dark:text-gray-400">
-            Rows per page:
-          </span>
-          <Select
-            size="sm"
-            selectedKeys={[pageSize.toString()]}
-            onChange={(e) => handlePageSizeChange(e.target.value)}
-            className="w-20"
-            aria-label="Select page size"
-          >
-            {pageSizeOptions.map((option) => (
-              <SelectItem key={option.toString()}>
-                {option.toString()}
-              </SelectItem>
-            ))}
-          </Select>
-        </div>
-
-        <Pagination
-          total={totalPages}
-          page={page}
-          onChange={setPage}
-          showControls
-          color="primary"
-        />
-      </div>
+      <TablePaginationControls
+        page={page}
+        totalPages={totalPages}
+        pageSize={pageSize}
+        pageSizeOptions={pageSizeOptions}
+        onPageChange={setPage}
+        onPageSizeChange={(value) => {
+          setPageSize(value);
+          setPage(1);
+        }}
+      />
     </div>
   );
 }
@@ -459,5 +434,5 @@ function SelectableTableInner<TData extends { id?: string }>(
 export const SelectableTable = forwardRef(SelectableTableInner) as <
   TData extends { id?: string }
 >(
-  props: SelectableTableConfig<TData> & { ref?: React.Ref<SelectableTableRef> }
+  props: SelectableTableProps<TData> & { ref?: React.Ref<SelectableTableRef> }
 ) => ReturnType<typeof SelectableTableInner>;

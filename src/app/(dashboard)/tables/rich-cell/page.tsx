@@ -1,77 +1,75 @@
+/** biome-ignore-all lint/correctness/useExhaustiveDependencies: <explanation> */
 "use client";
 
-import { useRef, useMemo, Suspense } from "react";
+import { useRef, useCallback, useMemo, Suspense } from "react";
 import {
   PaginationTable,
   type PaginationTableRef,
 } from "@/components/PaginationTable";
-import { createRichCellsConfig } from "@/lib/config/richcells-tasks.config";
-import { type RichCellTask } from "@/lib/api-wrapper/richcell";
+import { TablePage } from "@/components/table/TablePage";
 import { Button, useDisclosure, Spinner } from "@heroui/react";
 import { Plus } from "@phosphor-icons/react";
-import { useRichCellTasksStore } from "@/stores/dashboard/richcell-tasks-store";
+import type { RichCellTask } from "@/lib/api-wrapper/richcell";
+import { richCellTasksModule } from "@/modules/tables/richcell-tasks.module";
 
 export default function RichCellPage() {
   const tableRef = useRef<PaginationTableRef>(null);
   const { onOpen } = useDisclosure();
-  const totalCount = useRichCellTasksStore((state) => state.totalCount);
 
-  const handleEdit = (task: RichCellTask) => {
+  const handleEdit = useCallback((task: RichCellTask) => {
     console.log("Editing task:", task);
-    // Here you would open a modal or form to edit the task
-  };
-
-  const handleDelete = (id: string) => {
-    if (confirm("Are you sure you want to delete this task?")) {
-      console.log("Deleting task:", id);
-      // Here you would call your API to delete the task
-      tableRef.current?.refresh();
-    }
-  };
-
-  const handleUpdateProgress = (id: string, progress: number) => {
-    console.log(`Updating task ${id} progress to ${progress}%`);
-    // Here you would call your API to update the progress
-    tableRef.current?.refresh();
-  };
-
-  const handleUpdateTask = (id: string, field: string, value: string) => {
-    console.log(`Updating task ${id} field ${field} to ${value}`);
-    // Here you would call your API to update the task
-    tableRef.current?.refresh();
-  };
-
-  const handleAddTask = () => {
-    console.log("Adding new task");
-    // Here you would open a modal or form to add a new task
     onOpen();
-  };
+  }, [onOpen]);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
-  const config = useMemo(
+  const handleDelete = useCallback(
+    (id: string) => {
+      if (confirm("Are you sure you want to delete this task?")) {
+        console.log("Deleting task:", id);
+        tableRef.current?.refresh();
+      }
+    },
+    [tableRef]
+  );
+
+  const handleUpdateProgress = useCallback(
+    (id: string, progress: number) => {
+      console.log(`Updating task ${id} progress to ${progress}%`);
+      tableRef.current?.refresh();
+    },
+    [tableRef]
+  );
+
+  const handleUpdateTask = useCallback(
+    (id: string, field: string, value: string) => {
+      console.log(`Updating task ${id} field ${field} to ${value}`);
+      tableRef.current?.refresh();
+    },
+    [tableRef]
+  );
+
+  const handleAddTask = useCallback(() => {
+    console.log("Adding new task");
+    onOpen();
+  }, [onOpen]);
+
+  const { store, config } = useMemo(
     () =>
-      createRichCellsConfig({
+      richCellTasksModule.createInstance({
         onEdit: handleEdit,
         onDelete: handleDelete,
         onUpdateProgress: handleUpdateProgress,
         onUpdateTask: handleUpdateTask,
       }),
-    []
+    [handleDelete, handleEdit, handleUpdateProgress, handleUpdateTask]
   );
 
+  const totalCount = store((state) => state.totalCount);
+
   return (
-    <div className="flex flex-1 min-h-0 flex-col p-8">
-      <div className="mb-6 shrink-0 flex justify-between items-end  ">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-            Rich Cell Table
-          </h1>
-          <p className="mt-2 text-gray-600 dark:text-gray-400">
-            Advanced table with avatars, editable inputs, progress bars, and
-            more interactive components. Total tasks:{" "}
-            {totalCount}
-          </p>
-        </div>
+    <TablePage
+      title={richCellTasksModule.meta.title}
+      description={`${richCellTasksModule.meta.description} Total tasks: ${totalCount}`}
+      actions={
         <Button
           color="primary"
           startContent={<Plus size={18} weight="bold" />}
@@ -79,8 +77,8 @@ export default function RichCellPage() {
         >
           Add Task
         </Button>
-      </div>
-
+      }
+    >
       <Suspense
         fallback={
           <div className="flex items-center justify-center py-20">
@@ -88,12 +86,8 @@ export default function RichCellPage() {
           </div>
         }
       >
-        <PaginationTable
-          ref={tableRef}
-          store={useRichCellTasksStore}
-          {...config}
-        />
+        <PaginationTable ref={tableRef} store={store} {...config} />
       </Suspense>
-    </div>
+    </TablePage>
   );
 }

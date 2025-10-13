@@ -2,14 +2,17 @@
 
 import { useCallback, useEffect, forwardRef, useImperativeHandle } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Pagination, Select, SelectItem, Spinner, Input, Button } from "@heroui/react";
+import { Spinner } from "@heroui/react";
 import {
   useReactTable,
   getCoreRowModel,
   flexRender,
   type ColumnDef,
 } from "@tanstack/react-table";
-import { MagnifyingGlass, CaretUp, CaretDown, ArrowClockwise } from "@phosphor-icons/react";
+import { CaretUp, CaretDown } from "@phosphor-icons/react";
+import { TableToolbar } from "@/components/table/TableToolbar";
+import { TablePaginationControls } from "@/components/table/TablePaginationControls";
+import type { FilterConfig, TableStateSnapshot } from "@/components/table/types";
 import type {
   PaginationStoreHook,
   PaginationStoreState,
@@ -35,16 +38,6 @@ export interface PaginationResponse<TData> {
   };
 }
 
-export interface FilterConfig {
-  key: string;
-  label: string;
-  placeholder: string;
-  options: Array<{
-    key: string;
-    label: string;
-  }>;
-}
-
 export interface PaginationTableConfig<TData> {
   columns: ColumnDef<TData>[];
   fetchData: (params: PaginationRequest) => Promise<PaginationResponse<TData>>;
@@ -59,7 +52,10 @@ export interface PaginationTableConfig<TData> {
 
 export interface PaginationTableProps<TData> extends PaginationTableConfig<TData> {
   store: PaginationStoreHook<TData>;
+  onStateChange?: (snapshot: TableStateSnapshot) => void;
 }
+
+export type { FilterConfig } from "@/components/table/types";
 
 export interface PaginationTableRef {
   refresh: () => void;
@@ -83,6 +79,7 @@ function PaginationTableInner<TData>(
     emptyMessage = "No data found",
     className = "",
     store,
+    onStateChange,
   }: PaginationTableProps<TData>,
   ref: React.Ref<PaginationTableRef>
 ) {
@@ -199,10 +196,15 @@ function PaginationTableInner<TData>(
     void fetchAndUpdate();
   }, [fetchAndUpdate, filterValues, page, pageSize, search, sortBy, sortOrder]);
 
-  const handlePageSizeChange = (value: string) => {
-    const newPageSize = Number.parseInt(value, 10);
-    mergeState({ pageSize: newPageSize, page: 1 });
-  };
+  useEffect(() => {
+    onStateChange?.({
+      page,
+      pageSize,
+      totalPages,
+      totalCount,
+      isLoading,
+    });
+  }, [isLoading, onStateChange, page, pageSize, totalCount, totalPages]);
 
   const handleSort = (columnId: string) => {
     updateState((current) => {
@@ -273,42 +275,17 @@ function PaginationTableInner<TData>(
 
   return (
     <div className={`flex flex-1 min-h-0 flex-col ${className}`}>
-      <div className="mb-4 flex shrink-0 items-center gap-4 overflow-hidden">
-        {enableSearch && (
-          <Input
-            isClearable
-            placeholder={searchPlaceholder}
-            startContent={<MagnifyingGlass size={18} />}
-            value={search}
-            onValueChange={handleSearchChange}
-            className="flex-1"
-          />
-        )}
-        {filters.map((filter) => (
-          <Select
-            key={filter.key}
-            size="md"
-            placeholder={filter.placeholder}
-            selectedKeys={filterValues[filter.key] ? [filterValues[filter.key]] : []}
-            onChange={(e) => handleFilterChange(filter.key, e.target.value)}
-            className="w-48"
-            aria-label={filter.label}
-          >
-            {filter.options.map((option) => (
-              <SelectItem key={option.key}>{option.label}</SelectItem>
-            ))}
-          </Select>
-        ))}
-        <Button
-          isIconOnly
-          variant="flat"
-          onPress={handleRefresh}
-          isLoading={isLoading}
-          aria-label="Refresh"
-        >
-          <ArrowClockwise size={20} />
-        </Button>
-      </div>
+      <TableToolbar
+        enableSearch={enableSearch}
+        searchValue={search}
+        onSearchChange={handleSearchChange}
+        searchPlaceholder={searchPlaceholder}
+        filters={filters}
+        filterValues={filterValues}
+        onFilterChange={handleFilterChange}
+        onRefresh={handleRefresh}
+        isLoading={isLoading}
+      />
 
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
         <div className="flex-1 overflow-auto">
@@ -381,30 +358,16 @@ function PaginationTableInner<TData>(
         </div>
       </div>
 
-      <div className="mt-6 flex shrink-0 items-center justify-between overflow-hidden">
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-gray-600 dark:text-gray-400">Rows per page:</span>
-          <Select
-            size="sm"
-            selectedKeys={[pageSize.toString()]}
-            onChange={(e) => handlePageSizeChange(e.target.value)}
-            className="w-20"
-            aria-label="Select page size"
-          >
-            {pageSizeOptions.map((option) => (
-              <SelectItem key={option.toString()}>{option.toString()}</SelectItem>
-            ))}
-          </Select>
-        </div>
-
-        <Pagination
-          total={totalPages}
-          page={page}
-          onChange={(nextPage) => mergeState({ page: nextPage })}
-          showControls
-          color="primary"
-        />
-      </div>
+      <TablePaginationControls
+        page={page}
+        totalPages={totalPages}
+        onPageChange={(nextPage) => mergeState({ page: nextPage })}
+        pageSize={pageSize}
+        pageSizeOptions={pageSizeOptions}
+        onPageSizeChange={(newPageSize) =>
+          mergeState({ pageSize: newPageSize, page: 1 })
+        }
+      />
     </div>
   );
 }
@@ -413,4 +376,3 @@ function PaginationTableInner<TData>(
 export const PaginationTable = forwardRef(PaginationTableInner) as <TData>(
   props: PaginationTableProps<TData> & { ref?: React.Ref<PaginationTableRef> }
 ) => ReturnType<typeof PaginationTableInner>;
-

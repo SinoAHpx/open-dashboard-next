@@ -21,7 +21,7 @@ import {
   type PaginationTableRef,
 } from "@/components/PaginationTable";
 import { TablePage } from "@/components/table/TablePage";
-import { productsTableModule } from "@/modules/tables/products-table.module";
+import { productsTableBlueprint } from "@/lib/config/actions-products.config";
 import {
   addProduct,
   updateProduct,
@@ -109,9 +109,9 @@ export default function ActionsPage() {
     tableRef.current?.refresh();
   }, [tableRef]);
 
-  const { store, config } = useMemo(
+  const { store, config, meta } = useMemo(
     () =>
-      productsTableModule.createInstance({
+      productsTableBlueprint.createInstance({
         onEdit: handleEdit,
         onDelete: handleDelete,
       }),
@@ -122,10 +122,11 @@ export default function ActionsPage() {
 
   return (
     <TablePage
-      title={productsTableModule.meta.title}
+      title={meta.title}
       description={
         <>
-          {productsTableModule.meta.description} Total products: {totalCount}
+          {meta.description ? `${meta.description} ` : ""}
+          Total products: {totalCount}
         </>
       }
       actions={

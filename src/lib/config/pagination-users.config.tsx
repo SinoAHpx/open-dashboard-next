@@ -1,10 +1,11 @@
 import { Chip } from "@heroui/react";
 import type { ColumnDef } from "@tanstack/react-table";
-import type {
-  PaginationTableConfig,
-  PaginationRequest,
-  PaginationResponse,
-} from "@/components/PaginationTable";
+import {
+  PaginationTableBlueprint,
+  type PaginationTableConfig,
+  type PaginationRequest,
+  type PaginationResponse,
+} from "@/lib/config/table-blueprint";
 import {
   getPaginationUsers,
   type PaginationUser,
@@ -127,3 +128,21 @@ export const paginationUsersConfig: PaginationTableConfig<PaginationUser> = {
   searchPlaceholder: "Search all columns...",
   emptyMessage: "No users found",
 };
+
+class PaginationUsersBlueprint extends PaginationTableBlueprint<
+  PaginationUser,
+  void
+> {
+  constructor() {
+    super({
+      title: "Pagination Table",
+      description: "Server-side pagination with TanStack Table and Hero UI.",
+    });
+  }
+
+  protected buildConfig(): PaginationTableConfig<PaginationUser> {
+    return paginationUsersConfig;
+  }
+}
+
+export const paginationUsersBlueprint = new PaginationUsersBlueprint();

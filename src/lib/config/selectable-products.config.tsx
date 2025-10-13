@@ -8,12 +8,13 @@ import {
   PencilSimple,
 } from "@phosphor-icons/react";
 import type { ColumnDef } from "@tanstack/react-table";
-import type {
-  PaginationRequest,
-  PaginationResponse,
-} from "@/components/PaginationTable";
-import type { SelectableTableConfig } from "@/components/SelectableTable";
-import type { FloatingAction } from "@/components/FloatingActionMenu";
+import {
+  SelectableTableBlueprint,
+  type PaginationRequest,
+  type PaginationResponse,
+  type SelectableTableConfig,
+  type FloatingAction,
+} from "@/lib/config/table-blueprint";
 import {
   getSelectableProductsMock,
   type SelectableProduct,
@@ -180,12 +181,16 @@ export const selectableProductsConfig: SelectableTableConfig<SelectableProduct> 
   };
 
 // Floating action menu configuration factory
-export function createFloatingActionsConfig(options: {
+export interface SelectableProductsActionsContext {
   selectedIds: string[];
   onClear: () => void;
   onRefresh: () => void;
   onEdit?: (id: string) => void;
-}): FloatingAction[] {
+}
+
+export function createFloatingActionsConfig(
+  options: SelectableProductsActionsContext
+): FloatingAction[] {
   const { selectedIds, onClear, onRefresh, onEdit } = options;
 
   const actions: FloatingAction[] = [];
@@ -272,3 +277,29 @@ export function createFloatingActionsConfig(options: {
 
   return actions;
 }
+
+class SelectableProductsBlueprint extends SelectableTableBlueprint<
+  SelectableProduct,
+  void,
+  SelectableProductsActionsContext
+> {
+  constructor() {
+    super({
+      title: "Selectable Products",
+      description:
+        "Select multiple products to perform bulk operations.",
+    });
+  }
+
+  protected buildConfig(): SelectableTableConfig<SelectableProduct> {
+    return selectableProductsConfig;
+  }
+
+  protected buildActions(
+    context: SelectableProductsActionsContext
+  ): FloatingAction[] {
+    return createFloatingActionsConfig(context);
+  }
+}
+
+export const selectableProductsBlueprint = new SelectableProductsBlueprint();

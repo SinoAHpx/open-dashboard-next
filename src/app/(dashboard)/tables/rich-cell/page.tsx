@@ -10,7 +10,7 @@ import { TablePage } from "@/components/table/TablePage";
 import { Button, useDisclosure, Spinner } from "@heroui/react";
 import { Plus } from "@phosphor-icons/react";
 import type { RichCellTask } from "@/lib/api-wrapper/richcell";
-import { richCellTasksModule } from "@/modules/tables/richcell-tasks.module";
+import { richCellTasksBlueprint } from "@/lib/config/richcells-tasks.config";
 
 export default function RichCellPage() {
   const tableRef = useRef<PaginationTableRef>(null);
@@ -52,9 +52,9 @@ export default function RichCellPage() {
     onOpen();
   }, [onOpen]);
 
-  const { store, config } = useMemo(
+  const { store, config, meta } = useMemo(
     () =>
-      richCellTasksModule.createInstance({
+      richCellTasksBlueprint.createInstance({
         onEdit: handleEdit,
         onDelete: handleDelete,
         onUpdateProgress: handleUpdateProgress,
@@ -67,8 +67,10 @@ export default function RichCellPage() {
 
   return (
     <TablePage
-      title={richCellTasksModule.meta.title}
-      description={`${richCellTasksModule.meta.description} Total tasks: ${totalCount}`}
+      title={meta.title}
+      description={`${meta.description ?? ""}${
+        meta.description ? " " : ""
+      }Total tasks: ${totalCount}`}
       actions={
         <Button
           color="primary"

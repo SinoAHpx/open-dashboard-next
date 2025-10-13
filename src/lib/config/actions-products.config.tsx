@@ -8,11 +8,12 @@ import {
 } from "@heroui/react";
 import { DotsThreeVertical, PencilSimple, Trash } from "@phosphor-icons/react";
 import type { ColumnDef } from "@tanstack/react-table";
-import type {
-  PaginationTableConfig,
-  PaginationRequest,
-  PaginationResponse,
-} from "@/components/PaginationTable";
+import {
+  PaginationTableBlueprint,
+  type PaginationTableConfig,
+  type PaginationRequest,
+  type PaginationResponse,
+} from "@/lib/config/table-blueprint";
 import { getPaginatedProducts, type Product } from "@/lib/api-wrapper/products";
 
 // Adapter function to convert API response to generic format
@@ -49,11 +50,15 @@ const statusColorMap: Record<
   discontinued: "danger",
 };
 
-// Config factory function that accepts callbacks for row actions
-export function createProductsConfig(options: {
+export interface ProductsTableContext {
   onEdit: (product: Product) => void;
   onDelete: (id: string) => void;
-}): PaginationTableConfig<Product> {
+}
+
+// Config factory function that accepts callbacks for row actions
+export function createProductsConfig(
+  options: ProductsTableContext
+): PaginationTableConfig<Product> {
   const { onEdit, onDelete } = options;
 
   const columns: ColumnDef<Product>[] = [
@@ -171,3 +176,23 @@ export function createProductsConfig(options: {
     emptyMessage: "No products found",
   };
 }
+
+class ProductsTableBlueprintClass extends PaginationTableBlueprint<
+  Product,
+  ProductsTableContext
+> {
+  constructor() {
+    super({
+      title: "Product Management",
+      description: "Manage your products with full CRUD operations.",
+    });
+  }
+
+  protected buildConfig(
+    context: ProductsTableContext
+  ): PaginationTableConfig<Product> {
+    return createProductsConfig(context);
+  }
+}
+
+export const productsTableBlueprint = new ProductsTableBlueprintClass();

@@ -1,20 +1,15 @@
-# Table Modules Guide
+# Table Blueprint Guide
 
-This guide explains how to build table pages quickly using the shared modules, layouts, and Zustand-powered stores that ship with the dashboard.
+This project ships a small set of “table blueprints” that keep every table page consistent: configs declare metadata and behaviour, pages only consume the blueprint, and shared UI primitives take care of layout.
 
-## Architecture At A Glance
+## Architecture Snapshot
 
-- **API wrappers (`src/lib/api-wrapper/*`)**: Typed fetchers or mocks that hide the backend contract.
-- **Table configs (`src/lib/config/*`)**: Column definitions, filter metadata, and adapters that map API responses to the table shape.
-- **Modules (`src/modules/tables/*`)**: Lightweight factories built with `createPaginationTableModule` or `createSelectableTableModule`. A module wraps metadata, the table config, and (for paginated tables) a ready-to-use Zustand store.
-- **UI primitives (`src/components/table/*`)**:
-  - `TablePage` renders the standard header, description, and action row.
-  - `TableToolbar` and `TablePaginationControls` provide consistent search, filters, refresh, and pagination UI.
-  - `PaginationTable` and `SelectableTable` compose everything together and keep state in sync with the URL.
+- **API wrappers (`src/lib/api-wrapper/*`)** – strongly typed accessors for your backend (or mocks while prototyping).
+- **Table blueprints (`src/lib/config/*`)** – each config file extends a base class from `table-blueprint.ts`, bundling table metadata, columns, filters, adapters, and (for paginated tables) the Zustand store factory.
+- **UI primitives (`src/components/table/*`)** – `TablePage`, `TableToolbar`, and `TablePaginationControls` render the standard shell; `PaginationTable` and `SelectableTable` handle client state and URL syncing.
 
-## Step-by-Step
 
-### Step 1 – API Wrapper & Types
+## Step 1 – API Wrapper & Types
 
 ```ts
 // src/lib/api-wrapper/orders.ts
@@ -49,7 +44,10 @@ export async function getOrders(params: {
     pageSize: String(params.pageSize),
     ...(params.search && { search: params.search }),
     ...(params.status && { status: params.status }),
-    ...(params.sortBy && { sortBy: params.sortBy, sortOrder: params.sortOrder ?? "asc" }),
+    ...(params.sortBy && {
+      sortBy: params.sortBy,
+      sortOrder: params.sortOrder ?? "asc",
+    }),
   });
 
   const res = await fetch(`/api/orders?${query.toString()}`);
@@ -58,17 +56,20 @@ export async function getOrders(params: {
 }
 ```
 
-### Step 2 – Table Configuration
+## Step 2 – Table Blueprint
+
+Each config file now exports a blueprint object that extends a base class. The base class enforces metadata and provides `createInstance` which returns `{ store, config, meta }`.
 
 ```tsx
 // src/lib/config/orders-table.config.tsx
 import { Chip } from "@heroui/react";
 import type { ColumnDef } from "@tanstack/react-table";
-import type {
-  PaginationRequest,
-  PaginationResponse,
-  PaginationTableConfig,
-} from "@/components/PaginationTable";
+import {
+  PaginationTableBlueprint,
+  type PaginationRequest,
+  type PaginationResponse,
+  type PaginationTableConfig,
+} from "@/lib/config/table-blueprint";
 import { getOrders, type Order } from "@/lib/api-wrapper/orders";
 
 async function fetchOrders(
@@ -105,11 +106,15 @@ const columns: ColumnDef<Order>[] = [
       </Chip>
     ),
   },
-  { accessorKey: "total", header: "Total", cell: (info) => `$${info.getValue<number>().toFixed(2)}` },
+  {
+    accessorKey: "total",
+    header: "Total",
+    cell: (info) => `$${info.getValue<number>().toFixed(2)}`,
+  },
   { accessorKey: "createdAt", header: "Date" },
 ];
 
-export const ordersTableConfig: PaginationTableConfig<Order> = {
+const ordersTableConfig: PaginationTableConfig<Order> = {
   columns,
   fetchData: fetchOrders,
   filters: [
@@ -125,32 +130,31 @@ export const ordersTableConfig: PaginationTableConfig<Order> = {
     },
   ],
   enableSearch: true,
-  searchPlaceholder: "Search orders…",
+  searchPlaceholder: "Search orders...",
   emptyMessage: "No orders found",
 };
+
+class OrdersTableBlueprint extends PaginationTableBlueprint<Order> {
+  constructor() {
+    super({
+      title: "Orders",
+      description: "Manage customer orders.",
+    });
+  }
+
+  protected buildConfig(): PaginationTableConfig<Order> {
+    return ordersTableConfig;
+  }
+}
+
+export const ordersTableBlueprint = new OrdersTableBlueprint();
 ```
 
-### Step 3 – Table Module
+For tables that require callbacks (e.g. edit/delete handlers) pass a context object to `createInstance` and forward it inside `buildConfig`. Selectable tables work the same way via `SelectableTableBlueprint`, and can override `buildActions` to populate floating menus.
 
-```ts
-// src/modules/tables/orders-table.module.ts
-import { createPaginationTableModule } from "@/modules/table-module";
-import { ordersTableConfig } from "@/lib/config/orders-table.config";
-import type { Order } from "@/lib/api-wrapper/orders";
+## Step 3 – Page Component
 
-export const ordersTableModule = createPaginationTableModule<Order>({
-  id: "orders-table",
-  meta: {
-    title: "Orders",
-    description: "Manage customer orders.",
-  },
-  createConfig: () => ordersTableConfig,
-});
-```
-
-For selectable tables, swap in `createSelectableTableModule` and pass `createFloatingActions` if you need bulk actions.
-
-### Step 4 – Page Component
+Pages read metadata, config, and store from the blueprint. The UI remains concise and predictable.
 
 ```tsx
 // src/app/(dashboard)/orders/page.tsx
@@ -163,20 +167,22 @@ import {
   type PaginationTableRef,
 } from "@/components/PaginationTable";
 import { TablePage } from "@/components/table/TablePage";
-import { ordersTableModule } from "@/modules/tables/orders-table.module";
+import { ordersTableBlueprint } from "@/lib/config/orders-table.config";
 
 export default function OrdersPage() {
   const tableRef = useRef<PaginationTableRef>(null);
-  const { store, config } = useMemo(
-    () => ordersTableModule.createInstance(undefined),
+  const { store, config, meta } = useMemo(
+    () => ordersTableBlueprint.createInstance(undefined),
     []
   );
   const totalCount = store((state) => state.totalCount);
 
   return (
     <TablePage
-      title={ordersTableModule.meta.title}
-      description={`${ordersTableModule.meta.description} Total: ${totalCount}`}
+      title={meta.title}
+      description={`${meta.description ?? ""}${
+        meta.description ? " " : ""
+      }Total orders: ${totalCount}`}
     >
       <Suspense
         fallback={
@@ -194,71 +200,36 @@ export default function OrdersPage() {
 
 ## Selectable Tables
 
-`SelectableTable` extends the same layout with multi-select support and a floating action bar.
-
-- Use `createSelectableTableModule` to wire the config and floating actions.
-- Pass `onSelectionChange` to receive selected IDs/rows and drive UI badges or action states.
-- Pass `onStateChange` to keep the header in sync with `totalCount`, `page`, or loading status.
-
-Example page wiring:
+`SelectableTableBlueprint` mirrors the pagination blueprint but skips the Zustand store and optionally supplies floating actions.
 
 ```tsx
-const { config } = useMemo(
-  () => selectableProductsModule.createInstance(undefined),
+const tableConfig = useMemo(
+  () => selectableProductsBlueprint.createConfig(undefined),
   []
 );
 
 const floatingActions = useMemo(
   () =>
-    selectableProductsModule.createFloatingActions?.({
+    selectableProductsBlueprint.createActions({
       selectedIds,
       onClear: handleClearSelection,
       onRefresh: handleRefresh,
       onEdit: handleEditSelected,
-    }) ?? [],
-  [selectedIds, handleClearSelection, handleRefresh, handleEditSelected]
+    }),
+  [handleClearSelection, handleEditSelected, handleRefresh, selectedIds]
 );
-
-<SelectableTable
-  ref={tableRef}
-  {...config}
-  onStateChange={setTableState}
-  onSelectionChange={({ ids }) => {
-    setSelectedIds(ids);
-    setSelectedCount(ids.length);
-  }}
-/>;
 ```
 
-## Shared UI Primitives
+Inside `buildActions` (see `src/lib/config/selectable-products.config.tsx`) you can react to the provided context and return an array of `FloatingAction` items for the `FloatingActionMenu`.
 
-- `TablePage` keeps headings, descriptions, and action buttons consistent across dashboards.
-- `TableToolbar` (used internally by both table components) provides search, filters, and refresh controls.
-- `TablePaginationControls` renders the page-size selector and pagination widget.
+## API Contract (Recap)
 
-These components live in `src/components/table` and are safe to use in custom layouts when needed.
-
-## API Contract (recap)
-
-Requests include `page`, `pageSize`, optional `search`, `sortBy`, `sortOrder`, and any filter keys you defined. Responses must return:
-
-```json
-{
-  "data": [...],
-  "pagination": {
-    "page": 1,
-    "pageSize": 10,
-    "totalCount": 100,
-    "totalPages": 10
-  }
-}
-```
-
-If your backend uses a different shape, adapt it in the config’s `fetchData` function before handing it to the table.
+- Requests supply `page`, `pageSize`, optional `search`, `sortBy`, `sortOrder`, plus any custom filters.
+- Responses must return `{ data: T[], pagination: { page, pageSize, totalCount, totalPages } }`.
+- If the backend deviates, adapt it inside the config’s `fetchData` function—no page changes required.
 
 ## Tips
 
-- Keep configs focused on presentation; handle side-effects (editing, deleting) inside the page or module callbacks.
-- Use modules to co-locate metadata (title, description) so headers stay in sync with future design updates.
-- For mock data, leverage the provided Faker helpers in the API wrappers until real endpoints are ready.
-- When adding new filters, just update the config: the toolbar and URL sync will pick them up automatically.
+- Keep configs declarative: derive metadata, filters, and actions in one place.
+- When callbacks mutate data, call `tableRef.current?.refresh()` to stay in sync.
+- Use the shared toolbar and pagination components for consistent UX without manual wiring.

@@ -30,7 +30,7 @@ import {
 import { TablePage } from "@/components/table/TablePage";
 import type { TableStateSnapshot } from "@/components/table/types";
 import { FloatingActionMenu } from "@/components/FloatingActionMenu";
-import { selectableProductsModule } from "@/modules/tables/selectable-products.module";
+import { selectableProductsBlueprint } from "@/lib/config/selectable-products.config";
 import {
   addProduct,
   updateProduct,
@@ -44,11 +44,11 @@ type ProductFormData = Omit<SelectableProduct, "id" | "lastRestocked">;
 export default function SelectablesPage() {
   const tableRef = useRef<SelectableTableRef>(null);
   const { isOpen, onOpen, onClose } = useDisclosure();
-  const moduleInstance = useMemo(
-    () => selectableProductsModule.createInstance(undefined),
+  const tableConfig = useMemo(
+    () => selectableProductsBlueprint.createConfig(undefined),
     []
   );
-  const tableConfig = moduleInstance.config;
+  const tableMeta = selectableProductsBlueprint.meta;
   const [selectedCount, setSelectedCount] = useState(0);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [tableState, setTableState] = useState<TableStateSnapshot>({
@@ -151,22 +151,22 @@ export default function SelectablesPage() {
 
   const floatingActions = useMemo(
     () =>
-      selectableProductsModule.createFloatingActions?.({
+      selectableProductsBlueprint.createActions({
         selectedIds,
         onClear: handleClearSelection,
         onRefresh: handleRefresh,
         onEdit: handleEditSelected,
-      }) ?? [],
+      }),
     [handleClearSelection, handleEditSelected, handleRefresh, selectedIds]
   );
 
   return (
     <TablePage
-      title={selectableProductsModule.meta.title}
+      title={tableMeta.title}
       description={
         <>
-          {selectableProductsModule.meta.description} Total products:{" "}
-          {tableState.totalCount}
+          {tableMeta.description ? `${tableMeta.description} ` : ""}
+          Total products: {tableState.totalCount}
         </>
       }
       actions={

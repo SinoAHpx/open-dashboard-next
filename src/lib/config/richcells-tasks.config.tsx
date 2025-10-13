@@ -19,11 +19,12 @@ import {
   X,
 } from "@phosphor-icons/react";
 import type { ColumnDef } from "@tanstack/react-table";
-import type {
-  PaginationTableConfig,
-  PaginationRequest,
-  PaginationResponse,
-} from "@/components/PaginationTable";
+import {
+  PaginationTableBlueprint,
+  type PaginationTableConfig,
+  type PaginationRequest,
+  type PaginationResponse,
+} from "@/lib/config/table-blueprint";
 import { useState } from "react";
 import {
   getRichCellTasksMock,
@@ -54,6 +55,27 @@ async function fetchRichCellTasks(
     },
   };
 }
+
+class RichCellTasksBlueprint extends PaginationTableBlueprint<
+  RichCellTask,
+  RichCellTasksContext
+> {
+  constructor() {
+    super({
+      title: "Rich Cell Table",
+      description:
+        "Advanced table with avatars, editable inputs, progress bars, and more interactive components.",
+    });
+  }
+
+  protected buildConfig(
+    context: RichCellTasksContext
+  ): PaginationTableConfig<RichCellTask> {
+    return createRichCellsConfig(context);
+  }
+}
+
+export const richCellTasksBlueprint = new RichCellTasksBlueprint();
 
 // Editable cell component
 function EditableCell({
@@ -124,13 +146,17 @@ function EditableCell({
   );
 }
 
-// Factory function for creating config with actions
-export function createRichCellsConfig(options: {
+export interface RichCellTasksContext {
   onEdit: (task: RichCellTask) => void;
   onDelete: (id: string) => void;
   onUpdateProgress: (id: string, progress: number) => void;
   onUpdateTask: (id: string, field: string, value: string) => void;
-}): PaginationTableConfig<RichCellTask> {
+}
+
+// Factory function for creating config with actions
+export function createRichCellsConfig(
+  options: RichCellTasksContext
+): PaginationTableConfig<RichCellTask> {
   const { onEdit, onDelete, onUpdateProgress, onUpdateTask } = options;
 
   // Status color mapping

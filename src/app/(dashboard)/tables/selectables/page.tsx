@@ -23,10 +23,10 @@ import {
 } from "@heroui/react";
 import { Plus, Sparkle } from "@phosphor-icons/react";
 import {
-  SelectableTable,
-  type SelectableTableRef,
+  PaginationTable,
+  type PaginationTableRef,
   type SelectionChangePayload,
-} from "@/components/SelectableTable";
+} from "@/components/PaginationTable";
 import { TablePage } from "@/components/table/TablePage";
 import type { TableStateSnapshot } from "@/components/table/types";
 import { FloatingActionMenu } from "@/components/FloatingActionMenu";
@@ -42,13 +42,12 @@ import {
 type ProductFormData = Omit<SelectableProduct, "id" | "lastRestocked">;
 
 export default function SelectablesPage() {
-  const tableRef = useRef<SelectableTableRef>(null);
+  const tableRef = useRef<PaginationTableRef>(null);
   const { isOpen, onOpen, onClose } = useDisclosure();
-  const tableConfig = useMemo(
-    () => selectableProductsBlueprint.createConfig(undefined),
+  const { store, config: tableConfig, meta: tableMeta } = useMemo(
+    () => selectableProductsBlueprint.createInstance(undefined),
     []
   );
-  const tableMeta = selectableProductsBlueprint.meta;
   const [selectedCount, setSelectedCount] = useState(0);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [tableState, setTableState] = useState<TableStateSnapshot>({
@@ -197,8 +196,10 @@ export default function SelectablesPage() {
           </div>
         }
       >
-        <SelectableTable
+        <PaginationTable
           ref={tableRef}
+          store={store}
+          enableSelection
           {...tableConfig}
           onStateChange={setTableState}
           onSelectionChange={handleSelectionChange}

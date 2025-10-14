@@ -1,5 +1,4 @@
 import type { PaginationTableConfig } from "@/components/PaginationTable";
-import type { SelectableTableConfig } from "@/components/SelectableTable";
 import type { FloatingAction } from "@/components/FloatingActionMenu";
 import {
   createPaginationStore,
@@ -43,15 +42,33 @@ export abstract class SelectableTableBlueprint<
   TConfigContext = void,
   TActionsContext = void,
 > {
-  constructor(public readonly meta: TableMeta) {}
+  constructor(
+    public readonly meta: TableMeta,
+    private readonly defaultState?: Partial<PaginationStoreState<TData>>
+  ) {}
+
+  protected createStore(): PaginationStoreHook<TData> {
+    return createPaginationStore<TData>(this.defaultState);
+  }
 
   protected abstract buildConfig(
     context: TConfigContext
-  ): SelectableTableConfig<TData>;
+  ): PaginationTableConfig<TData>;
 
   protected buildActions?(
     context: TActionsContext
   ): FloatingAction[];
+
+  createInstance(context: TConfigContext) {
+    const store = this.createStore();
+    const config = this.buildConfig(context);
+
+    return {
+      store,
+      config,
+      meta: this.meta,
+    };
+  }
 
   createConfig(context: TConfigContext) {
     return this.buildConfig(context);
@@ -68,6 +85,6 @@ export abstract class SelectableTableBlueprint<
 export type {
   PaginationRequest,
   PaginationResponse,
+  PaginationTableConfig,
 } from "@/components/PaginationTable";
-export type { SelectableTableConfig } from "@/components/SelectableTable";
 export type { FloatingAction } from "@/components/FloatingActionMenu";

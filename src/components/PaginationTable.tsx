@@ -1,8 +1,15 @@
 "use client";
 
-import { useCallback, useEffect, forwardRef, useImperativeHandle } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  forwardRef,
+  useImperativeHandle,
+} from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Spinner } from "@heroui/react";
+import { Checkbox, Spinner } from "@heroui/react";
 import {
   useReactTable,
   getCoreRowModel,
@@ -38,6 +45,11 @@ export interface PaginationResponse<TData> {
   };
 }
 
+export interface SelectionChangePayload<TData> {
+  ids: string[];
+  rows: TData[];
+}
+
 export interface PaginationTableConfig<TData> {
   columns: ColumnDef<TData>[];
   fetchData: (params: PaginationRequest) => Promise<PaginationResponse<TData>>;
@@ -48,11 +60,14 @@ export interface PaginationTableConfig<TData> {
   searchPlaceholder?: string;
   emptyMessage?: string;
   className?: string;
+  getRowId?: (row: TData) => string;
 }
 
 export interface PaginationTableProps<TData> extends PaginationTableConfig<TData> {
   store: PaginationStoreHook<TData>;
   onStateChange?: (snapshot: TableStateSnapshot) => void;
+  enableSelection?: boolean;
+  onSelectionChange?: (payload: SelectionChangePayload<TData>) => void;
 }
 
 export type { FilterConfig } from "@/components/table/types";
@@ -63,6 +78,9 @@ export interface PaginationTableRef {
   getTotalCount: () => number;
   getCurrentPage: () => number;
   isLoading: () => boolean;
+  getSelectedKeys: () => Set<string>;
+  clearSelection: () => void;
+  selectAll: () => void;
 }
 
 const DEFAULT_PAGE_SIZE_OPTIONS = [5, 10, 15, 20, 25, 50];
@@ -80,6 +98,9 @@ function PaginationTableInner<TData>(
     className = "",
     store,
     onStateChange,
+    enableSelection = false,
+    getRowId,
+    onSelectionChange,
   }: PaginationTableProps<TData>,
   ref: React.Ref<PaginationTableRef>
 ) {
@@ -99,6 +120,67 @@ function PaginationTableInner<TData>(
   const mergeState = store((state) => state.mergeState);
   const updateState = store((state) => state.updateState);
   const resetState = store((state) => state.resetState);
+
+  const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
+
+  const isSelectable = enableSelection;
+
+  const resolveRowId = useCallback(
+    (row: TData): string => {
+      if (getRowId) {
+        return getRowId(row);
+      }
+
+      const candidate = (row as { id?: string | number | null | undefined }).id;
+
+      if (candidate === undefined || candidate === null) {
+        console.warn(
+          "PaginationTable: getRowId was not provided and row is missing an id property. Falling back to JSON serialization, which may be unstable.",
+          row
+        );
+
+        return JSON.stringify(row);
+      }
+
+      return String(candidate);
+    },
+    [getRowId]
+  );
+
+  const validRowIds = useMemo(() => {
+    if (!isSelectable) {
+      return new Set<string>();
+    }
+
+    return new Set(data.map((row) => resolveRowId(row)));
+  }, [data, isSelectable, resolveRowId]);
+
+  const emitSelectionChange = useCallback(
+    (nextSelected: Set<string>) => {
+      if (!isSelectable || !onSelectionChange) {
+        return;
+      }
+
+      const selectedRows = data.filter((row) => nextSelected.has(resolveRowId(row)));
+
+      onSelectionChange({
+        ids: Array.from(nextSelected),
+        rows: selectedRows,
+      });
+    },
+    [data, isSelectable, onSelectionChange, resolveRowId]
+  );
+
+  const updateSelection = useCallback(
+    (updater: (current: Set<string>) => Set<string>) => {
+      if (!isSelectable) {
+        return;
+      }
+
+      setSelectedKeys((previous) => updater(new Set(previous)));
+    },
+    [isSelectable]
+  );
 
   // Initialize from URL on mount
   // biome-ignore lint/correctness/useExhaustiveDependencies: run once per mount to hydrate initial state
@@ -206,6 +288,56 @@ function PaginationTableInner<TData>(
     });
   }, [isLoading, onStateChange, page, pageSize, totalCount, totalPages]);
 
+  useEffect(() => {
+    if (!isSelectable) {
+      return;
+    }
+
+    setSelectedKeys((previous) => {
+      if (previous.size === 0) {
+        return previous;
+      }
+
+      let changed = false;
+      const next = new Set<string>();
+
+      for (const id of previous) {
+        if (validRowIds.has(id)) {
+          next.add(id);
+        } else {
+          changed = true;
+        }
+      }
+
+      if (!changed) {
+        return previous;
+      }
+
+      return next;
+    });
+  }, [isSelectable, validRowIds]);
+
+  useEffect(() => {
+    if (!isSelectable) {
+      return;
+    }
+
+    emitSelectionChange(selectedKeys);
+  }, [emitSelectionChange, isSelectable, selectedKeys]);
+
+  useEffect(() => {
+    if (isSelectable) {
+      return;
+    }
+
+    setSelectedKeys((previous) => {
+      if (previous.size === 0) {
+        return previous;
+      }
+      return new Set();
+    });
+  }, [isSelectable]);
+
   const handleSort = (columnId: string) => {
     updateState((current) => {
       if (current.sortBy === columnId) {
@@ -249,6 +381,39 @@ function PaginationTableInner<TData>(
     void fetchAndUpdate();
   }, [fetchAndUpdate]);
 
+  const handleSelectAll = useCallback(
+    (checked: boolean) => {
+      if (!isSelectable) {
+        return;
+      }
+
+      if (checked) {
+        setSelectedKeys(new Set(validRowIds));
+      } else {
+        setSelectedKeys(new Set());
+      }
+    },
+    [isSelectable, validRowIds]
+  );
+
+  const handleSelectRow = useCallback(
+    (rowId: string, checked: boolean) => {
+      if (!isSelectable) {
+        return;
+      }
+
+      updateSelection((current) => {
+        if (checked) {
+          current.add(rowId);
+        } else {
+          current.delete(rowId);
+        }
+        return current;
+      });
+    },
+    [isSelectable, updateSelection]
+  );
+
   useImperativeHandle(
     ref,
     () => ({
@@ -261,8 +426,21 @@ function PaginationTableInner<TData>(
       getTotalCount: () => store.getState().totalCount,
       getCurrentPage: () => store.getState().page,
       isLoading: () => store.getState().isLoading,
+      getSelectedKeys: () => new Set(selectedKeys),
+      clearSelection: () => {
+        if (!isSelectable) {
+          return;
+        }
+        setSelectedKeys(new Set());
+      },
+      selectAll: () => {
+        if (!isSelectable) {
+          return;
+        }
+        setSelectedKeys(new Set(validRowIds));
+      },
     }),
-    [fetchAndUpdate, mergeState, store]
+    [fetchAndUpdate, isSelectable, mergeState, selectedKeys, store, validRowIds]
   );
 
   const table = useReactTable({
@@ -272,6 +450,11 @@ function PaginationTableInner<TData>(
     manualSorting: true,
     manualFiltering: true,
   });
+
+  const isAllSelected =
+    isSelectable && data.length > 0 && selectedKeys.size === data.length;
+  const isSomeSelected =
+    isSelectable && selectedKeys.size > 0 && selectedKeys.size < data.length;
 
   return (
     <div className={`flex flex-1 min-h-0 flex-col ${className}`}>
@@ -293,6 +476,16 @@ function PaginationTableInner<TData>(
             <thead className="sticky top-0 z-10 backdrop-blur-md bg-gray-50/80 dark:bg-gray-800/80">
               {table.getHeaderGroups().map((headerGroup) => (
                 <tr key={headerGroup.id}>
+                  {isSelectable ? (
+                    <th className="px-4 py-3 w-12">
+                      <Checkbox
+                        isSelected={isAllSelected}
+                        isIndeterminate={isSomeSelected}
+                        onValueChange={handleSelectAll}
+                        aria-label="Select all rows"
+                      />
+                    </th>
+                  ) : null}
                   {headerGroup.headers.map((header) => (
                     <th
                       key={header.id}
@@ -326,32 +519,49 @@ function PaginationTableInner<TData>(
             <tbody>
               {isLoading ? (
                 <tr>
-                  <td colSpan={columns.length} className="py-20 text-center">
+                  <td
+                    colSpan={columns.length + (isSelectable ? 1 : 0)}
+                    className="py-20 text-center"
+                  >
                     <Spinner color="default" />
                   </td>
                 </tr>
               ) : table.getRowModel().rows.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={columns.length}
+                    colSpan={columns.length + (isSelectable ? 1 : 0)}
                     className="py-20 text-center text-gray-500 dark:text-gray-400"
                   >
                     {emptyMessage}
                   </td>
                 </tr>
               ) : (
-                table.getRowModel().rows.map((row) => (
-                  <tr
-                    key={row.id}
-                    className="border-t border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50"
-                  >
-                    {row.getVisibleCells().map((cell) => (
-                      <td key={cell.id} className="px-4 py-3 text-sm">
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                      </td>
-                    ))}
-                  </tr>
-                ))
+                table.getRowModel().rows.map((row) => {
+                  const rowData = row.original as TData;
+                  const rowId = resolveRowId(rowData);
+
+                  return (
+                    <tr
+                      key={row.id}
+                      className="border-t border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50"
+                    >
+                      {isSelectable ? (
+                        <td className="px-4 py-3 w-12">
+                          <Checkbox
+                            isSelected={selectedKeys.has(rowId)}
+                            onValueChange={(checked) => handleSelectRow(rowId, checked)}
+                            aria-label={`Select row ${rowId}`}
+                          />
+                        </td>
+                      ) : null}
+                      {row.getVisibleCells().map((cell) => (
+                        <td key={cell.id} className="px-4 py-3 text-sm">
+                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        </td>
+                      ))}
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>

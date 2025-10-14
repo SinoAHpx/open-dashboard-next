@@ -6,7 +6,7 @@ This project ships a small set of “table blueprints” that keep every table p
 
 - **API wrappers (`src/lib/api-wrapper/*`)** – strongly typed accessors for your backend (or mocks while prototyping).
 - **Table blueprints (`src/lib/config/*`)** – each config file extends a base class from `table-blueprint.ts`, bundling table metadata, columns, filters, adapters, and (for paginated tables) the Zustand store factory.
-- **UI primitives (`src/components/table/*`)** – `TablePage`, `TableToolbar`, and `TablePaginationControls` render the standard shell; `PaginationTable` and `SelectableTable` handle client state and URL syncing.
+- **UI primitives (`src/components/table/*`)** – `TablePage`, `TableToolbar`, and `TablePaginationControls` render the standard shell; `PaginationTable` handles client state, URL syncing, and optional row selection.
 
 
 ## Step 1 – API Wrapper & Types
@@ -150,7 +150,7 @@ class OrdersTableBlueprint extends PaginationTableBlueprint<Order> {
 export const ordersTableBlueprint = new OrdersTableBlueprint();
 ```
 
-For tables that require callbacks (e.g. edit/delete handlers) pass a context object to `createInstance` and forward it inside `buildConfig`. Selectable tables work the same way via `SelectableTableBlueprint`, and can override `buildActions` to populate floating menus.
+For tables that require callbacks (e.g. edit/delete handlers) pass a context object to `createInstance` and forward it inside `buildConfig`. Selectable tables use `SelectableTableBlueprint`, which wraps `PaginationTable` and can override `buildActions` to populate floating menus.
 
 ## Step 3 – Page Component
 
@@ -200,11 +200,11 @@ export default function OrdersPage() {
 
 ## Selectable Tables
 
-`SelectableTableBlueprint` mirrors the pagination blueprint but skips the Zustand store and optionally supplies floating actions.
+`SelectableTableBlueprint` mirrors the pagination blueprint, returning both a store and config while enabling selection by default. Use `PaginationTable` with `enableSelection` to render the selectable experience and wire bulk-action menus.
 
 ```tsx
-const tableConfig = useMemo(
-  () => selectableProductsBlueprint.createConfig(undefined),
+const { store, config, meta } = useMemo(
+  () => selectableProductsBlueprint.createInstance(undefined),
   []
 );
 
@@ -218,6 +218,14 @@ const floatingActions = useMemo(
     }),
   [handleClearSelection, handleEditSelected, handleRefresh, selectedIds]
 );
+
+<PaginationTable
+  ref={tableRef}
+  store={store}
+  enableSelection
+  {...config}
+  onSelectionChange={handleSelectionChange}
+/>;
 ```
 
 Inside `buildActions` (see `src/lib/config/selectable-products.config.tsx`) you can react to the provided context and return an array of `FloatingAction` items for the `FloatingActionMenu`.

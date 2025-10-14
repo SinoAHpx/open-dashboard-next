@@ -12,7 +12,7 @@ import {
   SelectableTableBlueprint,
   type PaginationRequest,
   type PaginationResponse,
-  type SelectableTableConfig,
+  type PaginationTableConfig,
   type FloatingAction,
 } from "@/lib/config/table-blueprint";
 import {
@@ -141,7 +141,7 @@ const columns: ColumnDef<SelectableProduct>[] = [
 ];
 
 // Export configuration
-export const selectableProductsConfig: SelectableTableConfig<SelectableProduct> =
+export const selectableProductsConfig: PaginationTableConfig<SelectableProduct> =
   {
     columns,
     fetchData: fetchSelectableProducts,
@@ -291,7 +291,7 @@ class SelectableProductsBlueprint extends SelectableTableBlueprint<
     });
   }
 
-  protected buildConfig(): SelectableTableConfig<SelectableProduct> {
+  protected buildConfig(): PaginationTableConfig<SelectableProduct> {
     return selectableProductsConfig;
   }
 

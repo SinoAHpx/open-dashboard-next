@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-This project is a Dashboard template, for ship a SaaS/App back-end faster.
+This project is a SaaS template, for ship a SaaS/App back-end faster.
 
 ## Tech Stack & Architecture
 

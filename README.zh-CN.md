@@ -25,8 +25,8 @@
 
 ```bash
 # 克隆仓库
-git clone https://github.com/yourusername/open-dashboard-next.git
-cd open-dashboard-next
+git clone https://github.com/yourusername/open-saas-next.git
+cd open-saas-next
 
 # 安装依赖
 bun install
@@ -49,7 +49,7 @@ bun run dev
 ## 项目结构
 
 ```
-open-dashboard-next/
+open-saas-next/
 ├── src/
 │   ├── app/              # Next.js App Router 页面和布局
 │   │   ├── (auth)/       # 认证页面（登录、注册）
@@ -166,7 +166,7 @@ bun run start
 
 最简单的部署方式是使用 [Vercel](https://vercel.com)：
 
-[![使用 Vercel 部署](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/yourusername/open-dashboard-next)
+[![使用 Vercel 部署](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/yourusername/open-saas-next)
 
 ## 贡献
 

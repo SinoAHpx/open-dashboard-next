@@ -47,8 +47,8 @@ We put a ton of effort into making an interface that is aesthetically designed, 
 
 ```bash
 # Clone the repository
-git clone https://github.com/SinoAHpx/open-dashboard-next.git
-cd open-dashboard-next
+git clone https://github.com/SinoAHpx/open-saas-next.git
+cd open-saas-next
 
 # Install dependencies
 bun install
@@ -91,7 +91,7 @@ This is a modern Next.js 15 application built with:
 ## Project Structure
 
 ```
-open-dashboard-next/
+open-saas-next/
 ├── src/
 │   ├── app/              # Next.js App Router pages and layouts
 │   │   ├── (auth)/       # Authentication pages (login, register)
@@ -168,7 +168,7 @@ bun run start
 
 The easiest way to deploy is using [Vercel](https://vercel.com):
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/SinoAHpx/open-dashboard-next)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/SinoAHpx/open-saas-next)
 
 ## What's Next?
 

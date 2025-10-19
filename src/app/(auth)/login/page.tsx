@@ -1,11 +1,17 @@
 "use client";
 
+import { Alert } from "@heroui/alert";
 import { Button } from "@heroui/button";
 import { Card, CardBody } from "@heroui/card";
 import { Checkbox } from "@heroui/checkbox";
 import { Input } from "@heroui/input";
 import { Link } from "@heroui/link";
-import { GithubLogoIcon, GoogleLogoIcon } from "@phosphor-icons/react/dist/ssr";
+import {
+  Eye,
+  EyeSlash,
+  GithubLogoIcon,
+  GoogleLogoIcon,
+} from "@phosphor-icons/react/dist/ssr";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { authClient } from "@/lib/auth-client";
@@ -28,6 +34,7 @@ export default function LoginPage() {
   const [errors, setErrors] = useState<LoginErrors>({});
   const [infoMessage, setInfoMessage] = useState<string | null>(null);
   const [isResendingEmail, setIsResendingEmail] = useState(false);
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 
   const resetErrors = (...keys: (keyof LoginErrors)[]) => {
     setErrors((prev) => {
@@ -80,8 +87,9 @@ export default function LoginPage() {
         callbackURL: "/",
       });
       if (error) {
-        const isEmailNotVerified = error.message?.toLowerCase().includes("email") &&
-                                   error.message?.toLowerCase().includes("verif");
+        const isEmailNotVerified =
+          error.message?.toLowerCase().includes("email") &&
+          error.message?.toLowerCase().includes("verif");
         setErrors({
           general:
             error.message ||
@@ -94,8 +102,9 @@ export default function LoginPage() {
         router.push("/");
       }
     } catch (error: any) {
-      const isEmailNotVerified = error.message?.toLowerCase().includes("email") &&
-                                 error.message?.toLowerCase().includes("verif");
+      const isEmailNotVerified =
+        error.message?.toLowerCase().includes("email") &&
+        error.message?.toLowerCase().includes("verif");
       setErrors({
         general:
           error.message || "Failed to sign in. Please check your credentials.",
@@ -119,7 +128,9 @@ export default function LoginPage() {
 
       setInfoMessage("Verification email sent! Please check your inbox.");
     } catch (error: any) {
-      setErrors({ general: error.message || "Failed to resend verification email" });
+      setErrors({
+        general: error.message || "Failed to resend verification email",
+      });
     } finally {
       setIsResendingEmail(false);
     }
@@ -141,28 +152,34 @@ export default function LoginPage() {
         <CardBody className="space-y-4">
           <form onSubmit={handleSubmit} className="flex flex-col space-y-4">
             {errors.general && (
-              <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
-                <div>{errors.general}</div>
-                {errors.emailNotVerified && (
-                  <div className="mt-2">
+              <Warn
+                color="danger"
+                variant="flat"
+                title="Unable to sign in"
+                description={errors.general}
+                endContent={
+                  errors.emailNotVerified ? (
                     <Button
+                      type="button"
                       size="sm"
+                      color="danger"
                       variant="flat"
-                      color="primary"
-                      onClick={handleResendVerification}
+                      onPress={handleResendVerification}
                       isLoading={isResendingEmail}
-                      className="mt-1"
                     >
-                      Resend verification email
+                      Resend email
                     </Button>
-                  </div>
-                )}
-              </div>
+                  ) : undefined
+                }
+              />
             )}
             {infoMessage && (
-              <div className="p-3 rounded-lg bg-blue-50 border border-blue-200 text-blue-700 text-sm">
-                {infoMessage}
-              </div>
+              <Alert
+                color="primary"
+                variant="flat"
+                title="Email verified"
+                description={infoMessage}
+              />
             )}
             <Input
               isRequired
@@ -179,7 +196,7 @@ export default function LoginPage() {
             />
             <Input
               isRequired
-              type="password"
+              type={isPasswordVisible ? "text" : "password"}
               label="Password"
               placeholder="Enter your password"
               value={password}
@@ -189,6 +206,24 @@ export default function LoginPage() {
               }}
               isInvalid={!!errors.password}
               errorMessage={errors.password}
+              endContent={
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="light"
+                  isIconOnly
+                  aria-label={
+                    isPasswordVisible ? "Hide password" : "Show password"
+                  }
+                  onPress={() => setIsPasswordVisible((prev) => !prev)}
+                >
+                  {isPasswordVisible ? (
+                    <EyeSlash className="h-5 w-5" weight="bold" />
+                  ) : (
+                    <Eye className="h-5 w-5" weight="bold" />
+                  )}
+                </Button>
+              }
             />
             <div className="flex items-center justify-between">
               <Checkbox

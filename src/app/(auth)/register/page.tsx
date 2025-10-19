@@ -1,10 +1,12 @@
 "use client";
 
+import { Alert } from "@heroui/alert";
 import { Button } from "@heroui/button";
 import { Card, CardBody } from "@heroui/card";
 import { Checkbox } from "@heroui/checkbox";
 import { Input } from "@heroui/input";
 import { Link } from "@heroui/link";
+import { Eye, EyeSlash } from "@phosphor-icons/react/dist/ssr";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { authClient } from "@/lib/auth-client";
@@ -28,6 +30,9 @@ export default function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<RegisterErrors>({});
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] =
+    useState(false);
 
   const resetFieldErrors = (...keys: (keyof RegisterErrors)[]) => {
     setErrors((prev) => {
@@ -116,7 +121,7 @@ export default function RegisterPage() {
       }
 
       setSuccessMessage(
-        `Account created! We just sent a verification link to ${email}. Please verify your email before signing in.`,
+        `We just sent a verification link to ${email}. Please verify your email before signing in.`,
       );
       setName("");
       setEmail("");
@@ -148,21 +153,30 @@ export default function RegisterPage() {
         <CardBody className="space-y-4">
           <form onSubmit={handleSubmit} className="space-y-4">
             {errors.general && (
-              <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
-                {errors.general}
-              </div>
+              <Alert
+                color="danger"
+                variant="flat"
+                title="Unable to create account"
+                description={errors.general}
+              />
             )}
             {successMessage && (
-              <div className="p-3 rounded-lg bg-green-50 border border-green-200 text-green-700 text-sm">
-                {successMessage}{" "}
-                <button
-                  type="button"
-                  className="underline font-semibold"
-                  onClick={() => router.push("/login")}
-                >
-                  Go to login
-                </button>
-              </div>
+              <Alert
+                color="success"
+                variant="flat"
+                title="Account created!"
+                description={successMessage}
+                endContent={
+                  <Button
+                    size="sm"
+                    variant="flat"
+                    color="success"
+                    onPress={() => router.push("/login")}
+                  >
+                    Go to login
+                  </Button>
+                }
+              />
             )}
             <Input
               isRequired
@@ -193,7 +207,7 @@ export default function RegisterPage() {
             <div>
               <Input
                 isRequired
-                type="password"
+                type={isPasswordVisible ? "text" : "password"}
                 label="Password"
                 placeholder="Create a password"
                 value={password}
@@ -203,6 +217,24 @@ export default function RegisterPage() {
                 }}
                 isInvalid={!!errors.password}
                 errorMessage={errors.password}
+                endContent={
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="light"
+                    isIconOnly
+                    aria-label={
+                      isPasswordVisible ? "Hide password" : "Show password"
+                    }
+                    onPress={() => setIsPasswordVisible((prev) => !prev)}
+                  >
+                    {isPasswordVisible ? (
+                      <EyeSlash className="h-5 w-5" weight="bold" />
+                    ) : (
+                      <Eye className="h-5 w-5" weight="bold" />
+                    )}
+                  </Button>
+                }
                 description={
                   password.length > 0 && (
                     <div className="mt-2">
@@ -244,7 +276,7 @@ export default function RegisterPage() {
             </div>
             <Input
               isRequired
-              type="password"
+              type={isConfirmPasswordVisible ? "text" : "password"}
               label="Confirm Password"
               placeholder="Confirm your password"
               value={confirmPassword}
@@ -259,6 +291,26 @@ export default function RegisterPage() {
                 confirmPassword.length > 0 && password !== confirmPassword
                   ? "Passwords do not match"
                   : errors.confirmPassword
+              }
+              endContent={
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="light"
+                  isIconOnly
+                  aria-label={
+                    isConfirmPasswordVisible
+                      ? "Hide confirm password"
+                      : "Show confirm password"
+                  }
+                  onPress={() => setIsConfirmPasswordVisible((prev) => !prev)}
+                >
+                  {isConfirmPasswordVisible ? (
+                    <EyeSlash className="h-5 w-5" weight="bold" />
+                  ) : (
+                    <Eye className="h-5 w-5" weight="bold" />
+                  )}
+                </Button>
               }
             />
             <Checkbox

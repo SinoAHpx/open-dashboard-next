@@ -8,23 +8,23 @@ import { Link } from "@heroui/link";
 import { Checkbox } from "@heroui/checkbox";
 import { useRouter } from "next/navigation";
 import { loginSchema } from "@/lib/schemas";
-import { useAuthStore } from "@/stores/auth";
+import { authClient } from "@/lib/auth-client";
 import { GithubLogoIcon, GoogleLogoIcon } from "@phosphor-icons/react/dist/ssr";
 
 export default function LoginPage() {
   const router = useRouter();
-  const login = useAuthStore((state) => state.login);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>(
+  const [errors, setErrors] = useState<{ email?: string; password?: string; general?: string }>(
     {}
   );
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setErrors({});
 
     const result = loginSchema.safeParse({ email, password });
 
@@ -39,12 +39,17 @@ export default function LoginPage() {
       return;
     }
 
-    setErrors({});
-    login({ email });
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      await authClient.signIn.email({
+        email,
+        password,
+        callbackURL: "/",
+      });
       router.push("/");
-    }, 500);
+    } catch (error: any) {
+      setErrors({ general: error.message || "Failed to sign in. Please check your credentials." });
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -62,6 +67,11 @@ export default function LoginPage() {
       <Card className="w-full max-w-md">
         <CardBody className="space-y-4">
           <form onSubmit={handleSubmit} className="flex flex-col space-y-4">
+            {errors.general && (
+              <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
+                {errors.general}
+              </div>
+            )}
             <Input
               isRequired
               type="email"

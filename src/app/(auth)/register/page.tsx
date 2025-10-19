@@ -9,12 +9,11 @@ import { Checkbox } from "@heroui/checkbox";
 import { Avatar } from "@heroui/avatar";
 import { useRouter } from "next/navigation";
 import { registerSchema } from "@/lib/schemas";
-import { useAuthStore } from "@/stores/auth";
+import { authClient } from "@/lib/auth-client";
 import { Camera } from "@phosphor-icons/react";
 
 export default function RegisterPage() {
   const router = useRouter();
-  const login = useAuthStore((state) => state.login);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -27,6 +26,7 @@ export default function RegisterPage() {
     email?: string;
     password?: string;
     confirmPassword?: string;
+    general?: string;
   }>({});
 
   const validatePassword = (pwd: string) => {
@@ -64,9 +64,10 @@ export default function RegisterPage() {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setErrors({});
 
     const result = registerSchema.safeParse({
       name,
@@ -92,16 +93,23 @@ export default function RegisterPage() {
     }
 
     if (!agreeToTerms) {
+      setErrors({ general: "You must agree to the Terms of Service and Privacy Policy" });
       setIsLoading(false);
       return;
     }
 
-    setErrors({});
-    login({ email, name });
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      await authClient.signUp.email({
+        email,
+        password,
+        name,
+        callbackURL: "/",
+      });
       router.push("/");
-    }, 500);
+    } catch (error: any) {
+      setErrors({ general: error.message || "Failed to create account. Please try again." });
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -119,6 +127,11 @@ export default function RegisterPage() {
       <Card className="w-full max-w-md">
         <CardBody className="space-y-4">
           <form onSubmit={handleSubmit} className="space-y-4">
+            {errors.general && (
+              <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
+                {errors.general}
+              </div>
+            )}
             <div className="flex justify-center">
               <div className="relative">
                 <input

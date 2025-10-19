@@ -152,8 +152,8 @@ export default function LoginPage() {
         <CardBody className="space-y-4">
           <form onSubmit={handleSubmit} className="flex flex-col space-y-4">
             {errors.general && (
-              <Warn
-                color="danger"
+              <Alert
+                color="warning"
                 variant="flat"
                 title="Unable to sign in"
                 description={errors.general}
@@ -162,7 +162,7 @@ export default function LoginPage() {
                     <Button
                       type="button"
                       size="sm"
-                      color="danger"
+                      color="warning"
                       variant="flat"
                       onPress={handleResendVerification}
                       isLoading={isResendingEmail}

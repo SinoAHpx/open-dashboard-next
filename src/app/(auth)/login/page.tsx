@@ -15,6 +15,7 @@ type LoginErrors = {
   email?: string;
   password?: string;
   general?: string;
+  emailNotVerified?: boolean;
 };
 
 export default function LoginPage() {
@@ -26,6 +27,7 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<LoginErrors>({});
   const [infoMessage, setInfoMessage] = useState<string | null>(null);
+  const [isResendingEmail, setIsResendingEmail] = useState(false);
 
   const resetErrors = (...keys: (keyof LoginErrors)[]) => {
     setErrors((prev) => {
@@ -78,10 +80,13 @@ export default function LoginPage() {
         callbackURL: "/",
       });
       if (error) {
+        const isEmailNotVerified = error.message?.toLowerCase().includes("email") &&
+                                   error.message?.toLowerCase().includes("verif");
         setErrors({
           general:
             error.message ||
             "Failed to sign in. Please check your credentials.",
+          emailNotVerified: isEmailNotVerified,
         });
         return;
       }
@@ -89,12 +94,34 @@ export default function LoginPage() {
         router.push("/");
       }
     } catch (error: any) {
+      const isEmailNotVerified = error.message?.toLowerCase().includes("email") &&
+                                 error.message?.toLowerCase().includes("verif");
       setErrors({
         general:
           error.message || "Failed to sign in. Please check your credentials.",
+        emailNotVerified: isEmailNotVerified,
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleResendVerification = async () => {
+    setIsResendingEmail(true);
+    setInfoMessage(null);
+    setErrors({});
+
+    try {
+      await authClient.sendVerificationEmail({
+        email,
+        callbackURL: "/login?verified=1",
+      });
+
+      setInfoMessage("Verification email sent! Please check your inbox.");
+    } catch (error: any) {
+      setErrors({ general: error.message || "Failed to resend verification email" });
+    } finally {
+      setIsResendingEmail(false);
     }
   };
 
@@ -115,7 +142,21 @@ export default function LoginPage() {
           <form onSubmit={handleSubmit} className="flex flex-col space-y-4">
             {errors.general && (
               <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
-                {errors.general}
+                <div>{errors.general}</div>
+                {errors.emailNotVerified && (
+                  <div className="mt-2">
+                    <Button
+                      size="sm"
+                      variant="flat"
+                      color="primary"
+                      onClick={handleResendVerification}
+                      isLoading={isResendingEmail}
+                      className="mt-1"
+                    >
+                      Resend verification email
+                    </Button>
+                  </div>
+                )}
               </div>
             )}
             {infoMessage && (

@@ -2,27 +2,48 @@
 
 import {
   Avatar,
+  Button,
   Dropdown,
-  DropdownTrigger,
+  DropdownItem,
   DropdownMenu,
   DropdownSection,
-  DropdownItem,
-  Button,
+  DropdownTrigger,
+  Spinner,
 } from "@heroui/react";
 import {
-  UserIcon,
-  GearIcon,
-  SignOutIcon,
-  MoonIcon,
-  SunIcon,
   BellIcon,
+  GearIcon,
+  MoonIcon,
+  SignOutIcon,
+  UserIcon,
 } from "@phosphor-icons/react/dist/ssr";
 import { useRouter } from "next/navigation";
+import type { Key } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { signOut, useSession } from "@/lib/auth-client";
 
 export function UserAvatar() {
   const router = useRouter();
+  const { data: session, isPending } = useSession();
+  const [isSigningOut, setIsSigningOut] = useState(false);
+  const [signOutError, setSignOutError] = useState<string | null>(null);
 
-  const handleAction = (key: React.Key) => {
+  useEffect(() => {
+    if (signOutError) {
+      console.error("[auth] Sign out failed:", signOutError);
+    }
+  }, [signOutError]);
+
+  const displayName = useMemo(() => {
+    if (session?.user?.name) {
+      return session.user.name;
+    }
+    return session?.user?.email ?? "User";
+  }, [session]);
+
+  const avatarSrc = session?.user?.image ?? undefined;
+
+  const handleAction = async (key: Key) => {
     switch (key) {
       case "profile":
         router.push("/profile");
@@ -37,8 +58,23 @@ export function UserAvatar() {
         // Toggle theme logic here
         break;
       case "logout":
-        // Logout logic here
-        router.push("/login");
+        try {
+          setIsSigningOut(true);
+          setSignOutError(null);
+          const result = await signOut();
+          if (result?.error) {
+            setSignOutError(result.error.message);
+            return;
+          }
+          router.push("/login");
+          router.refresh();
+        } catch (error: any) {
+          setSignOutError(
+            error.message ?? "Unable to sign out. Please try again.",
+          );
+        } finally {
+          setIsSigningOut(false);
+        }
         break;
     }
   };
@@ -46,21 +82,26 @@ export function UserAvatar() {
   return (
     <Dropdown placement="bottom-end">
       <DropdownTrigger>
-        <Button variant="light" radius="full" endContent={
-          <Avatar
-
-            className="transition-transform"
-            color="primary"
-            name={'Rick'}
-            size="sm"
-            src="https://i.pravatar.cc/150?u=user@example.com"
-          />
-        }>
+        <Button
+          variant="light"
+          radius="full"
+          endContent={
+            isPending ? (
+              <Spinner size="sm" />
+            ) : (
+              <Avatar
+                className="transition-transform"
+                color="primary"
+                name={displayName}
+                size="sm"
+                src={avatarSrc}
+              />
+            )
+          }
+        >
           <span className="hidden text-sm font-medium text-gray-700 dark:text-gray-200 sm:inline">
-            Rick Asley
+            {displayName}
           </span>
-          
-          
         </Button>
       </DropdownTrigger>
       <DropdownMenu
@@ -107,6 +148,7 @@ export function UserAvatar() {
             color="danger"
             description="Sign out of your account"
             startContent={<SignOutIcon size={20} />}
+            isDisabled={isSigningOut}
           >
             Logout
           </DropdownItem>

@@ -1,25 +1,38 @@
 "use client";
 
-import { useState } from "react";
 import { Button } from "@heroui/button";
 import { Card, CardBody } from "@heroui/card";
+import { Checkbox } from "@heroui/checkbox";
 import { Input } from "@heroui/input";
 import { Link } from "@heroui/link";
-import { Checkbox } from "@heroui/checkbox";
-import { useRouter } from "next/navigation";
-import { loginSchema } from "@/lib/schemas";
-import { authClient } from "@/lib/auth-client";
 import { GithubLogoIcon, GoogleLogoIcon } from "@phosphor-icons/react/dist/ssr";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import { authClient } from "@/lib/auth-client";
+import { loginSchema } from "@/lib/schemas";
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [errors, setErrors] = useState<{ email?: string; password?: string; general?: string }>(
-    {}
-  );
+  const [errors, setErrors] = useState<{
+    email?: string;
+    password?: string;
+    general?: string;
+  }>({});
+  const [infoMessage, setInfoMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    const verified = searchParams.get("verified");
+    if (verified === "1") {
+      setInfoMessage("Email verified successfully. You can now sign in.");
+    } else {
+      setInfoMessage(null);
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,14 +53,29 @@ export default function LoginPage() {
     }
 
     try {
-      await authClient.signIn.email({
+      const { data, error } = await authClient.signIn.email({
         email,
         password,
+        rememberMe,
         callbackURL: "/",
       });
-      router.push("/");
+      if (error) {
+        setErrors({
+          general:
+            error.message ||
+            "Failed to sign in. Please check your credentials.",
+        });
+        return;
+      }
+      if (data) {
+        router.push("/");
+      }
     } catch (error: any) {
-      setErrors({ general: error.message || "Failed to sign in. Please check your credentials." });
+      setErrors({
+        general:
+          error.message || "Failed to sign in. Please check your credentials.",
+      });
+    } finally {
       setIsLoading(false);
     }
   };
@@ -72,6 +100,11 @@ export default function LoginPage() {
                 {errors.general}
               </div>
             )}
+            {infoMessage && (
+              <div className="p-3 rounded-lg bg-blue-50 border border-blue-200 text-blue-700 text-sm">
+                {infoMessage}
+              </div>
+            )}
             <Input
               isRequired
               type="email"
@@ -92,7 +125,14 @@ export default function LoginPage() {
               isInvalid={!!errors.password}
               errorMessage={errors.password}
             />
-            <div className="flex justify-end items-center">
+            <div className="flex items-center justify-between">
+              <Checkbox
+                isSelected={rememberMe}
+                onValueChange={setRememberMe}
+                size="sm"
+              >
+                Remember me
+              </Checkbox>
               <Link href="/forgot-password" size="sm" className="text-primary">
                 Forgot password?
               </Link>

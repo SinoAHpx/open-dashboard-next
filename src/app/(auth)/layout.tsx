@@ -1,11 +1,22 @@
 import { Link } from "@heroui/link";
+import { headers } from "next/headers";
 import Image from "next/image";
+import { redirect } from "next/navigation";
+import { auth } from "@/lib/auth";
 
-export default function AuthLayout({
+export default async function AuthLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const session = await auth.api.getSession({
+    headers: headers(),
+  });
+
+  if (session) {
+    redirect("/");
+  }
+
   return (
     <div className="grid grid-cols-[60%_40%] h-screen">
       <div className="relative">

@@ -1,16 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { Avatar } from "@heroui/avatar";
 import { Button } from "@heroui/button";
 import { Card, CardBody } from "@heroui/card";
+import { Checkbox } from "@heroui/checkbox";
 import { Input } from "@heroui/input";
 import { Link } from "@heroui/link";
-import { Checkbox } from "@heroui/checkbox";
-import { Avatar } from "@heroui/avatar";
-import { useRouter } from "next/navigation";
-import { registerSchema } from "@/lib/schemas";
-import { authClient } from "@/lib/auth-client";
 import { Camera } from "@phosphor-icons/react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { authClient } from "@/lib/auth-client";
+import { registerSchema } from "@/lib/schemas";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -28,6 +28,7 @@ export default function RegisterPage() {
     confirmPassword?: string;
     general?: string;
   }>({});
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const validatePassword = (pwd: string) => {
     const validationErrors: string[] = [];
@@ -50,8 +51,7 @@ export default function RegisterPage() {
   };
 
   const passwordErrors = password ? validatePassword(password) : [];
-  const passwordStrength =
-    password.length > 0 ? 5 - passwordErrors.length : 0;
+  const passwordStrength = password.length > 0 ? 5 - passwordErrors.length : 0;
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -68,6 +68,7 @@ export default function RegisterPage() {
     e.preventDefault();
     setIsLoading(true);
     setErrors({});
+    setSuccessMessage(null);
 
     const result = registerSchema.safeParse({
       name,
@@ -93,21 +94,42 @@ export default function RegisterPage() {
     }
 
     if (!agreeToTerms) {
-      setErrors({ general: "You must agree to the Terms of Service and Privacy Policy" });
+      setErrors({
+        general: "You must agree to the Terms of Service and Privacy Policy",
+      });
       setIsLoading(false);
       return;
     }
 
     try {
-      await authClient.signUp.email({
+      const { error } = await authClient.signUp.email({
         email,
         password,
         name,
-        callbackURL: "/",
+        callbackURL: "/login?verified=1",
       });
-      router.push("/");
+      if (error) {
+        setErrors({
+          general:
+            error.message || "Failed to create account. Please try again.",
+        });
+        return;
+      }
+
+      setSuccessMessage(
+        `Account created! We just sent a verification link to ${email}. Please verify your email before signing in.`,
+      );
+      setName("");
+      setEmail("");
+      setPassword("");
+      setConfirmPassword("");
+      setAgreeToTerms(false);
+      setAvatarPreview(null);
     } catch (error: any) {
-      setErrors({ general: error.message || "Failed to create account. Please try again." });
+      setErrors({
+        general: error.message || "Failed to create account. Please try again.",
+      });
+    } finally {
       setIsLoading(false);
     }
   };
@@ -130,6 +152,18 @@ export default function RegisterPage() {
             {errors.general && (
               <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
                 {errors.general}
+              </div>
+            )}
+            {successMessage && (
+              <div className="p-3 rounded-lg bg-green-50 border border-green-200 text-green-700 text-sm">
+                {successMessage}{" "}
+                <button
+                  type="button"
+                  className="underline font-semibold"
+                  onClick={() => router.push("/login")}
+                >
+                  Go to login
+                </button>
               </div>
             )}
             <div className="flex justify-center">

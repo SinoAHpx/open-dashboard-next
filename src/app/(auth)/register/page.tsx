@@ -1,16 +1,22 @@
 "use client";
 
-import { Avatar } from "@heroui/avatar";
 import { Button } from "@heroui/button";
 import { Card, CardBody } from "@heroui/card";
 import { Checkbox } from "@heroui/checkbox";
 import { Input } from "@heroui/input";
 import { Link } from "@heroui/link";
-import { Camera } from "@phosphor-icons/react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { authClient } from "@/lib/auth-client";
 import { registerSchema } from "@/lib/schemas";
+
+type RegisterErrors = {
+  name?: string;
+  email?: string;
+  password?: string;
+  confirmPassword?: string;
+  general?: string;
+};
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -20,49 +26,46 @@ export default function RegisterPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [agreeToTerms, setAgreeToTerms] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
-  const [errors, setErrors] = useState<{
-    name?: string;
-    email?: string;
-    password?: string;
-    confirmPassword?: string;
-    general?: string;
-  }>({});
+  const [errors, setErrors] = useState<RegisterErrors>({});
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  const validatePassword = (pwd: string) => {
-    const validationErrors: string[] = [];
-    if (pwd.length < 8) {
-      validationErrors.push("Password must be at least 8 characters");
-    }
-    if (!/[A-Z]/.test(pwd)) {
-      validationErrors.push("Must include at least 1 uppercase letter");
-    }
-    if (!/[a-z]/.test(pwd)) {
-      validationErrors.push("Must include at least 1 lowercase letter");
-    }
-    if (!/[0-9]/.test(pwd)) {
-      validationErrors.push("Must include at least 1 number");
-    }
-    if (!/[^A-Za-z0-9]/.test(pwd)) {
-      validationErrors.push("Must include at least 1 special character");
-    }
-    return validationErrors;
+  const resetFieldErrors = (...keys: (keyof RegisterErrors)[]) => {
+    setErrors((prev) => {
+      if (!prev.general && keys.every((key) => !prev[key])) {
+        return prev;
+      }
+      const next = { ...prev };
+      keys.forEach((key) => {
+        if (next[key]) {
+          delete next[key];
+        }
+      });
+      delete next.general;
+      return next;
+    });
   };
 
-  const passwordErrors = password ? validatePassword(password) : [];
-  const passwordStrength = password.length > 0 ? 5 - passwordErrors.length : 0;
-
-  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setAvatarPreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+  const passwordHints = useMemo(() => {
+    const requirements: string[] = [];
+    if (password.length < 8) {
+      requirements.push("Password must be at least 8 characters");
     }
-  };
+    if (!/[A-Z]/.test(password)) {
+      requirements.push("Must include at least 1 uppercase letter");
+    }
+    if (!/[a-z]/.test(password)) {
+      requirements.push("Must include at least 1 lowercase letter");
+    }
+    if (!/[0-9]/.test(password)) {
+      requirements.push("Must include at least 1 number");
+    }
+    if (!/[^A-Za-z0-9]/.test(password)) {
+      requirements.push("Must include at least 1 special character");
+    }
+    return requirements;
+  }, [password]);
+
+  const passwordStrength = password.length > 0 ? 5 - passwordHints.length : 0;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -78,15 +81,10 @@ export default function RegisterPage() {
     });
 
     if (!result.success) {
-      const fieldErrors: {
-        name?: string;
-        email?: string;
-        password?: string;
-        confirmPassword?: string;
-      } = {};
-      result.error.issues.forEach((err) => {
-        const field = err.path[0] as keyof typeof fieldErrors;
-        fieldErrors[field] = err.message;
+      const fieldErrors: RegisterErrors = {};
+      result.error.issues.forEach((issue) => {
+        const field = issue.path[0] as keyof RegisterErrors;
+        fieldErrors[field] = issue.message;
       });
       setErrors(fieldErrors);
       setIsLoading(false);
@@ -108,6 +106,7 @@ export default function RegisterPage() {
         name,
         callbackURL: "/login?verified=1",
       });
+
       if (error) {
         setErrors({
           general:
@@ -124,7 +123,6 @@ export default function RegisterPage() {
       setPassword("");
       setConfirmPassword("");
       setAgreeToTerms(false);
-      setAvatarPreview(null);
     } catch (error: any) {
       setErrors({
         general: error.message || "Failed to create account. Please try again.",
@@ -140,7 +138,7 @@ export default function RegisterPage() {
         <h1 className="text-4xl font-bold">Create Account</h1>
         <div className="flex space-x-1">
           <p className="text-gray-600">Already have an account?</p>
-          <Link href={"/login"} underline="always">
+          <Link href="/login" underline="always">
             Sign in here
           </Link>
           <p>.</p>
@@ -166,35 +164,16 @@ export default function RegisterPage() {
                 </button>
               </div>
             )}
-            <div className="flex justify-center">
-              <div className="relative">
-                <input
-                  type="file"
-                  id="avatar-upload"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleAvatarChange}
-                />
-                <label htmlFor="avatar-upload" className="cursor-pointer">
-                  <Avatar
-                    src={avatarPreview || undefined}
-                    showFallback
-                    name={name || undefined}
-                    className="w-24 h-24"
-                  />
-                  <div className="absolute bottom-0 right-0 bg-primary rounded-full p-2 shadow-lg">
-                    <Camera size={16} weight="fill" className="text-white" />
-                  </div>
-                </label>
-              </div>
-            </div>
             <Input
               isRequired
               type="text"
               label="Full Name"
               placeholder="Enter your full name"
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={(event) => {
+                setName(event.target.value);
+                resetFieldErrors("name");
+              }}
               isInvalid={!!errors.name}
               errorMessage={errors.name}
             />
@@ -204,7 +183,10 @@ export default function RegisterPage() {
               label="Email"
               placeholder="Enter your email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(event) => {
+                setEmail(event.target.value);
+                resetFieldErrors("email");
+              }}
               isInvalid={!!errors.email}
               errorMessage={errors.email}
             />
@@ -215,18 +197,21 @@ export default function RegisterPage() {
                 label="Password"
                 placeholder="Create a password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(event) => {
+                  setPassword(event.target.value);
+                  resetFieldErrors("password");
+                }}
                 isInvalid={!!errors.password}
                 errorMessage={errors.password}
                 description={
                   password.length > 0 && (
                     <div className="mt-2">
                       <div className="flex gap-1 mb-1">
-                        {[...Array(5)].map((_, i) => (
+                        {[...Array(5)].map((_, index) => (
                           <div
-                            key={i}
+                            key={index}
                             className={`h-1 flex-1 rounded ${
-                              i < passwordStrength
+                              index < passwordStrength
                                 ? passwordStrength <= 2
                                   ? "bg-red-500"
                                   : passwordStrength === 3
@@ -245,10 +230,10 @@ export default function RegisterPage() {
                             ? "Medium"
                             : "Strong"}
                       </p>
-                      {passwordErrors.length > 0 && (
+                      {passwordHints.length > 0 && (
                         <ul className="list-disc list-inside text-xs text-gray-500 mt-1">
-                          {passwordErrors.map((err, i) => (
-                            <li key={i}>{err}</li>
+                          {passwordHints.map((hint) => (
+                            <li key={hint}>{hint}</li>
                           ))}
                         </ul>
                       )}
@@ -263,7 +248,10 @@ export default function RegisterPage() {
               label="Confirm Password"
               placeholder="Confirm your password"
               value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
+              onChange={(event) => {
+                setConfirmPassword(event.target.value);
+                resetFieldErrors("confirmPassword");
+              }}
               isInvalid={
                 confirmPassword.length > 0 && password !== confirmPassword
               }
@@ -275,7 +263,10 @@ export default function RegisterPage() {
             />
             <Checkbox
               isSelected={agreeToTerms}
-              onValueChange={setAgreeToTerms}
+              onValueChange={(value) => {
+                setAgreeToTerms(value);
+                resetFieldErrors("general");
+              }}
               size="sm"
               className="mb-2"
             >

@@ -11,6 +11,12 @@ import { useEffect, useState } from "react";
 import { authClient } from "@/lib/auth-client";
 import { loginSchema } from "@/lib/schemas";
 
+type LoginErrors = {
+  email?: string;
+  password?: string;
+  general?: string;
+};
+
 export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -18,12 +24,24 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [errors, setErrors] = useState<{
-    email?: string;
-    password?: string;
-    general?: string;
-  }>({});
+  const [errors, setErrors] = useState<LoginErrors>({});
   const [infoMessage, setInfoMessage] = useState<string | null>(null);
+
+  const resetErrors = (...keys: (keyof LoginErrors)[]) => {
+    setErrors((prev) => {
+      if (!prev.general && keys.every((key) => !prev[key])) {
+        return prev;
+      }
+      const next = { ...prev };
+      keys.forEach((key) => {
+        if (next[key]) {
+          delete next[key];
+        }
+      });
+      delete next.general;
+      return next;
+    });
+  };
 
   useEffect(() => {
     const verified = searchParams.get("verified");
@@ -111,7 +129,10 @@ export default function LoginPage() {
               label="Email"
               placeholder="Enter your email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                resetErrors("email");
+              }}
               isInvalid={!!errors.email}
               errorMessage={errors.email}
             />
@@ -121,7 +142,10 @@ export default function LoginPage() {
               label="Password"
               placeholder="Enter your password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                resetErrors("password");
+              }}
               isInvalid={!!errors.password}
               errorMessage={errors.password}
             />

@@ -9,6 +9,65 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// Better Auth models
+model AuthUser {
+  id            String         @id @default(cuid())
+  name          String
+  email         String         @unique
+  emailVerified Boolean
+  image         String?
+  createdAt     DateTime       @default(now()) @db.Timestamptz(6)
+  updatedAt     DateTime       @default(now()) @updatedAt @db.Timestamptz(6)
+  sessions      AuthSession[]
+  accounts      AuthAccount[]
+
+  @@map("user")
+}
+
+model AuthSession {
+  id        String   @id @default(cuid())
+  expiresAt DateTime @db.Timestamptz(6)
+  token     String   @unique
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      AuthUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("session")
+}
+
+model AuthAccount {
+  id                      String    @id @default(cuid())
+  accountId               String
+  providerId              String
+  userId                  String
+  accessToken             String?
+  refreshToken            String?
+  idToken                 String?
+  accessTokenExpiresAt    DateTime? @db.Timestamptz(6)
+  refreshTokenExpiresAt   DateTime? @db.Timestamptz(6)
+  scope                   String?
+  password                String?
+  createdAt               DateTime  @default(now()) @db.Timestamptz(6)
+  updatedAt               DateTime  @updatedAt @db.Timestamptz(6)
+  user                    AuthUser  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("account")
+}
+
+model AuthVerification {
+  id         String   @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime @db.Timestamptz(6)
+  createdAt  DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt  DateTime @default(now()) @updatedAt @db.Timestamptz(6)
+
+  @@map("verification")
+}
+
 enum PetSpecies {
   dog
   cat

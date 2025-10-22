@@ -29,6 +29,10 @@ export const mainMenuItems: MenuGroup[] = [
   {
     groupLabel: "Table",
     items: [
+      { label: "Users", href: "/tables/users", icon: TableIcon },
+      { label: "Pets", href: "/tables/pets", icon: TableIcon },
+      { label: "Stores", href: "/tables/stores", icon: TableIcon },
+      { label: "Orders", href: "/tables/orders", icon: TableIcon },
       { label: "Simple", href: "/tables/simple", icon: TableIcon },
       { label: "Pagination", href: "/tables/pagination", icon: TableIcon },
       { label: "Actions", href: "/tables/actions", icon: TableIcon },

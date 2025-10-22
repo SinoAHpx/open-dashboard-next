@@ -1,0 +1,357 @@
+// Prisma schema generated from schema.sql for the pet store miniapp backend
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum PetSpecies {
+  dog
+  cat
+  other
+}
+
+enum PetGender {
+  male
+  female
+  unknown
+}
+
+enum PetHeightClass {
+  small
+  large
+}
+
+enum PetType {
+  dog
+  cat
+  spa
+  other
+}
+
+enum OrderStatus {
+  pending
+  confirmed
+  processing
+  completed
+  cancelled
+}
+
+enum MembershipStatus {
+  active
+  expired
+  cancelled
+}
+
+model MembershipLevel {
+  id                BigInt              @id @default(autoincrement())
+  code              String              @unique
+  name              String
+  priceCents        Int                 @map("price_cents")
+  pointsMultiplier  Decimal             @default("1.0") @map("points_multiplier") @db.Decimal(5, 2)
+  serviceDiscount   Decimal?            @map("service_discount") @db.Decimal(5, 2)
+  productDiscount   Decimal?            @map("product_discount") @db.Decimal(5, 2)
+  highlight         String?
+  description       String?
+  createdAt         DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime            @default(now()) @map("updated_at") @db.Timestamptz(6)
+  benefits          MembershipBenefit[]
+  users             User[]
+  memberships       UserMembership[]
+  orders            Order[]
+
+  @@map("membership_levels")
+}
+
+model MembershipBenefit {
+  id                 BigInt           @id @default(autoincrement())
+  membershipLevelId  BigInt           @map("membership_level_id")
+  displayOrder       Int              @default(0) @map("display_order")
+  label              String
+  membershipLevel    MembershipLevel  @relation(fields: [membershipLevelId], references: [id], onDelete: Cascade)
+
+  @@map("membership_benefits")
+}
+
+model User {
+  id                        BigInt              @id @default(autoincrement())
+  openId                    String              @unique @map("open_id") @db.VarChar(64)
+  unionId                   String?             @map("union_id") @db.VarChar(64)
+  phone                     String?             @db.VarChar(32)
+  nickname                  String?             @db.VarChar(64)
+  avatarUrl                 String?             @map("avatar_url")
+  pointsBalance             Int                 @default(0) @map("points_balance")
+  currentMembershipLevelId  BigInt?             @map("current_membership_level_id")
+  membershipExpireAt        DateTime?           @map("membership_expire_at") @db.Timestamptz(6)
+  createdAt                 DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                 DateTime            @default(now()) @map("updated_at") @db.Timestamptz(6)
+  currentMembershipLevel    MembershipLevel?    @relation(fields: [currentMembershipLevelId], references: [id])
+  memberships               UserMembership[]
+  pointsLedger              UserPointsLedger[]
+  pets                      Pet[]
+  orders                    Order[]
+  storeReviews              StoreReview[]
+
+  @@map("users")
+}
+
+model UserMembership {
+  id                 BigInt            @id @default(autoincrement())
+  userId             BigInt            @map("user_id")
+  membershipLevelId  BigInt            @map("membership_level_id")
+  status             MembershipStatus  @default(active)
+  purchasedAt        DateTime          @default(now()) @map("purchased_at") @db.Timestamptz(6)
+  startedAt          DateTime          @map("started_at") @db.Timestamptz(6)
+  expiresAt          DateTime?         @map("expires_at") @db.Timestamptz(6)
+  benefitsSnapshot   Json?             @map("benefits_snapshot")
+  createdAt          DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  user               User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  membershipLevel    MembershipLevel   @relation(fields: [membershipLevelId], references: [id])
+
+  @@map("user_memberships")
+}
+
+model UserPointsLedger {
+  id             BigInt  @id @default(autoincrement())
+  userId         BigInt  @map("user_id")
+  changeAmount   Int     @map("change_amount")
+  balanceAfter   Int     @map("balance_after")
+  reason         String
+  referenceType  String? @map("reference_type")
+  referenceId    BigInt? @map("reference_id")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  user           User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_points_ledger")
+}
+
+model Pet {
+  id                   BigInt          @id @default(autoincrement())
+  userId               BigInt          @map("user_id")
+  name                 String          @db.VarChar(64)
+  species              PetSpecies
+  breed                String?         @db.VarChar(128)
+  gender               PetGender       @default(unknown)
+  birthdate            DateTime?       @db.Date
+  ageText              String?         @map("age_text") @db.VarChar(32)
+  weightKg             Decimal?        @map("weight_kg") @db.Decimal(6, 2)
+  color                String?         @db.VarChar(64)
+  shoulderHeightClass  PetHeightClass? @map("shoulder_height_class")
+  avatarUrl            String?         @map("avatar_url")
+  neutered             Boolean         @default(false)
+  vaccinated           Boolean         @default(false)
+  notes                String?
+  createdAt            DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime        @default(now()) @map("updated_at") @db.Timestamptz(6)
+  user                 User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orders               Order[]
+  orderItems           OrderItem[]
+
+  @@map("pets")
+  @@index([userId], map: "pets_user_id_idx")
+}
+
+model Store {
+  id              BigInt             @id @default(autoincrement())
+  name            String
+  slug            String?            @unique
+  description     String?
+  address         String?
+  city            String?
+  province        String?
+  latitude        Decimal?           @db.Decimal(9, 6)
+  longitude       Decimal?           @db.Decimal(9, 6)
+  phone           String?            @db.VarChar(32)
+  wechatId        String?            @map("wechat_id") @db.VarChar(64)
+  businessHours   String?            @map("business_hours")
+  heroImageUrl    String?            @map("hero_image_url")
+  defaultDiscount String?            @map("default_discount")
+  createdAt       DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime           @default(now()) @map("updated_at") @db.Timestamptz(6)
+  images          StoreImage[]
+  promotions      StorePromotion[]
+  reviews         StoreReview[]
+  storeServices   StoreServiceItem[]
+  orders          Order[]
+
+  @@map("stores")
+}
+
+model StoreImage {
+  id           BigInt   @id @default(autoincrement())
+  storeId      BigInt   @map("store_id")
+  imageUrl     String   @map("image_url")
+  displayOrder Int      @default(0) @map("display_order")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  store        Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@map("store_images")
+}
+
+model StorePromotion {
+  id           BigInt   @id @default(autoincrement())
+  storeId      BigInt   @map("store_id")
+  title        String
+  description  String?
+  discountText String?  @map("discount_text")
+  validFrom    DateTime? @map("valid_from") @db.Date
+  validTo      DateTime? @map("valid_to") @db.Date
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  store        Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@map("store_promotions")
+}
+
+model StoreReview {
+  id        BigInt   @id @default(autoincrement())
+  storeId   BigInt   @map("store_id")
+  userId    BigInt?  @map("user_id")
+  rating    Int
+  content   String
+  visitedAt DateTime? @map("visited_at") @db.Date
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  store     Store     @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  user      User?     @relation(fields: [userId], references: [id])
+
+  @@map("store_reviews")
+  @@index([storeId], map: "store_reviews_store_id_idx")
+}
+
+model HomepageCarouselSlide {
+  id           BigInt   @id @default(autoincrement())
+  title        String?
+  imageUrl     String   @map("image_url")
+  linkUrl      String?  @map("link_url")
+  displayOrder Int      @default(0) @map("display_order")
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@map("homepage_carousel_slides")
+}
+
+model ServiceCategory {
+  id         BigInt    @id @default(autoincrement())
+  name       String
+  slug       String?   @unique
+  description String?
+  petScope   PetType[] @map("pet_scope") @default([dog, cat])
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime  @default(now()) @map("updated_at") @db.Timestamptz(6)
+  services   ServiceItem[]
+
+  @@map("service_categories")
+}
+
+model ServiceItem {
+  id               BigInt         @id @default(autoincrement())
+  categoryId       BigInt         @map("category_id")
+  title            String
+  subtitle         String?
+  description      String?
+  basePrice        Decimal        @map("base_price") @db.Decimal(10, 2)
+  durationMinutes  Int?           @map("duration_minutes")
+  coverImageUrl    String?        @map("cover_image_url")
+  petScope         PetType[]      @map("pet_scope") @default([dog, cat])
+  attributes       Json?
+  isActive         Boolean        @default(true) @map("is_active")
+  createdAt        DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime       @default(now()) @map("updated_at") @db.Timestamptz(6)
+  category         ServiceCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  media            ServiceMedia[]
+  storeServices    StoreServiceItem[]
+  orderItems       OrderItem[]
+
+  @@map("service_items")
+  @@index([categoryId], map: "service_items_category_idx")
+}
+
+model ServiceMedia {
+  id             BigInt    @id @default(autoincrement())
+  serviceItemId  BigInt    @map("service_item_id")
+  mediaUrl       String    @map("media_url")
+  mediaType      String    @map("media_type")
+  caption        String?
+  displayOrder   Int       @default(0) @map("display_order")
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  serviceItem    ServiceItem @relation(fields: [serviceItemId], references: [id], onDelete: Cascade)
+
+  @@map("service_media")
+}
+
+model StoreServiceItem {
+  id             BigInt      @id @default(autoincrement())
+  storeId        BigInt      @map("store_id")
+  serviceItemId  BigInt      @map("service_item_id")
+  priceOverride  Decimal?    @map("price_override") @db.Decimal(10, 2)
+  discountText   String?     @map("discount_text")
+  isAvailable    Boolean     @default(true) @map("is_available")
+  store          Store       @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  serviceItem    ServiceItem @relation(fields: [serviceItemId], references: [id], onDelete: Cascade)
+
+  @@map("store_service_items")
+  @@unique([storeId, serviceItemId], map: "store_service_items_store_id_service_item_id_key")
+}
+
+model Order {
+  id                 BigInt          @id @default(autoincrement())
+  orderNo            String          @unique @map("order_no") @db.VarChar(40)
+  userId             BigInt          @map("user_id")
+  storeId            BigInt?         @map("store_id")
+  membershipLevelId  BigInt?         @map("membership_level_id")
+  petId              BigInt?         @map("pet_id")
+  status             OrderStatus     @default(pending)
+  totalAmount        Decimal         @map("total_amount") @db.Decimal(10, 2)
+  discountAmount     Decimal         @default("0") @map("discount_amount") @db.Decimal(10, 2)
+  payableAmount      Decimal         @map("payable_amount") @db.Decimal(10, 2)
+  appointmentAt      DateTime?       @map("appointment_at") @db.Timestamptz(6)
+  completedAt        DateTime?       @map("completed_at") @db.Timestamptz(6)
+  cancelledAt        DateTime?       @map("cancelled_at") @db.Timestamptz(6)
+  createdAt          DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime        @default(now()) @map("updated_at") @db.Timestamptz(6)
+  user               User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  store              Store?          @relation(fields: [storeId], references: [id])
+  membershipLevel    MembershipLevel? @relation(fields: [membershipLevelId], references: [id])
+  pet                Pet?            @relation(fields: [petId], references: [id])
+  items              OrderItem[]
+  events             OrderEvent[]
+
+  @@map("orders")
+  @@index([userId], map: "orders_user_id_idx")
+  @@index([storeId], map: "orders_store_id_idx")
+  @@index([status], map: "orders_status_idx")
+}
+
+model OrderItem {
+  id             BigInt     @id @default(autoincrement())
+  orderId        BigInt     @map("order_id")
+  serviceItemId  BigInt?    @map("service_item_id")
+  petId          BigInt?    @map("pet_id")
+  serviceType    String?    @map("service_type")
+  serviceName    String     @map("service_name")
+  unitPrice      Decimal    @map("unit_price") @db.Decimal(10, 2)
+  quantity       Int        @default(1)
+  notes          String?
+  order          Order      @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  serviceItem    ServiceItem? @relation(fields: [serviceItemId], references: [id])
+  pet            Pet?       @relation(fields: [petId], references: [id])
+
+  @@map("order_items")
+  @@index([orderId], map: "order_items_order_idx")
+}
+
+model OrderEvent {
+  id          BigInt      @id @default(autoincrement())
+  orderId     BigInt      @map("order_id")
+  fromStatus  OrderStatus? @map("from_status")
+  toStatus    OrderStatus  @map("to_status")
+  remark      String?
+  createdAt   DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  order       Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@map("order_events")
+}

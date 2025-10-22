@@ -63,7 +63,7 @@ export function UserAvatar() {
           setSignOutError(null);
           const result = await signOut();
           if (result?.error) {
-            setSignOutError(result.error.message);
+            setSignOutError(result.error.message ?? "Sign out failed");
             return;
           }
           router.push("/login");

@@ -1,7 +1,7 @@
 "use client";
 
 import { Button, Input, Select, SelectItem } from "@heroui/react";
-import { MagnifyingGlass, ArrowClockwise } from "@phosphor-icons/react";
+import { ArrowClockwise, MagnifyingGlass } from "@phosphor-icons/react";
 import type { FilterConfig } from "./types";
 
 export interface TableToolbarProps {
@@ -59,9 +59,7 @@ export function TableToolbar({
           selectedKeys={
             filterValues[filter.key] ? [filterValues[filter.key]] : []
           }
-          onChange={(event) =>
-            onFilterChange?.(filter.key, event.target.value)
-          }
+          onChange={(event) => onFilterChange?.(filter.key, event.target.value)}
           className="w-48"
           aria-label={filter.label}
         >

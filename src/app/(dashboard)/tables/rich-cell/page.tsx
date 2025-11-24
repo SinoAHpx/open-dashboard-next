@@ -1,75 +1,58 @@
-/** biome-ignore-all lint/correctness/useExhaustiveDependencies: <explanation> */
 "use client";
 
-import { useRef, useCallback, useMemo, Suspense } from "react";
+import { Button, Spinner, useDisclosure } from "@heroui/react";
+import { Plus } from "@phosphor-icons/react";
+import { Suspense, useCallback, useMemo, useRef, useState } from "react";
 import {
   PaginationTable,
   type PaginationTableRef,
 } from "@/components/PaginationTable";
 import { TablePage } from "@/components/table/TablePage";
-import { Button, useDisclosure, Spinner } from "@heroui/react";
-import { Plus } from "@phosphor-icons/react";
 import type { RichCellTask } from "@/lib/api-wrapper/richcell";
-import { richCellTasksBlueprint } from "@/lib/config/richcells-tasks.config";
+import {
+  createRichCellTasksConfig,
+  richCellMeta,
+} from "@/lib/config/richcells-tasks.config";
 
 export default function RichCellPage() {
   const tableRef = useRef<PaginationTableRef>(null);
   const { onOpen } = useDisclosure();
 
-  const handleEdit = useCallback((task: RichCellTask) => {
-    console.log("Editing task:", task);
-    onOpen();
-  }, [onOpen]);
-
-  const handleDelete = useCallback(
-    (id: string) => {
-      if (confirm("Are you sure you want to delete this task?")) {
-        console.log("Deleting task:", id);
-        tableRef.current?.refresh();
-      }
+  const handleEdit = useCallback(
+    (task: RichCellTask) => {
+      console.log("Editing task:", task);
+      onOpen();
     },
-    [tableRef]
+    [onOpen],
   );
 
-  const handleUpdateProgress = useCallback(
-    (id: string, progress: number) => {
-      console.log(`Updating task ${id} progress to ${progress}%`);
+  const handleDelete = useCallback((id: string) => {
+    if (confirm("Are you sure you want to delete this task?")) {
+      console.log("Deleting task:", id);
       tableRef.current?.refresh();
-    },
-    [tableRef]
-  );
-
-  const handleUpdateTask = useCallback(
-    (id: string, field: string, value: string) => {
-      console.log(`Updating task ${id} field ${field} to ${value}`);
-      tableRef.current?.refresh();
-    },
-    [tableRef]
-  );
+    }
+  }, []);
 
   const handleAddTask = useCallback(() => {
     console.log("Adding new task");
     onOpen();
   }, [onOpen]);
 
-  const { store, config, meta } = useMemo(
+  const [totalCount, setTotalCount] = useState(0);
+  const config = useMemo(
     () =>
-      richCellTasksBlueprint.createInstance({
+      createRichCellTasksConfig({
         onEdit: handleEdit,
         onDelete: handleDelete,
-        onUpdateProgress: handleUpdateProgress,
-        onUpdateTask: handleUpdateTask,
       }),
-    [handleDelete, handleEdit, handleUpdateProgress, handleUpdateTask]
+    [handleDelete, handleEdit],
   );
-
-  const totalCount = store((state) => state.totalCount);
 
   return (
     <TablePage
-      title={meta.title}
-      description={`${meta.description ?? ""}${
-        meta.description ? " " : ""
+      title={richCellMeta.title}
+      description={`${richCellMeta.description ?? ""}${
+        richCellMeta.description ? " " : ""
       }Total tasks: ${totalCount}`}
       actions={
         <Button
@@ -88,7 +71,11 @@ export default function RichCellPage() {
           </div>
         }
       >
-        <PaginationTable ref={tableRef} store={store} {...config} />
+        <PaginationTable
+          ref={tableRef}
+          {...config}
+          onTotalsChange={({ totalCount }) => setTotalCount(totalCount)}
+        />
       </Suspense>
     </TablePage>
   );

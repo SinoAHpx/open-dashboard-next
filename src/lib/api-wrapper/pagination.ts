@@ -28,9 +28,16 @@ export interface GetPaginationUsersParams {
 }
 
 export async function getPaginationUsers(
-  params: GetPaginationUsersParams = {}
+  params: GetPaginationUsersParams = {},
 ): Promise<PaginationResponse> {
-  const { page = 1, pageSize = 10, search = "", status = "", sortBy = "", sortOrder = "asc" } = params;
+  const {
+    page = 1,
+    pageSize = 10,
+    search = "",
+    status = "",
+    sortBy = "",
+    sortOrder = "asc",
+  } = params;
 
   const queryParams = new URLSearchParams({
     page: page.toString(),

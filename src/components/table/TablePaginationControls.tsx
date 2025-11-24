@@ -43,9 +43,7 @@ export function TablePaginationControls({
           aria-label="Select page size"
         >
           {pageSizeOptions.map((option) => (
-            <SelectItem key={option.toString()}>
-              {option.toString()}
-            </SelectItem>
+            <SelectItem key={option.toString()}>{option.toString()}</SelectItem>
           ))}
         </Select>
       </div>

@@ -1,6 +1,6 @@
-import { Pool } from "pg";
 import { readFileSync } from "fs";
 import { join } from "path";
+import { Pool } from "pg";
 
 async function migrate() {
   const pool = new Pool({

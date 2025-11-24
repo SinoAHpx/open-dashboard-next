@@ -1,17 +1,16 @@
 import { Link } from "@heroui/link";
-import { headers } from "next/headers";
+import { cookies } from "next/headers";
 import Image from "next/image";
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { decodeSession, SESSION_COOKIE } from "@/lib/auth/session";
 
 export default async function AuthLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const session = await auth.api.getSession({
-    headers: headers(),
-  });
+  const cookieStore = cookies();
+  const session = decodeSession(cookieStore.get(SESSION_COOKIE)?.value);
 
   if (session) {
     redirect("/");

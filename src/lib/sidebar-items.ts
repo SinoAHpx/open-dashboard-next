@@ -6,8 +6,8 @@ import {
   GearIcon,
   HouseIcon,
   TableIcon,
-  UserIcon,
   TextboxIcon,
+  UserIcon,
   WarningIcon,
 } from "@phosphor-icons/react";
 

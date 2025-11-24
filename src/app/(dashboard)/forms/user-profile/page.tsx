@@ -1,17 +1,18 @@
 "use client";
 
-import { useState } from "react";
 import {
-  Input,
   Button,
-  Textarea,
   Card,
   CardBody,
   CardHeader,
-  Tabs,
-  Tab,
+  Input,
   Switch,
+  Tab,
+  Tabs,
+  Textarea,
 } from "@heroui/react";
+import Image from "next/image";
+import { useState } from "react";
 
 export default function UserProfileFormsPage() {
   return (
@@ -44,7 +45,9 @@ function UserProfileForm() {
   const [lastName, setLastName] = useState("Doe");
   const [email, setEmail] = useState("john.doe@example.com");
   const [phone, setPhone] = useState("+1 (555) 123-4567");
-  const [bio, setBio] = useState("Software developer with a passion for building great products.");
+  const [bio, setBio] = useState(
+    "Software developer with a passion for building great products.",
+  );
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
@@ -87,14 +90,17 @@ function UserProfileForm() {
       </CardHeader>
       <CardBody>
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="flex flex-col items-center mb-6">
+          <div className="mb-6 flex flex-col items-center">
             <div className="relative">
-              <div className="w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden mb-3">
+              <div className="relative mb-3 flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-gray-200">
                 {profileImage ? (
-                  <img
+                  <Image
                     src={profileImage}
                     alt="Profile"
-                    className="w-full h-full object-cover"
+                    fill
+                    sizes="96px"
+                    className="object-cover"
+                    unoptimized
                   />
                 ) : (
                   <span className="text-3xl text-gray-500">

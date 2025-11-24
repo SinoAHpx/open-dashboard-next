@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
 import { Button } from "@heroui/button";
 import { Card, CardBody } from "@heroui/card";
 import { Input } from "@heroui/input";
 import { Link } from "@heroui/link";
+import { useState } from "react";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -61,8 +61,8 @@ export default function ForgotPasswordPage() {
         <CardBody className="space-y-4">
           <form onSubmit={handleSubmit} className="space-y-4">
             <p className="text-sm text-gray-600">
-              Enter your email address and we will send you a link to reset
-              your password.
+              Enter your email address and we will send you a link to reset your
+              password.
             </p>
             <Input
               isRequired

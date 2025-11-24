@@ -1,13 +1,14 @@
 "use client";
 
+import { Button } from "@heroui/button";
 import { Card, CardBody, CardHeader } from "@heroui/card";
 import { Input } from "@heroui/input";
-import { Button } from "@heroui/button";
 import { Switch } from "@heroui/switch";
-import { useAuthStore } from "@/stores/auth";
+import { useGetIdentity } from "@refinedev/core";
+import type { SessionUser } from "@/lib/auth/session";
 
 export default function SettingsPage() {
-  const user = useAuthStore((state) => state.user);
+  const { data: user } = useGetIdentity<SessionUser>();
 
   return (
     <div className="p-8">

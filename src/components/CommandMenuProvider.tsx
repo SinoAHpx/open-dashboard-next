@@ -1,7 +1,7 @@
 "use client";
 
-import { CommandMenu } from "./CommandMenu";
 import { useCommandMenu } from "@/stores/command-menu";
+import { CommandMenu } from "./CommandMenu";
 
 export function CommandMenuProvider({
   children,

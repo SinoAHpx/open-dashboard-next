@@ -1,42 +1,43 @@
 "use client";
 
-import { Card, CardBody, CardHeader } from "@heroui/card";
 import { Button } from "@heroui/button";
-import { Progress } from "@heroui/progress";
+import { Card, CardBody, CardHeader } from "@heroui/card";
 import { Chip } from "@heroui/chip";
-import { useAuthStore } from "@/stores/auth";
+import { Progress } from "@heroui/progress";
 import {
-  LineChart,
-  Line,
-  BarChart,
+  ChartLine,
+  Clock,
+  CurrencyDollar,
+  TrendDown,
+  TrendUp,
+  Users,
+} from "@phosphor-icons/react";
+import { useGetIdentity } from "@refinedev/core";
+import {
   Bar,
-  PieChart,
-  Pie,
+  BarChart,
+  CartesianGrid,
   Cell,
+  Legend,
+  Line,
+  LineChart,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
 } from "recharts";
+import type { SessionUser } from "@/lib/auth/session";
+import { useThemeColors } from "@/lib/color-theme";
 import {
-  monthlyRevenueData,
   categoryData,
+  monthlyRevenueData,
   trafficSourceData,
 } from "@/lib/dashboard/chart-data";
-import {
-  TrendUp,
-  TrendDown,
-  Users,
-  CurrencyDollar,
-  Clock,
-  ChartLine,
-} from "@phosphor-icons/react";
-import { useThemeColors } from "@/lib/color-theme";
 
 export default function DashboardPage() {
-  const user = useAuthStore((state) => state.user);
+  const { data: user } = useGetIdentity<SessionUser>();
   const themeColors = useThemeColors();
 
   return (

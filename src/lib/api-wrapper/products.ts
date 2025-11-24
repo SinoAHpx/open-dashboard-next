@@ -47,7 +47,7 @@ export function getPaginatedProducts(params: {
         product.name.toLowerCase().includes(searchLower) ||
         product.category.toLowerCase().includes(searchLower) ||
         product.sku.toLowerCase().includes(searchLower) ||
-        product.description.toLowerCase().includes(searchLower)
+        product.description.toLowerCase().includes(searchLower),
     );
   }
 
@@ -94,7 +94,9 @@ export function getPaginatedProducts(params: {
 }
 
 // Add a new product
-export function addProduct(product: Omit<Product, "id" | "createdAt">): Product {
+export function addProduct(
+  product: Omit<Product, "id" | "createdAt">,
+): Product {
   const products = getProducts();
   const newProduct: Product = {
     ...product,
@@ -107,7 +109,10 @@ export function addProduct(product: Omit<Product, "id" | "createdAt">): Product 
 }
 
 // Update a product
-export function updateProduct(id: string, updates: Partial<Omit<Product, "id" | "createdAt">>): Product | null {
+export function updateProduct(
+  id: string,
+  updates: Partial<Omit<Product, "id" | "createdAt">>,
+): Product | null {
   const products = getProducts();
   const index = products.findIndex((p) => p.id === id);
 
@@ -142,7 +147,11 @@ export function generateSampleProducts(count = 50): Product[] {
     "Health & Beauty",
   ];
 
-  const statuses: Product["status"][] = ["available", "out_of_stock", "discontinued"];
+  const statuses: Product["status"][] = [
+    "available",
+    "out_of_stock",
+    "discontinued",
+  ];
 
   const products: Product[] = [];
 

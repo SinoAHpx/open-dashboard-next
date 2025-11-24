@@ -55,7 +55,7 @@ export const COLOR_THEME = {
  */
 export function getPrimaryColor(
   shade: keyof typeof COLOR_THEME.light.primary,
-  theme: "light" | "dark" = "light"
+  theme: "light" | "dark" = "light",
 ): string {
   return COLOR_THEME[theme].primary[shade];
 }
@@ -95,10 +95,12 @@ export function getFocusColor(theme: "light" | "dark" = "light"): string {
  */
 export function getChartColorPalette(
   theme: "light" | "dark" = "light",
-  count: number = 5
+  count: number = 5,
 ): string[] {
   const shades = [900, 800, 700, 600, 500, 400, 300, 200, 100] as const;
-  return shades.slice(0, count).map((shade) => COLOR_THEME[theme].primary[shade]);
+  return shades
+    .slice(0, count)
+    .map((shade) => COLOR_THEME[theme].primary[shade]);
 }
 
 /**

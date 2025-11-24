@@ -1,6 +1,6 @@
-import { PaginationUser } from "@/lib/api-wrapper/pagination";
 import { faker } from "@faker-js/faker";
 import { NextRequest, NextResponse } from "next/server";
+import { PaginationUser } from "@/lib/api-wrapper/pagination";
 
 const TOTAL_RECORDS = 1000;
 let cachedUsers: PaginationUser[] | null = null;
@@ -55,14 +55,14 @@ export async function GET(request: NextRequest) {
           user.name.toLowerCase().includes(searchLower) ||
           user.email.toLowerCase().includes(searchLower) ||
           user.role.toLowerCase().includes(searchLower) ||
-          user.department.toLowerCase().includes(searchLower)
+          user.department.toLowerCase().includes(searchLower),
       );
     }
 
     // Apply status filter
     if (status) {
       filteredUsers = filteredUsers.filter(
-        (user) => user.status === status.toLowerCase()
+        (user) => user.status === status.toLowerCase(),
       );
     }
 
@@ -96,7 +96,7 @@ export async function GET(request: NextRequest) {
     console.error("Pagination API error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

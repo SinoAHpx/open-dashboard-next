@@ -2,8 +2,8 @@
 
 import { Button } from "@heroui/button";
 import { Card, CardBody } from "@heroui/card";
-import Link from "next/link";
 import { WrenchIcon } from "@phosphor-icons/react";
+import Link from "next/link";
 
 export default function ServiceUnavailablePage() {
   return (

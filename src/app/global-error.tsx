@@ -2,8 +2,8 @@
 
 import { Button } from "@heroui/button";
 import { Card, CardBody } from "@heroui/card";
-import { useEffect } from "react";
 import { WarningOctagonIcon } from "@phosphor-icons/react";
+import { useEffect } from "react";
 
 export default function GlobalError({
   error,
@@ -23,16 +23,24 @@ export default function GlobalError({
           <Card className="w-full max-w-md">
             <CardBody className="flex flex-col items-center space-y-6 py-8">
               <div className="flex items-center justify-center w-20 h-20 rounded-full bg-danger/10">
-                <WarningOctagonIcon className="w-10 h-10 text-danger" weight="fill" />
+                <WarningOctagonIcon
+                  className="w-10 h-10 text-danger"
+                  weight="fill"
+                />
               </div>
               <div className="text-center space-y-2">
                 <h1 className="text-6xl font-bold text-gray-900">500</h1>
-                <h2 className="text-2xl font-semibold text-gray-800">Critical Error</h2>
+                <h2 className="text-2xl font-semibold text-gray-800">
+                  Critical Error
+                </h2>
                 <p className="text-gray-600">
-                  A critical error occurred. Please refresh the page or contact support.
+                  A critical error occurred. Please refresh the page or contact
+                  support.
                 </p>
                 {error.digest && (
-                  <p className="text-sm text-gray-500 font-mono">Error ID: {error.digest}</p>
+                  <p className="text-sm text-gray-500 font-mono">
+                    Error ID: {error.digest}
+                  </p>
                 )}
               </div>
               <div className="flex gap-3 w-full">
@@ -45,7 +53,7 @@ export default function GlobalError({
                   Try Again
                 </Button>
                 <Button
-                  onClick={() => window.location.href = "/"}
+                  onClick={() => (window.location.href = "/")}
                   variant="bordered"
                   className="flex-1"
                 >

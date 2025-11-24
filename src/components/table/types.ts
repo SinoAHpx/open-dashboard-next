@@ -9,11 +9,3 @@ export interface FilterConfig {
   placeholder: string;
   options: FilterOption[];
 }
-
-export interface TableStateSnapshot {
-  page: number;
-  pageSize: number;
-  totalPages: number;
-  totalCount: number;
-  isLoading: boolean;
-}

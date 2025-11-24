@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  Button,
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@heroui/react";
+import { Button, Popover, PopoverContent, PopoverTrigger } from "@heroui/react";
 import { BellIcon } from "@phosphor-icons/react/dist/ssr";
 
 const NOTIFICATIONS = [

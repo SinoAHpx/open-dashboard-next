@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
 import { Button } from "@heroui/button";
 import { Card, CardBody } from "@heroui/card";
 import { Input } from "@heroui/input";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 export default function ResetPasswordPage() {
   const router = useRouter();

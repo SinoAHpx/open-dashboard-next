@@ -1,10 +1,10 @@
 "use client";
 
-import { MagnifyingGlassIcon } from "@phosphor-icons/react/dist/ssr";
 import { Button, Kbd } from "@heroui/react";
+import { MagnifyingGlassIcon } from "@phosphor-icons/react/dist/ssr";
+import { useCommandMenu } from "@/stores/command-menu";
 import { NotificationButton } from "./NotificationButton";
 import { UserAvatar } from "./UserAvatar";
-import { useCommandMenu } from "@/stores/command-menu";
 
 export function Header() {
   const { open } = useCommandMenu();

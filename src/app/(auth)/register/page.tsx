@@ -7,9 +7,9 @@ import { Checkbox } from "@heroui/checkbox";
 import { Input } from "@heroui/input";
 import { Link } from "@heroui/link";
 import { Eye, EyeSlash } from "@phosphor-icons/react/dist/ssr";
+import { useRegister } from "@refinedev/core";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
-import { authClient } from "@/lib/auth-client";
 import { registerSchema } from "@/lib/schemas";
 
 type RegisterErrors = {
@@ -22,12 +22,12 @@ type RegisterErrors = {
 
 export default function RegisterPage() {
   const router = useRouter();
+  const { mutateAsync: register, isLoading } = useRegister();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [agreeToTerms, setAgreeToTerms] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<RegisterErrors>({});
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
@@ -74,7 +74,6 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
     setErrors({});
     setSuccessMessage(null);
 
@@ -100,22 +99,22 @@ export default function RegisterPage() {
       setErrors({
         general: "You must agree to the Terms of Service and Privacy Policy",
       });
-      setIsLoading(false);
       return;
     }
 
     try {
-      const { error } = await authClient.signUp.email({
+      const response = await register({
         email,
         password,
         name,
-        callbackURL: "/login?verified=1",
+        redirectTo: "/login",
       });
 
-      if (error) {
+      if (response?.success === false) {
         setErrors({
           general:
-            error.message || "Failed to create account. Please try again.",
+            response.error?.message ||
+            "Failed to create account. Please try again.",
         });
         return;
       }
@@ -132,8 +131,6 @@ export default function RegisterPage() {
       setErrors({
         general: error.message || "Failed to create account. Please try again.",
       });
-    } finally {
-      setIsLoading(false);
     }
   };
 

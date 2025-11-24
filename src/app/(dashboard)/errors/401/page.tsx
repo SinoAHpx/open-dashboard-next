@@ -2,8 +2,8 @@
 
 import { Button } from "@heroui/button";
 import { Card, CardBody } from "@heroui/card";
-import Link from "next/link";
 import { LockKeyIcon } from "@phosphor-icons/react";
+import Link from "next/link";
 
 export default function UnauthorizedPage() {
   return (
@@ -16,7 +16,8 @@ export default function UnauthorizedPage() {
           <h1 className="text-6xl font-bold text-gray-900">401</h1>
           <h2 className="text-2xl font-semibold text-gray-800">Unauthorized</h2>
           <p className="text-gray-600">
-            You need to sign in to access this resource. Please authenticate to continue.
+            You need to sign in to access this resource. Please authenticate to
+            continue.
           </p>
         </div>
         <div className="flex gap-3 w-full">
@@ -29,12 +30,7 @@ export default function UnauthorizedPage() {
           >
             Sign In
           </Button>
-          <Button
-            as={Link}
-            href="/"
-            variant="bordered"
-            className="flex-1"
-          >
+          <Button as={Link} href="/" variant="bordered" className="flex-1">
             Go Home
           </Button>
         </div>

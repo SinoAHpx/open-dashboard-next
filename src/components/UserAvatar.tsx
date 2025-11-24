@@ -17,14 +17,17 @@ import {
   SignOutIcon,
   UserIcon,
 } from "@phosphor-icons/react/dist/ssr";
+import { useGetIdentity, useLogout } from "@refinedev/core";
 import { useRouter } from "next/navigation";
 import type { Key } from "react";
 import { useEffect, useMemo, useState } from "react";
-import { signOut, useSession } from "@/lib/auth-client";
+import type { SessionUser } from "@/lib/auth/session";
 
 export function UserAvatar() {
   const router = useRouter();
-  const { data: session, isPending } = useSession();
+  const { data: identity, isLoading: isIdentityLoading } =
+    useGetIdentity<SessionUser>();
+  const { mutateAsync: logout } = useLogout();
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [signOutError, setSignOutError] = useState<string | null>(null);
 
@@ -35,13 +38,13 @@ export function UserAvatar() {
   }, [signOutError]);
 
   const displayName = useMemo(() => {
-    if (session?.user?.name) {
-      return session.user.name;
+    if (identity?.name) {
+      return identity.name;
     }
-    return session?.user?.email ?? "User";
-  }, [session]);
+    return identity?.email ?? "User";
+  }, [identity]);
 
-  const avatarSrc = session?.user?.image ?? undefined;
+  const avatarSrc = undefined;
 
   const handleAction = async (key: Key) => {
     switch (key) {
@@ -61,9 +64,12 @@ export function UserAvatar() {
         try {
           setIsSigningOut(true);
           setSignOutError(null);
-          const result = await signOut();
-          if (result?.error) {
-            setSignOutError(result.error.message);
+          const response = await logout();
+          if (response?.success === false) {
+            setSignOutError(
+              response.error?.message ||
+                "Unable to sign out. Please try again.",
+            );
             return;
           }
           router.push("/login");
@@ -86,7 +92,7 @@ export function UserAvatar() {
           variant="light"
           radius="full"
           endContent={
-            isPending ? (
+            isIdentityLoading ? (
               <Spinner size="sm" />
             ) : (
               <Avatar

@@ -61,7 +61,8 @@ function generateMockProduct(): SelectableProduct {
     sku: `SKU-${faker.string.alphanumeric(8).toUpperCase()}`,
     category: faker.helpers.arrayElement(categories),
     price: parseFloat(faker.commerce.price({ min: 10, max: 1000, dec: 2 })),
-    stock: status === "out-of-stock" ? 0 : faker.number.int({ min: 0, max: 500 }),
+    stock:
+      status === "out-of-stock" ? 0 : faker.number.int({ min: 0, max: 500 }),
     status,
     supplier: faker.company.name(),
     lastRestocked: faker.date
@@ -106,7 +107,7 @@ function saveProducts(products: SelectableProduct[]): void {
 
 // Add a new product
 export function addProduct(
-  product: Omit<SelectableProduct, "id" | "lastRestocked">
+  product: Omit<SelectableProduct, "id" | "lastRestocked">,
 ): SelectableProduct {
   const products = getProducts();
   const newProduct: SelectableProduct = {
@@ -122,7 +123,7 @@ export function addProduct(
 // Update an existing product
 export function updateProduct(
   id: string,
-  updates: Partial<Omit<SelectableProduct, "id">>
+  updates: Partial<Omit<SelectableProduct, "id">>,
 ): SelectableProduct | null {
   const products = getProducts();
   const index = products.findIndex((p) => p.id === id);
@@ -154,7 +155,7 @@ export function generateSampleProducts(count: number): void {
 
 // Get paginated products
 export async function getSelectableProductsMock(
-  params: GetSelectableProductsParams = {}
+  params: GetSelectableProductsParams = {},
 ): Promise<SelectablesPaginationResponse> {
   const {
     page = 1,
@@ -178,7 +179,7 @@ export async function getSelectableProductsMock(
       (product) =>
         product.name.toLowerCase().includes(searchLower) ||
         product.sku.toLowerCase().includes(searchLower) ||
-        product.supplier.toLowerCase().includes(searchLower)
+        product.supplier.toLowerCase().includes(searchLower),
     );
   }
 
@@ -240,14 +241,14 @@ export async function bulkDeleteProducts(ids: string[]): Promise<void> {
 
 export async function bulkUpdateStatus(
   ids: string[],
-  status: SelectableProduct["status"]
+  status: SelectableProduct["status"],
 ): Promise<void> {
   console.log("Bulk updating product status:", ids, status);
   await new Promise((resolve) => setTimeout(resolve, 500));
 
   const products = getProducts();
   const updated = products.map((p) =>
-    ids.includes(p.id) ? { ...p, status } : p
+    ids.includes(p.id) ? { ...p, status } : p,
   );
   saveProducts(updated);
 }
@@ -260,7 +261,17 @@ export async function bulkExportProducts(ids: string[]): Promise<void> {
   const toExport = products.filter((p) => ids.includes(p.id));
 
   // Create CSV content
-  const headers = ["ID", "Name", "SKU", "Category", "Price", "Stock", "Status", "Supplier", "Last Restocked"];
+  const headers = [
+    "ID",
+    "Name",
+    "SKU",
+    "Category",
+    "Price",
+    "Stock",
+    "Status",
+    "Supplier",
+    "Last Restocked",
+  ];
   const rows = toExport.map((p) => [
     p.id,
     p.name,

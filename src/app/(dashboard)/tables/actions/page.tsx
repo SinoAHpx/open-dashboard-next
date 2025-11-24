@@ -1,34 +1,36 @@
-/** biome-ignore-all lint/correctness/useExhaustiveDependencies: <explanation> */
 "use client";
 
-import { useRef, useState, useMemo, useCallback, Suspense } from "react";
 import {
   Button,
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  useDisclosure,
   Input,
+  Modal,
+  ModalBody,
+  ModalContent,
+  ModalFooter,
+  ModalHeader,
   Select,
   SelectItem,
   Spinner,
+  useDisclosure,
 } from "@heroui/react";
 import { Plus, Sparkle } from "@phosphor-icons/react";
+import { Suspense, useCallback, useMemo, useRef, useState } from "react";
 import {
   PaginationTable,
   type PaginationTableRef,
 } from "@/components/PaginationTable";
 import { TablePage } from "@/components/table/TablePage";
-import { productsTableBlueprint } from "@/lib/config/actions-products.config";
 import {
   addProduct,
-  updateProduct,
   deleteProduct,
   generateSampleProducts,
   type Product,
+  updateProduct,
 } from "@/lib/api-wrapper/products";
+import {
+  createProductsConfig,
+  productsTableMeta,
+} from "@/lib/config/actions-products.config";
 
 type ProductFormData = Omit<Product, "id" | "createdAt">;
 
@@ -74,18 +76,15 @@ export default function ActionsPage() {
       });
       onOpen();
     },
-    [onOpen]
+    [onOpen],
   );
 
-  const handleDelete = useCallback(
-    (id: string) => {
-      if (confirm("Are you sure you want to delete this product?")) {
-        deleteProduct(id);
-        tableRef.current?.refresh();
-      }
-    },
-    [tableRef]
-  );
+  const handleDelete = useCallback((id: string) => {
+    if (confirm("Are you sure you want to delete this product?")) {
+      deleteProduct(id);
+      tableRef.current?.refresh();
+    }
+  }, []);
 
   const handleSubmit = useCallback(() => {
     if (editingProduct) {
@@ -95,37 +94,38 @@ export default function ActionsPage() {
     }
     onClose();
     tableRef.current?.refresh();
-  }, [editingProduct, formData, onClose, tableRef]);
+  }, [editingProduct, formData, onClose]);
 
   const handleFormChange = useCallback(
     (field: keyof ProductFormData, value: string | number) => {
       setFormData((previous) => ({ ...previous, [field]: value }));
     },
-    []
+    [],
   );
 
   const handleGenerateSamples = useCallback(() => {
     generateSampleProducts(50);
     tableRef.current?.refresh();
-  }, [tableRef]);
+  }, []);
 
-  const { store, config, meta } = useMemo(
+  const [totalCount, setTotalCount] = useState(0);
+  const config = useMemo(
     () =>
-      productsTableBlueprint.createInstance({
+      createProductsConfig({
         onEdit: handleEdit,
         onDelete: handleDelete,
       }),
-    [handleDelete, handleEdit]
+    [handleDelete, handleEdit],
   );
-
-  const totalCount = store((state) => state.totalCount);
 
   return (
     <TablePage
-      title={meta.title}
+      title={productsTableMeta.title}
       description={
         <>
-          {meta.description ? `${meta.description} ` : ""}
+          {productsTableMeta.description
+            ? `${productsTableMeta.description} `
+            : ""}
           Total products: {totalCount}
         </>
       }
@@ -156,7 +156,11 @@ export default function ActionsPage() {
           </div>
         }
       >
-        <PaginationTable ref={tableRef} store={store} {...config} />
+        <PaginationTable
+          ref={tableRef}
+          {...config}
+          onTotalsChange={({ totalCount }) => setTotalCount(totalCount)}
+        />
       </Suspense>
 
       <Modal isOpen={isOpen} onClose={onClose} size="2xl">

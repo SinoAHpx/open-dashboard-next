@@ -3,9 +3,9 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  mainMenuItems,
   bottomMenuItems,
   type MenuItem,
+  mainMenuItems,
 } from "@/lib/sidebar-items";
 
 interface SidebarProps {

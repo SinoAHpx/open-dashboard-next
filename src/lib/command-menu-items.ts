@@ -1,4 +1,4 @@
-import type { ComponentType } from "react";
+import type { KbdKey } from "@heroui/kbd";
 
 import {
   BellIcon,
@@ -6,7 +6,7 @@ import {
   SignOutIcon,
   UserIcon,
 } from "@phosphor-icons/react/dist/ssr";
-import type { KbdKey } from "@heroui/kbd";
+import type { ComponentType } from "react";
 
 export type CommandMenuIcon = ComponentType<{
   size?: number;

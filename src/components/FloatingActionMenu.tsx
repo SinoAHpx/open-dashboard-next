@@ -7,8 +7,21 @@ export interface FloatingAction {
   key: string;
   label: string;
   icon: ReactNode;
-  color?: "default" | "primary" | "secondary" | "success" | "warning" | "danger";
-  variant?: "solid" | "bordered" | "light" | "flat" | "faded" | "shadow" | "ghost";
+  color?:
+    | "default"
+    | "primary"
+    | "secondary"
+    | "success"
+    | "warning"
+    | "danger";
+  variant?:
+    | "solid"
+    | "bordered"
+    | "light"
+    | "flat"
+    | "faded"
+    | "shadow"
+    | "ghost";
   onClick: () => void | Promise<void>;
 }
 

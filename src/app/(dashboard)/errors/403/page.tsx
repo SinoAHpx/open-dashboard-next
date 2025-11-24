@@ -2,8 +2,8 @@
 
 import { Button } from "@heroui/button";
 import { Card, CardBody } from "@heroui/card";
-import Link from "next/link";
 import { ProhibitIcon } from "@phosphor-icons/react";
+import Link from "next/link";
 
 export default function ForbiddenPage() {
   return (
@@ -14,9 +14,12 @@ export default function ForbiddenPage() {
         </div>
         <div className="text-center space-y-2">
           <h1 className="text-6xl font-bold text-gray-900">403</h1>
-          <h2 className="text-2xl font-semibold text-gray-800">Access Forbidden</h2>
+          <h2 className="text-2xl font-semibold text-gray-800">
+            Access Forbidden
+          </h2>
           <p className="text-gray-600">
-            You do not have permission to access this resource. Contact your administrator if you believe this is an error.
+            You do not have permission to access this resource. Contact your
+            administrator if you believe this is an error.
           </p>
         </div>
         <div className="flex gap-3 w-full">

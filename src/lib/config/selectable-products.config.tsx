@@ -1,54 +1,17 @@
-import { Chip } from "@heroui/react";
-import {
-  Trash,
-  Export,
-  CheckCircle,
-  XCircle,
-  Package,
-  PencilSimple,
-} from "@phosphor-icons/react";
+import { Chip, Tooltip } from "@heroui/react";
+import { Info } from "@phosphor-icons/react";
 import type { ColumnDef } from "@tanstack/react-table";
-import {
-  SelectableTableBlueprint,
-  type PaginationRequest,
-  type PaginationResponse,
-  type PaginationTableConfig,
-  type FloatingAction,
-} from "@/lib/config/table-blueprint";
-import {
-  getSelectableProductsMock,
-  type SelectableProduct,
-  bulkDeleteProducts,
-  bulkUpdateStatus,
-  bulkExportProducts,
-} from "@/lib/api-wrapper/selectables";
+import type {
+  PaginationTableConfig,
+  PaginationTableProps,
+} from "@/components/PaginationTable";
+import type { SelectableProduct } from "@/lib/api-wrapper/selectables";
 
-// Adapter function to convert API response to generic format
-async function fetchSelectableProducts(
-  params: PaginationRequest
-): Promise<PaginationResponse<SelectableProduct>> {
-  const response = await getSelectableProductsMock({
-    page: params.page,
-    pageSize: params.pageSize,
-    search: params.search,
-    category: params.category as string | undefined,
-    status: params.status as string | undefined,
-    sortBy: params.sortBy,
-    sortOrder: params.sortOrder,
-  });
+export const selectableProductsMeta = {
+  title: "Selectable Products",
+  description: "Bulk actions and selection state management.",
+};
 
-  return {
-    data: response.data,
-    pagination: {
-      totalPages: response.pagination.totalPages,
-      totalCount: response.pagination.totalCount,
-      currentPage: response.pagination.page,
-      pageSize: response.pagination.pageSize,
-    },
-  };
-}
-
-// Status color mapping
 const statusColorMap: Record<
   SelectableProduct["status"],
   "success" | "warning" | "danger"
@@ -58,11 +21,10 @@ const statusColorMap: Record<
   discontinued: "danger",
 };
 
-// Column definitions
-const columns: ColumnDef<SelectableProduct>[] = [
+export const selectableProductsColumns: ColumnDef<SelectableProduct>[] = [
   {
     accessorKey: "name",
-    header: "Product Name",
+    header: "Name",
     cell: (info) => (
       <div className="flex flex-col">
         <span className="font-medium">{info.getValue() as string}</span>
@@ -83,7 +45,7 @@ const columns: ColumnDef<SelectableProduct>[] = [
     accessorKey: "price",
     header: "Price",
     cell: (info) => (
-      <span className="font-medium">
+      <span className="text-gray-600 dark:text-gray-400">
         ${(info.getValue() as number).toFixed(2)}
       </span>
     ),
@@ -91,22 +53,11 @@ const columns: ColumnDef<SelectableProduct>[] = [
   {
     accessorKey: "stock",
     header: "Stock",
-    cell: (info) => {
-      const stock = info.getValue() as number;
-      return (
-        <span
-          className={
-            stock === 0
-              ? "text-red-600"
-              : stock < 50
-              ? "text-orange-600"
-              : "text-green-600"
-          }
-        >
-          {stock} units
-        </span>
-      );
-    },
+    cell: (info) => (
+      <span className="text-gray-600 dark:text-gray-400">
+        {info.getValue() as number}
+      </span>
+    ),
   },
   {
     accessorKey: "status",
@@ -114,8 +65,8 @@ const columns: ColumnDef<SelectableProduct>[] = [
     cell: (info) => {
       const status = info.getValue() as SelectableProduct["status"];
       return (
-        <Chip color={statusColorMap[status]} size="sm" variant="flat">
-          {status.charAt(0).toUpperCase() + status.slice(1).replace("-", " ")}
+        <Chip color={statusColorMap[status]} variant="flat" size="sm">
+          {status}
         </Chip>
       );
     },
@@ -124,28 +75,44 @@ const columns: ColumnDef<SelectableProduct>[] = [
     accessorKey: "supplier",
     header: "Supplier",
     cell: (info) => (
-      <span className="text-sm text-gray-600 dark:text-gray-400">
+      <span className="text-gray-600 dark:text-gray-400">
         {info.getValue() as string}
       </span>
     ),
   },
   {
     accessorKey: "lastRestocked",
-    header: "Last Restocked",
+    header: () => (
+      <div className="flex items-center gap-1">
+        Last Restocked
+        <Tooltip content="Date of the latest restock action">
+          <Info size={14} />
+        </Tooltip>
+      </div>
+    ),
     cell: (info) => (
-      <span className="text-sm text-gray-600 dark:text-gray-400">
+      <span className="text-gray-600 dark:text-gray-400">
         {info.getValue() as string}
       </span>
     ),
   },
 ];
 
-// Export configuration
 export const selectableProductsConfig: PaginationTableConfig<SelectableProduct> =
   {
-    columns,
-    fetchData: fetchSelectableProducts,
+    resource: "selectables",
+    columns: selectableProductsColumns,
     filters: [
+      {
+        key: "status",
+        label: "Status",
+        placeholder: "Filter by status",
+        options: [
+          { key: "active", label: "Active" },
+          { key: "out-of-stock", label: "Out of Stock" },
+          { key: "discontinued", label: "Discontinued" },
+        ],
+      },
       {
         key: "category",
         label: "Category",
@@ -161,145 +128,13 @@ export const selectableProductsConfig: PaginationTableConfig<SelectableProduct> 
           { key: "Beauty", label: "Beauty" },
         ],
       },
-      {
-        key: "status",
-        label: "Status",
-        placeholder: "Filter by status",
-        options: [
-          { key: "active", label: "Active" },
-          { key: "out-of-stock", label: "Out of Stock" },
-          { key: "discontinued", label: "Discontinued" },
-        ],
-      },
     ],
-    pageSizeOptions: [10, 15, 20, 25, 50],
-    defaultPageSize: 15,
+    pageSizeOptions: [5, 10, 15, 20],
+    defaultPageSize: 10,
     enableSearch: true,
-    searchPlaceholder: "Search products by name, SKU, or supplier...",
+    searchPlaceholder: "Search products or suppliers...",
     emptyMessage: "No products found",
-    getRowId: (row) => row.id,
   };
 
-// Floating action menu configuration factory
-export interface SelectableProductsActionsContext {
-  selectedIds: string[];
-  onClear: () => void;
-  onRefresh: () => void;
-  onEdit?: (id: string) => void;
-}
-
-export function createFloatingActionsConfig(
-  options: SelectableProductsActionsContext
-): FloatingAction[] {
-  const { selectedIds, onClear, onRefresh, onEdit } = options;
-
-  const actions: FloatingAction[] = [];
-
-  if (selectedIds.length === 1 && onEdit) {
-    actions.push({
-      key: "edit",
-      label: "Edit",
-      icon: <PencilSimple size={16} weight="bold" />,
-      color: "primary",
-      variant: "flat",
-      onClick: () => {
-        onEdit(selectedIds[0]);
-      },
-    });
-  }
-
-  actions.push(
-    {
-      key: "mark-active",
-      label: "Active",
-      icon: <CheckCircle size={16} weight="bold" />,
-      color: "success",
-      variant: "flat",
-      onClick: async () => {
-        await bulkUpdateStatus(selectedIds, "active");
-        onClear();
-        onRefresh();
-      },
-    },
-    {
-      key: "mark-out-of-stock",
-      label: "Out of Stock",
-      icon: <Package size={16} weight="bold" />,
-      color: "warning",
-      variant: "flat",
-      onClick: async () => {
-        await bulkUpdateStatus(selectedIds, "out-of-stock");
-        onClear();
-        onRefresh();
-      },
-    },
-    {
-      key: "mark-discontinued",
-      label: "Discontinue",
-      icon: <XCircle size={16} weight="bold" />,
-      color: "default",
-      variant: "flat",
-      onClick: async () => {
-        await bulkUpdateStatus(selectedIds, "discontinued");
-        onClear();
-        onRefresh();
-      },
-    },
-    {
-      key: "export",
-      label: "Export",
-      icon: <Export size={16} weight="bold" />,
-      color: "primary",
-      variant: "flat",
-      onClick: async () => {
-        await bulkExportProducts(selectedIds);
-      },
-    },
-    {
-      key: "delete",
-      label: "Delete",
-      icon: <Trash size={16} weight="bold" />,
-      color: "danger",
-      variant: "flat",
-      onClick: async () => {
-        if (
-          confirm(
-            `Are you sure you want to delete ${selectedIds.length} product(s)?`
-          )
-        ) {
-          await bulkDeleteProducts(selectedIds);
-          onClear();
-          onRefresh();
-        }
-      },
-    }
-  );
-
-  return actions;
-}
-
-class SelectableProductsBlueprint extends SelectableTableBlueprint<
-  SelectableProduct,
-  void,
-  SelectableProductsActionsContext
-> {
-  constructor() {
-    super({
-      title: "Selectable Products",
-      description:
-        "Select multiple products to perform bulk operations.",
-    });
-  }
-
-  protected buildConfig(): PaginationTableConfig<SelectableProduct> {
-    return selectableProductsConfig;
-  }
-
-  protected buildActions(
-    context: SelectableProductsActionsContext
-  ): FloatingAction[] {
-    return createFloatingActionsConfig(context);
-  }
-}
-
-export const selectableProductsBlueprint = new SelectableProductsBlueprint();
+export type SelectableProductsTableProps =
+  PaginationTableProps<SelectableProduct>;

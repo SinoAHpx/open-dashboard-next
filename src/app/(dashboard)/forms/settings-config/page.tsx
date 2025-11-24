@@ -1,19 +1,19 @@
 "use client";
 
-import { useState } from "react";
 import {
-  Input,
   Button,
-  Select,
-  SelectItem,
   Card,
   CardBody,
   CardHeader,
-  Tabs,
-  Tab,
-  RadioGroup,
+  Input,
   Radio,
+  RadioGroup,
+  Select,
+  SelectItem,
+  Tab,
+  Tabs,
 } from "@heroui/react";
+import { useState } from "react";
 
 export default function SettingsConfigFormsPage() {
   return (
@@ -288,7 +288,9 @@ function BillingSubscriptionForm() {
                   <div className="flex justify-between items-start w-full">
                     <div>
                       <p className="font-medium">{plan.name}</p>
-                      <p className="text-sm text-gray-600">{plan.description}</p>
+                      <p className="text-sm text-gray-600">
+                        {plan.description}
+                      </p>
                     </div>
                     <p className="font-semibold text-primary ml-4">
                       {plan.price}
@@ -377,7 +379,9 @@ function BillingSubscriptionForm() {
                       }}
                     >
                       {countries.map((country) => (
-                        <SelectItem key={country.key}>{country.label}</SelectItem>
+                        <SelectItem key={country.key}>
+                          {country.label}
+                        </SelectItem>
                       ))}
                     </Select>
                   </div>
@@ -403,7 +407,9 @@ function BillingSubscriptionForm() {
           <div className="flex gap-3 justify-end">
             <Button variant="bordered">Cancel</Button>
             <Button type="submit" color="primary" isLoading={isLoading}>
-              {selectedPlan === "free" ? "Downgrade to Free" : "Update Subscription"}
+              {selectedPlan === "free"
+                ? "Downgrade to Free"
+                : "Update Subscription"}
             </Button>
           </div>
         </form>

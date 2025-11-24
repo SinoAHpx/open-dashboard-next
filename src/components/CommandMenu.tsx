@@ -1,19 +1,24 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
-import { Command } from "cmdk";
-import { DialogTitle } from "@radix-ui/react-dialog";
-import { Kbd } from "@heroui/react";
 import type { KbdKey } from "@heroui/kbd";
+import { Kbd } from "@heroui/react";
 import { MagnifyingGlassIcon } from "@phosphor-icons/react/dist/ssr";
-import { mainMenuItems, bottomMenuItems } from "@/lib/sidebar-items";
-import { commandMenuGroups, type CommandMenuItemConfig } from "@/lib/command-menu-items";
+import { DialogTitle } from "@radix-ui/react-dialog";
+import { Command } from "cmdk";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
+import {
+  type CommandMenuItemConfig,
+  commandMenuGroups,
+} from "@/lib/command-menu-items";
+import { bottomMenuItems, mainMenuItems } from "@/lib/sidebar-items";
 
 const ESCAPE_KEYS: KbdKey[] = ["escape"];
 const COMMAND_KEYS: KbdKey[] = ["command"];
-const GROUP_BASE_CLASS = "[&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:py-2 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:text-gray-500 dark:[&_[cmdk-group-heading]]:text-gray-400";
-const BASE_ITEM_CLASSES = "relative flex cursor-pointer select-none items-center rounded-lg px-3 py-2.5 text-sm outline-none transition-colors data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50";
+const GROUP_BASE_CLASS =
+  "[&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:py-2 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:text-gray-500 dark:[&_[cmdk-group-heading]]:text-gray-400";
+const BASE_ITEM_CLASSES =
+  "relative flex cursor-pointer select-none items-center rounded-lg px-3 py-2.5 text-sm outline-none transition-colors data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50";
 const NEUTRAL_ITEM_CLASSES = `${BASE_ITEM_CLASSES} data-[selected=true]:bg-gray-100 dark:data-[selected=true]:bg-gray-800`;
 const DANGER_ITEM_CLASSES = `${BASE_ITEM_CLASSES} data-[selected=true]:bg-red-50 dark:data-[selected=true]:bg-red-950/20`;
 
@@ -51,7 +56,7 @@ export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
       onOpenChange(false);
       command();
     },
-    [onOpenChange]
+    [onOpenChange],
   );
 
   const handleItemSelect = useCallback(
@@ -65,7 +70,7 @@ export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
         console.log("Toggle theme");
       }
     },
-    [router]
+    [router],
   );
 
   return (
@@ -115,7 +120,10 @@ export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
               heading="Navigation"
               className="mb-2 [&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:py-2 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:text-gray-500 dark:[&_[cmdk-group-heading]]:text-gray-400"
             >
-              {[...mainMenuItems.flatMap((group) => group.items), ...bottomMenuItems].map((item) => {
+              {[
+                ...mainMenuItems.flatMap((group) => group.items),
+                ...bottomMenuItems,
+              ].map((item) => {
                 const Icon = item.icon;
                 return (
                   <Command.Item
@@ -169,7 +177,9 @@ export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
                       <Command.Item
                         key={item.key}
                         value={item.label}
-                        onSelect={() => runCommand(() => handleItemSelect(item))}
+                        onSelect={() =>
+                          runCommand(() => handleItemSelect(item))
+                        }
                         className={itemClasses}
                       >
                         <Icon size={18} className={`mr-3 ${iconColor}`} />
@@ -182,7 +192,9 @@ export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
                             {item.shortcut.label}
                           </Kbd>
                         ) : item.description ? (
-                          <span className={descriptionClass}>{item.description}</span>
+                          <span className={descriptionClass}>
+                            {item.description}
+                          </span>
                         ) : null}
                       </Command.Item>
                     );
@@ -199,15 +211,11 @@ export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
               <div className="flex items-center gap-3">
                 <span className="hidden sm:inline-flex items-center gap-1">
                   Open
-                  <Kbd keys={COMMAND_KEYS}>
-                    K
-                  </Kbd>
+                  <Kbd keys={COMMAND_KEYS}>K</Kbd>
                 </span>
                 <span className="hidden sm:inline-flex items-center gap-1">
                   Close
-                  <Kbd keys={ESCAPE_KEYS}>
-                    ESC
-                  </Kbd>
+                  <Kbd keys={ESCAPE_KEYS}>ESC</Kbd>
                 </span>
               </div>
             </div>

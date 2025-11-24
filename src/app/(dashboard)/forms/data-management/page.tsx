@@ -1,30 +1,32 @@
 "use client";
 
-import { useState } from "react";
 import {
-  Input,
   Button,
-  Textarea,
-  Select,
-  SelectItem,
   Card,
   CardBody,
   CardHeader,
-  Tabs,
-  Tab,
+  Input,
   Modal,
-  ModalContent,
-  ModalHeader,
   ModalBody,
+  ModalContent,
   ModalFooter,
+  ModalHeader,
+  Select,
+  SelectItem,
+  Tab,
+  Tabs,
+  Textarea,
   useDisclosure,
 } from "@heroui/react";
+import { useState } from "react";
 
 export default function DataManagementFormsPage() {
   return (
     <div className="w-full p-6 space-y-8">
       <div>
-        <h1 className="text-3xl font-bold mb-2">Data Management (CRUD) Forms</h1>
+        <h1 className="text-3xl font-bold mb-2">
+          Data Management (CRUD) Forms
+        </h1>
         <p className="text-gray-600">
           Generic forms for creating, editing, and deleting items like projects,
           tasks, customers, and products.
@@ -75,7 +77,10 @@ function CreateEditForm({ mode }: CreateEditFormProps) {
     setIsSaved(false);
 
     setTimeout(() => {
-      console.log(`${mode === "create" ? "Created" : "Updated"} item:`, formData);
+      console.log(
+        `${mode === "create" ? "Created" : "Updated"} item:`,
+        formData,
+      );
       setIsLoading(false);
       setIsSaved(true);
       if (mode === "create") {
@@ -275,7 +280,8 @@ function DeleteConfirmationDemo() {
         </CardHeader>
         <CardBody className="space-y-4">
           <p className="text-gray-600">
-            Click the button below to see the delete confirmation modal in action.
+            Click the button below to see the delete confirmation modal in
+            action.
           </p>
 
           <div className="p-4 bg-gray-50 rounded border border-gray-200">

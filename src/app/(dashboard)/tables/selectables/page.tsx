@@ -1,62 +1,52 @@
-/** biome-ignore-all lint/correctness/useExhaustiveDependencies: <explanation> */
 "use client";
 
 import {
-  useRef,
-  useState,
-  useMemo,
-  useCallback,
-  Suspense,
-} from "react";
-import {
   Button,
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  useDisclosure,
   Input,
+  Modal,
+  ModalBody,
+  ModalContent,
+  ModalFooter,
+  ModalHeader,
   Select,
   SelectItem,
   Spinner,
+  useDisclosure,
 } from "@heroui/react";
-import { Plus, Sparkle } from "@phosphor-icons/react";
+import {
+  ArrowClockwise,
+  PencilSimple,
+  Plus,
+  Sparkle,
+} from "@phosphor-icons/react";
+import { Suspense, useCallback, useMemo, useRef, useState } from "react";
+import { FloatingActionMenu } from "@/components/FloatingActionMenu";
 import {
   PaginationTable,
   type PaginationTableRef,
   type SelectionChangePayload,
 } from "@/components/PaginationTable";
 import { TablePage } from "@/components/table/TablePage";
-import type { TableStateSnapshot } from "@/components/table/types";
-import { FloatingActionMenu } from "@/components/FloatingActionMenu";
-import { selectableProductsBlueprint } from "@/lib/config/selectable-products.config";
 import {
   addProduct,
-  updateProduct,
   generateSampleProducts,
   getProducts,
   type SelectableProduct,
+  updateProduct,
 } from "@/lib/api-wrapper/selectables";
+import {
+  selectableProductsConfig,
+  selectableProductsMeta,
+} from "@/lib/config/selectable-products.config";
 
 type ProductFormData = Omit<SelectableProduct, "id" | "lastRestocked">;
 
 export default function SelectablesPage() {
   const tableRef = useRef<PaginationTableRef>(null);
   const { isOpen, onOpen, onClose } = useDisclosure();
-  const { store, config: tableConfig, meta: tableMeta } = useMemo(
-    () => selectableProductsBlueprint.createInstance(undefined),
-    []
-  );
   const [selectedCount, setSelectedCount] = useState(0);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [tableState, setTableState] = useState<TableStateSnapshot>({
-    page: 1,
-    pageSize: tableConfig.defaultPageSize ?? 10,
-    totalPages: 1,
-    totalCount: 0,
-    isLoading: true,
-  });
+  const [totalCount, setTotalCount] = useState(0);
   const [editingProduct, setEditingProduct] =
     useState<SelectableProduct | null>(null);
   const [formData, setFormData] = useState<ProductFormData>({
@@ -97,7 +87,7 @@ export default function SelectablesPage() {
       });
       onOpen();
     },
-    [onOpen]
+    [onOpen],
   );
 
   const handleSubmit = useCallback(() => {
@@ -108,34 +98,34 @@ export default function SelectablesPage() {
     }
     onClose();
     tableRef.current?.refresh();
-  }, [editingProduct, formData, onClose, tableRef]);
+  }, [editingProduct, formData, onClose]);
 
   const handleFormChange = useCallback(
     (field: keyof ProductFormData, value: string | number) => {
       setFormData((previous) => ({ ...previous, [field]: value }));
     },
-    []
+    [],
   );
 
   const handleGenerateSamples = useCallback(() => {
     generateSampleProducts(50);
     tableRef.current?.refresh();
-  }, [tableRef]);
+  }, []);
 
   const handleClearSelection = useCallback(() => {
     tableRef.current?.clearSelection();
-  }, [tableRef]);
+  }, []);
 
   const handleRefresh = useCallback(() => {
     tableRef.current?.refresh();
-  }, [tableRef]);
+  }, []);
 
   const handleSelectionChange = useCallback(
     (payload: SelectionChangePayload<SelectableProduct>) => {
       setSelectedIds(payload.ids);
       setSelectedCount(payload.ids.length);
     },
-    []
+    [],
   );
 
   const handleEditSelected = useCallback(
@@ -145,27 +135,41 @@ export default function SelectablesPage() {
         handleEdit(product);
       }
     },
-    [handleEdit]
+    [handleEdit],
   );
 
   const floatingActions = useMemo(
-    () =>
-      selectableProductsBlueprint.createActions({
-        selectedIds,
-        onClear: handleClearSelection,
-        onRefresh: handleRefresh,
-        onEdit: handleEditSelected,
-      }),
-    [handleClearSelection, handleEditSelected, handleRefresh, selectedIds]
+    () => [
+      {
+        key: "edit-first",
+        label: "Edit First",
+        icon: <PencilSimple size={16} />,
+        color: "primary" as const,
+        onClick: () => {
+          if (selectedIds.length > 0) {
+            handleEditSelected(selectedIds[0]);
+          }
+        },
+      },
+      {
+        key: "refresh",
+        label: "Refresh",
+        icon: <ArrowClockwise size={16} />,
+        onClick: handleRefresh,
+      },
+    ],
+    [handleEditSelected, handleRefresh, selectedIds],
   );
 
   return (
     <TablePage
-      title={tableMeta.title}
+      title={selectableProductsMeta.title}
       description={
         <>
-          {tableMeta.description ? `${tableMeta.description} ` : ""}
-          Total products: {tableState.totalCount}
+          {selectableProductsMeta.description
+            ? `${selectableProductsMeta.description} `
+            : ""}
+          Total products: {totalCount}
         </>
       }
       actions={
@@ -198,10 +202,9 @@ export default function SelectablesPage() {
       >
         <PaginationTable
           ref={tableRef}
-          store={store}
           enableSelection
-          {...tableConfig}
-          onStateChange={setTableState}
+          {...selectableProductsConfig}
+          onTotalsChange={({ totalCount }) => setTotalCount(totalCount)}
           onSelectionChange={handleSelectionChange}
         />
       </Suspense>
@@ -238,9 +241,7 @@ export default function SelectablesPage() {
                   label="Category"
                   placeholder="Enter category"
                   value={formData.category}
-                  onValueChange={(value) =>
-                    handleFormChange("category", value)
-                  }
+                  onValueChange={(value) => handleFormChange("category", value)}
                   isRequired
                 />
               </div>

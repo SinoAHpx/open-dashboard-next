@@ -13,13 +13,13 @@ interface CreatePageOptions {
 async function updateSidebarItems(
   routeName: string,
   title: string,
-  icon: string
+  icon: string,
 ) {
   const sidebarItemsPath = join(
     process.cwd(),
     "src",
     "lib",
-    "sidebar-items.ts"
+    "sidebar-items.ts",
   );
 
   // Read the current sidebar-items.ts file
@@ -27,7 +27,9 @@ async function updateSidebarItems(
 
   // Check if the icon is already imported
   const iconImportRegex = new RegExp(`\\b${icon}\\b`);
-  const importMatch = content.match(/import\s+{([^}]+)}\s+from\s+"@phosphor-icons\/react";/);
+  const importMatch = content.match(
+    /import\s+{([^}]+)}\s+from\s+"@phosphor-icons\/react";/,
+  );
 
   if (importMatch && !iconImportRegex.test(importMatch[1])) {
     // Get the current imports
@@ -35,18 +37,18 @@ async function updateSidebarItems(
 
     // Add the new icon to the imports (alphabetically sorted)
     const imports = currentImports
-      .split(',')
-      .map(i => i.trim())
-      .filter(i => i && i !== 'type Icon')
+      .split(",")
+      .map((i) => i.trim())
+      .filter((i) => i && i !== "type Icon")
       .concat(icon)
       .sort();
 
     // Rebuild import statement
-    const newImports = `import {\n  ${imports.join(',\n  ')},\n}`;
+    const newImports = `import {\n  ${imports.join(",\n  ")},\n}`;
 
     content = content.replace(
       /import\s+{[^}]+}\s+from\s+"@phosphor-icons\/react";/,
-      `import type { Icon } from "@phosphor-icons/react";\n${newImports} from "@phosphor-icons/react";`
+      `import type { Icon } from "@phosphor-icons/react";\n${newImports} from "@phosphor-icons/react";`,
     );
   }
 
@@ -56,7 +58,7 @@ async function updateSidebarItems(
   // Find the last menu item and add the new one after it
   content = content.replace(
     /(export const menuItems: MenuItem\[\] = \[[^\]]+)/,
-    `$1\n${newMenuItem}`
+    `$1\n${newMenuItem}`,
   );
 
   await writeFile(sidebarItemsPath, content);

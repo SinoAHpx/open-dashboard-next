@@ -1,23 +1,22 @@
 "use client";
 
 import { Spinner } from "@heroui/react";
-import { Suspense, useMemo } from "react";
+import { Suspense, useState } from "react";
 import { PaginationTable } from "@/components/PaginationTable";
 import { TablePage } from "@/components/table/TablePage";
-import { paginationUsersBlueprint } from "@/lib/config/pagination-users.config";
+import {
+  paginationUsersConfig,
+  paginationUsersMeta,
+} from "@/lib/config/pagination-users.config";
 
 export default function PaginationPage() {
-  const { store, config, meta } = useMemo(
-    () => paginationUsersBlueprint.createInstance(undefined),
-    []
-  );
-  const totalCount = store((state) => state.totalCount);
+  const [totalCount, setTotalCount] = useState(0);
 
   return (
     <TablePage
-      title={meta.title}
-      description={`${meta.description ?? ""}${
-        meta.description ? " " : ""
+      title={paginationUsersMeta.title}
+      description={`${paginationUsersMeta.description ?? ""}${
+        paginationUsersMeta.description ? " " : ""
       }Total records: ${totalCount}`}
     >
       <Suspense
@@ -27,7 +26,10 @@ export default function PaginationPage() {
           </div>
         }
       >
-        <PaginationTable store={store} {...config} />
+        <PaginationTable
+          {...paginationUsersConfig}
+          onTotalsChange={({ totalCount }) => setTotalCount(totalCount)}
+        />
       </Suspense>
     </TablePage>
   );

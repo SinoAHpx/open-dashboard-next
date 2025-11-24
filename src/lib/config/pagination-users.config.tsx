@@ -1,43 +1,16 @@
 import { Chip } from "@heroui/react";
 import type { ColumnDef } from "@tanstack/react-table";
-import {
-  PaginationTableBlueprint,
-  type PaginationTableConfig,
-  type PaginationRequest,
-  type PaginationResponse,
-} from "@/lib/config/table-blueprint";
-import {
-  getPaginationUsers,
-  type PaginationUser,
-} from "@/lib/api-wrapper/pagination";
+import type {
+  PaginationTableConfig,
+  PaginationTableProps,
+} from "@/components/PaginationTable";
+import type { PaginationUser } from "@/lib/api-wrapper/pagination";
 
-export type { PaginationUser };
+export const paginationUsersMeta = {
+  title: "Pagination Table",
+  description: "Server-side pagination with TanStack Table and Hero UI.",
+};
 
-// Adapter function to convert API response to generic format
-async function fetchPaginationUsers(
-  params: PaginationRequest
-): Promise<PaginationResponse<PaginationUser>> {
-  const response = await getPaginationUsers({
-    page: params.page,
-    pageSize: params.pageSize,
-    search: params.search,
-    status: params.status as string | undefined,
-    sortBy: params.sortBy,
-    sortOrder: params.sortOrder,
-  });
-
-  return {
-    data: response.data,
-    pagination: {
-      totalPages: response.pagination.totalPages,
-      totalCount: response.pagination.totalCount,
-      currentPage: response.pagination.page,
-      pageSize: response.pagination.pageSize,
-    },
-  };
-}
-
-// Status color mapping
 const statusColorMap: Record<
   PaginationUser["status"],
   "success" | "warning" | "danger"
@@ -47,7 +20,6 @@ const statusColorMap: Record<
   inactive: "danger",
 };
 
-// Column definitions
 const columns: ColumnDef<PaginationUser>[] = [
   {
     accessorKey: "name",
@@ -106,10 +78,9 @@ const columns: ColumnDef<PaginationUser>[] = [
   },
 ];
 
-// Export the configuration
 export const paginationUsersConfig: PaginationTableConfig<PaginationUser> = {
+  resource: "users",
   columns,
-  fetchData: fetchPaginationUsers,
   filters: [
     {
       key: "status",
@@ -129,20 +100,4 @@ export const paginationUsersConfig: PaginationTableConfig<PaginationUser> = {
   emptyMessage: "No users found",
 };
 
-class PaginationUsersBlueprint extends PaginationTableBlueprint<
-  PaginationUser,
-  void
-> {
-  constructor() {
-    super({
-      title: "Pagination Table",
-      description: "Server-side pagination with TanStack Table and Hero UI.",
-    });
-  }
-
-  protected buildConfig(): PaginationTableConfig<PaginationUser> {
-    return paginationUsersConfig;
-  }
-}
-
-export const paginationUsersBlueprint = new PaginationUsersBlueprint();
+export type PaginationUsersTableProps = PaginationTableProps<PaginationUser>;

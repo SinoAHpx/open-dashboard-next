@@ -1,15 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableColumn,
-  TableRow,
-  TableCell,
   Chip,
+  Table,
+  TableBody,
+  TableCell,
+  TableColumn,
+  TableHeader,
+  TableRow,
 } from "@heroui/react";
+import { useEffect, useState } from "react";
 import { getSimpleUsers, type SimpleUser } from "@/lib/api-wrapper/simple";
 
 export default function SimplePage() {
@@ -49,7 +49,9 @@ export default function SimplePage() {
       case "name":
         return <span className="font-medium">{user.name}</span>;
       case "email":
-        return <span className="text-gray-600 dark:text-gray-400">{user.email}</span>;
+        return (
+          <span className="text-gray-600 dark:text-gray-400">{user.email}</span>
+        );
       case "status":
         return (
           <Chip color={statusColorMap[user.status]} size="sm" variant="flat">
@@ -57,7 +59,9 @@ export default function SimplePage() {
           </Chip>
         );
       case "role":
-        return <span className="text-gray-600 dark:text-gray-400">{user.role}</span>;
+        return (
+          <span className="text-gray-600 dark:text-gray-400">{user.role}</span>
+        );
       default:
         return null;
     }
@@ -76,7 +80,9 @@ export default function SimplePage() {
 
       <Table aria-label="Simple user table">
         <TableHeader columns={columns}>
-          {(column) => <TableColumn key={column.key}>{column.label}</TableColumn>}
+          {(column) => (
+            <TableColumn key={column.key}>{column.label}</TableColumn>
+          )}
         </TableHeader>
         <TableBody
           items={users}
@@ -86,7 +92,9 @@ export default function SimplePage() {
         >
           {(item) => (
             <TableRow key={item.id}>
-              {(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}
+              {(columnKey) => (
+                <TableCell>{renderCell(item, columnKey)}</TableCell>
+              )}
             </TableRow>
           )}
         </TableBody>

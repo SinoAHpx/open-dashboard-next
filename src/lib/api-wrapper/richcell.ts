@@ -90,7 +90,7 @@ function generateMockTasks(count: number): RichCellTask[] {
         .split("T")[0],
       tags: faker.helpers.arrayElements(
         tagOptions,
-        faker.number.int({ min: 1, max: 3 })
+        faker.number.int({ min: 1, max: 3 }),
       ),
     };
   });
@@ -107,7 +107,7 @@ function getMockTasks(): RichCellTask[] {
 }
 
 export async function getRichCellTasks(
-  params: GetRichCellTasksParams = {}
+  params: GetRichCellTasksParams = {},
 ): Promise<RichCellPaginationResponse> {
   const {
     page = 1,
@@ -153,7 +153,7 @@ export async function getRichCellTasks(
 
 // Client-side mock function (for development without backend)
 export async function getRichCellTasksMock(
-  params: GetRichCellTasksParams = {}
+  params: GetRichCellTasksParams = {},
 ): Promise<RichCellPaginationResponse> {
   const {
     page = 1,
@@ -177,7 +177,7 @@ export async function getRichCellTasksMock(
       (task) =>
         task.name.toLowerCase().includes(searchLower) ||
         task.assignee.toLowerCase().includes(searchLower) ||
-        task.email.toLowerCase().includes(searchLower)
+        task.email.toLowerCase().includes(searchLower),
     );
   }
 

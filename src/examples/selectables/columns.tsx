@@ -72,9 +72,6 @@ export const selectablesColumns: ColumnDef<SelectableProduct>[] = [
     header: () => (
       <div className="flex items-center gap-1">
         Last Restocked
-        <Tooltip content="Date of the latest restock action">
-          <Info size={14} />
-        </Tooltip>
       </div>
     ),
     cell: (info) => (

@@ -1,18 +1,61 @@
-# Table Blueprint Guide
+# Table Infrastructure Guide
 
-This project ships a small set of “table blueprints” that keep every table page consistent: configs declare metadata and behaviour, pages only consume the blueprint, and shared UI primitives take care of layout.
+This project provides a modular table infrastructure built on Refine + TanStack Table. The codebase separates infrastructure (reusable primitives) from examples (demonstration tables).
 
-## Architecture Snapshot
+## Architecture Overview
 
-- **API wrappers (`src/lib/api-wrapper/*`)** – strongly typed accessors for your backend (or mocks while prototyping).
-- **Table blueprints (`src/lib/config/*`)** – each config file extends a base class from `table-blueprint.ts`, bundling table metadata, columns, filters, adapters, and (for paginated tables) the Zustand store factory.
-- **UI primitives (`src/components/table/*`)** – `TablePage`, `TableToolbar`, and `TablePaginationControls` render the standard shell; `PaginationTable` handles client state, URL syncing, and optional row selection.
+```
+src/
+├── infra/                    # Reusable infrastructure
+│   ├── data/                 # Data layer utilities
+│   │   ├── types.ts               # ListParams, PaginatedResponse, ResourceHandlers
+│   │   ├── filter-sort-paginate.ts# Query helpers
+│   │   └── create-mock-repository.ts # Factory for mock CRUD
+│   ├── refine/               # Refine integration
+│   │   ├── resource-registry.ts  # Central handler registry
+│   │   ├── data-provider.ts      # Delegates to registry
+│   │   └── auth-provider.ts
+│   ├── table/                # Table components
+│   │   ├── types.ts          # TableConfig, TableMeta, PaginationTableProps
+│   │   ├── PaginationTable.tsx
+│   │   ├── TablePage.tsx
+│   │   ├── TableToolbar.tsx
+│   │   └── TablePaginationControls.tsx
+│   └── ui/                   # UI primitives
+│       ├── StatusChip.tsx
+│       └── ActionMenu.tsx
+├── examples/                 # Demonstration modules
+│   ├── users/
+│   ├── products/
+│   ├── tasks/
+│   ├── selectables/
+│   ├── simple/
+│   ├── _registry.ts          # Registers all example handlers
+│   └── resources.ts          # Refine resource definitions
+└── app/(dashboard)/tables/   # Pages consume examples
+```
 
+## How it works
 
-## Step 1 – API Wrapper & Types
+- Each example module exports: types, mock-data (optional), repository (handlers), columns, config, and meta via an `index.ts`.
+- `createMockRepository()` returns CRUD handlers backed by localStorage for quick demos.
+- `registerResource(name, handlers)` stores handlers in a central registry. The Refine data provider delegates all operations to the registered handlers.
+- Pages import `TableConfig` and `TableMeta` from examples and render `PaginationTable` inside `TablePage`.
+
+Providers are wired to call `registerExampleResources()` once and to pass `exampleResources` into Refine:
 
 ```ts
-// src/lib/api-wrapper/orders.ts
+// src/app/providers.tsx
+registerExampleResources();
+<Refine resources={exampleResources} dataProvider={refineDataProvider} />
+```
+
+## Creating a new table
+
+### 1) Define types
+
+```ts
+// src/examples/orders/types.ts
 export interface Order {
   id: string;
   customerName: string;
@@ -20,224 +63,198 @@ export interface Order {
   status: "pending" | "completed" | "cancelled";
   createdAt: string;
 }
-
-export interface OrdersResponse {
-  data: Order[];
-  pagination: {
-    page: number;
-    pageSize: number;
-    totalCount: number;
-    totalPages: number;
-  };
-}
-
-export async function getOrders(params: {
-  page: number;
-  pageSize: number;
-  search?: string;
-  status?: string;
-  sortBy?: string;
-  sortOrder?: "asc" | "desc";
-}): Promise<OrdersResponse> {
-  const query = new URLSearchParams({
-    page: String(params.page),
-    pageSize: String(params.pageSize),
-    ...(params.search && { search: params.search }),
-    ...(params.status && { status: params.status }),
-    ...(params.sortBy && {
-      sortBy: params.sortBy,
-      sortOrder: params.sortOrder ?? "asc",
-    }),
-  });
-
-  const res = await fetch(`/api/orders?${query.toString()}`);
-  if (!res.ok) throw new Error("Failed to fetch orders");
-  return res.json();
-}
+export type OrderStatus = Order["status"];
 ```
 
-## Step 2 – Table Blueprint
+### 2) Create repository (handlers)
 
-Each config file now exports a blueprint object that extends a base class. The base class enforces metadata and provides `createInstance` which returns `{ store, config, meta }`.
+Use `createMockRepository` while prototyping. Replace with real API calls later.
+
+```ts
+// src/examples/orders/repository.ts
+import { createMockRepository, type ResourceHandlers } from "@/infra/data";
+import type { Order } from "./types";
+
+export const ordersHandlers: ResourceHandlers<Order> = createMockRepository({
+  storageKey: "example-orders",
+  seedData: () => [
+    { id: "1", customerName: "Ada", total: 120, status: "completed", createdAt: new Date().toISOString() },
+  ],
+  searchFields: ["customerName"],
+  getId: (o) => o.id,
+  generateId: () => String(Date.now()),
+});
+```
+
+### 3) Define columns
 
 ```tsx
-// src/lib/config/orders-table.config.tsx
-import { Chip } from "@heroui/react";
+// src/examples/orders/columns.tsx
 import type { ColumnDef } from "@tanstack/react-table";
-import {
-  PaginationTableBlueprint,
-  type PaginationRequest,
-  type PaginationResponse,
-  type PaginationTableConfig,
-} from "@/lib/config/table-blueprint";
-import { getOrders, type Order } from "@/lib/api-wrapper/orders";
+import { StatusChip, type ChipColor } from "@/infra/ui";
+import type { Order, OrderStatus } from "./types";
 
-async function fetchOrders(
-  params: PaginationRequest
-): Promise<PaginationResponse<Order>> {
-  const response = await getOrders({
-    page: params.page,
-    pageSize: params.pageSize,
-    search: params.search,
-    status: params.status as string | undefined,
-    sortBy: params.sortBy,
-    sortOrder: params.sortOrder,
-  });
+const statusColorMap: Record<OrderStatus, ChipColor> = {
+  pending: "warning",
+  completed: "success",
+  cancelled: "danger",
+};
 
-  return {
-    data: response.data,
-    pagination: {
-      totalPages: response.pagination.totalPages,
-      totalCount: response.pagination.totalCount,
-      currentPage: response.pagination.page,
-      pageSize: response.pagination.pageSize,
-    },
-  };
-}
-
-const columns: ColumnDef<Order>[] = [
+export const ordersColumns: ColumnDef<Order>[] = [
   { accessorKey: "customerName", header: "Customer" },
   {
     accessorKey: "status",
     header: "Status",
     cell: (info) => (
-      <Chip size="sm" variant="flat">
-        {info.getValue<string>().toUpperCase()}
-      </Chip>
+      <StatusChip status={info.getValue() as OrderStatus} colorMap={statusColorMap} />
     ),
   },
-  {
-    accessorKey: "total",
-    header: "Total",
-    cell: (info) => `$${info.getValue<number>().toFixed(2)}`,
-  },
+  { accessorKey: "total", header: "Total", cell: (info) => `$${(info.getValue() as number).toFixed(2)}` },
   { accessorKey: "createdAt", header: "Date" },
 ];
+```
 
-const ordersTableConfig: PaginationTableConfig<Order> = {
-  columns,
-  fetchData: fetchOrders,
+### 4) Create config and meta
+
+```ts
+// src/examples/orders/config.ts
+import type { TableConfig, TableMeta } from "@/infra/table";
+import { ordersColumns } from "./columns";
+import type { Order } from "./types";
+
+export const ordersMeta: TableMeta = {
+  title: "Orders",
+  description: "Manage customer orders.",
+};
+
+export const ordersConfig: TableConfig<Order> = {
+  resource: "orders",
+  columns: ordersColumns,
   filters: [
-    {
-      key: "status",
-      label: "Filter by status",
-      placeholder: "Filter by status",
-      options: [
-        { key: "pending", label: "Pending" },
-        { key: "completed", label: "Completed" },
-        { key: "cancelled", label: "Cancelled" },
-      ],
-    },
+    { key: "status", label: "Filter by status", placeholder: "All statuses", options: [
+      { key: "pending", label: "Pending" },
+      { key: "completed", label: "Completed" },
+      { key: "cancelled", label: "Cancelled" },
+    ]},
   ],
   enableSearch: true,
   searchPlaceholder: "Search orders...",
   emptyMessage: "No orders found",
 };
-
-class OrdersTableBlueprint extends PaginationTableBlueprint<Order> {
-  constructor() {
-    super({
-      title: "Orders",
-      description: "Manage customer orders.",
-    });
-  }
-
-  protected buildConfig(): PaginationTableConfig<Order> {
-    return ordersTableConfig;
-  }
-}
-
-export const ordersTableBlueprint = new OrdersTableBlueprint();
 ```
 
-For tables that require callbacks (e.g. edit/delete handlers) pass a context object to `createInstance` and forward it inside `buildConfig`. Selectable tables use `SelectableTableBlueprint`, which wraps `PaginationTable` and can override `buildActions` to populate floating menus.
+### 5) Export module
 
-## Step 3 – Page Component
+```ts
+// src/examples/orders/index.ts
+export { ordersColumns } from "./columns";
+export { ordersConfig, ordersMeta } from "./config";
+export { ordersHandlers } from "./repository";
+export * from "./types";
+```
 
-Pages read metadata, config, and store from the blueprint. The UI remains concise and predictable.
+### 6) Register the resource
+
+```ts
+// src/examples/_registry.ts
+import { registerResource } from "@/infra/refine";
+import { ordersHandlers } from "./orders";
+
+export function registerExampleResources(): void {
+  registerResource("orders", ordersHandlers);
+  // register other resources...
+}
+```
+
+Add an entry to `examples/resources.ts` so Refine can route to the list page:
+
+```ts
+// src/examples/resources.ts
+import type { IResourceItem } from "@refinedev/core";
+export const exampleResources: IResourceItem[] = [
+  { name: "orders", list: "/tables/orders" },
+  // other resources
+];
+```
+
+### 7) Create the page
 
 ```tsx
-// src/app/(dashboard)/orders/page.tsx
+// src/app/(dashboard)/tables/orders/page.tsx
 "use client";
 
-import { useMemo, useRef, Suspense } from "react";
 import { Spinner } from "@heroui/react";
-import {
-  PaginationTable,
-  type PaginationTableRef,
-} from "@/components/PaginationTable";
-import { TablePage } from "@/components/table/TablePage";
-import { ordersTableBlueprint } from "@/lib/config/orders-table.config";
+import { Suspense, useState } from "react";
+import { ordersConfig, ordersMeta } from "@/examples/orders";
+import { PaginationTable, TablePage } from "@/infra/table";
 
 export default function OrdersPage() {
-  const tableRef = useRef<PaginationTableRef>(null);
-  const { store, config, meta } = useMemo(
-    () => ordersTableBlueprint.createInstance(undefined),
-    []
-  );
-  const totalCount = store((state) => state.totalCount);
-
+  const [totalCount, setTotalCount] = useState(0);
   return (
-    <TablePage
-      title={meta.title}
-      description={`${meta.description ?? ""}${
-        meta.description ? " " : ""
-      }Total orders: ${totalCount}`}
-    >
-      <Suspense
-        fallback={
-          <div className="flex items-center justify-center py-20">
-            <Spinner />
-          </div>
-        }
-      >
-        <PaginationTable ref={tableRef} store={store} {...config} />
+    <TablePage title={ordersMeta.title} description={`${ordersMeta.description} Total: ${totalCount}`}>
+      <Suspense fallback={<div className="flex items-center justify-center py-20"><Spinner /></div>}>
+        <PaginationTable {...ordersConfig} onTotalsChange={({ totalCount }) => setTotalCount(totalCount)} />
       </Suspense>
     </TablePage>
   );
 }
 ```
 
-## Selectable Tables
+## Selectable tables
 
-`SelectableTableBlueprint` mirrors the pagination blueprint, returning both a store and config while enabling selection by default. Use `PaginationTable` with `enableSelection` to render the selectable experience and wire bulk-action menus.
+Enable row selection with `enableSelection` and handle changes via `onSelectionChange`:
 
 ```tsx
-const { store, config, meta } = useMemo(
-  () => selectableProductsBlueprint.createInstance(undefined),
-  []
-);
-
-const floatingActions = useMemo(
-  () =>
-    selectableProductsBlueprint.createActions({
-      selectedIds,
-      onClear: handleClearSelection,
-      onRefresh: handleRefresh,
-      onEdit: handleEditSelected,
-    }),
-  [handleClearSelection, handleEditSelected, handleRefresh, selectedIds]
-);
-
 <PaginationTable
-  ref={tableRef}
-  store={store}
+  {...selectablesConfig}
   enableSelection
-  {...config}
-  onSelectionChange={handleSelectionChange}
-/>;
+  onSelectionChange={({ ids }) => console.log(ids)}
+/>
 ```
 
-Inside `buildActions` (see `src/lib/config/selectable-products.config.tsx`) you can react to the provided context and return an array of `FloatingAction` items for the `FloatingActionMenu`.
+## Row actions
 
-## API Contract (Recap)
+Use `ActionMenu` to provide per-row actions in a column:
 
-- Requests supply `page`, `pageSize`, optional `search`, `sortBy`, `sortOrder`, plus any custom filters.
-- Responses must return `{ data: T[], pagination: { page, pageSize, totalCount, totalPages } }`.
-- If the backend deviates, adapt it inside the config’s `fetchData` function—no page changes required.
+```tsx
+{
+  id: "actions",
+  header: "",
+  cell: ({ row, table }) => {
+    const meta = table.options.meta as { onEdit?: (id: string) => void; onDelete?: (id: string) => void };
+    return <ActionMenu onEdit={() => meta.onEdit?.(row.original.id)} onDelete={() => meta.onDelete?.(row.original.id)} />;
+  },
+}
+```
+
+## Reference
+
+### PaginationTable props (key)
+
+- resource: string — Refine resource name
+- columns: ColumnDef<T>[] — TanStack Table columns
+- filters?: FilterConfig[]
+- pageSizeOptions?: number[]
+- defaultPageSize?: number
+- enableSearch?: boolean
+- searchPlaceholder?: string
+- emptyMessage?: string
+- className?: string
+- getRowId?: (row: T) => string
+- permanentFilters?: CrudFilters
+- permanentSorters?: CrudSort[]
+- onTotalsChange?: ({ totalCount, currentPage, pageSize }) => void
+- enableSelection?: boolean
+- onSelectionChange?: ({ ids, rows }) => void
+
+### PaginationTableRef methods
+
+- refresh(), resetPage(), getTotalCount(), getCurrentPage(), isLoading()
+- getSelectedKeys(), clearSelection(), selectAll()
 
 ## Tips
 
-- Keep configs declarative: derive metadata, filters, and actions in one place.
-- When callbacks mutate data, call `tableRef.current?.refresh()` to stay in sync.
-- Use the shared toolbar and pagination components for consistent UX without manual wiring.
+- Keep example modules self-contained: types, repository, columns, config, meta, index.
+- Call `tableRef.current?.refresh()` after mutations to sync the UI.
+- Swap `createMockRepository` for real API handlers without changing pages.
+- Register resources in `_registry.ts` and entries in `resources.ts` so Refine can route.

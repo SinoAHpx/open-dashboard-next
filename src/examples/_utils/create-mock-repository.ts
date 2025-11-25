@@ -1,9 +1,20 @@
-import { filterSortPaginate } from "./filter-sort-paginate";
-import type {
-  ListParams,
-  MockRepositoryConfig,
-  ResourceHandlers,
-} from "./types";
+import { filterSortPaginate, type ListParams, type ResourceHandlers } from "@/infra/data";
+
+/**
+ * Configuration for creating a mock repository
+ */
+export interface MockRepositoryConfig<T> {
+  /** localStorage key for persistence */
+  storageKey: string;
+  /** Function to generate seed data */
+  seedData: () => T[];
+  /** Fields to search when filtering by 'q' */
+  searchFields: (keyof T)[];
+  /** Function to get the ID from an entity */
+  getId: (item: T) => string;
+  /** Function to generate a new ID */
+  generateId: () => string;
+}
 
 /**
  * Creates a mock repository with localStorage persistence.

@@ -31,18 +31,3 @@ export interface ResourceHandlers<T = any> {
   deleteOne?: (id: string) => Promise<{ data: { id: string } }>;
 }
 
-/**
- * Configuration for creating a mock repository
- */
-export interface MockRepositoryConfig<T> {
-  /** localStorage key for persistence */
-  storageKey: string;
-  /** Function to generate seed data */
-  seedData: () => T[];
-  /** Fields to search when filtering by 'q' */
-  searchFields: (keyof T)[];
-  /** Function to get the ID from an entity */
-  getId: (item: T) => string;
-  /** Function to generate a new ID */
-  generateId: () => string;
-}

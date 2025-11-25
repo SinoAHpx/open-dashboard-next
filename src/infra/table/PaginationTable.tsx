@@ -427,7 +427,7 @@ function PaginationTableInner<TData extends BaseRecord>(
                     {row.getVisibleCells().map((cell) => (
                       <td
                         key={cell.id}
-                        className="px-4 py-3 text-sm text-gray-700 dark:text-gray-200"
+                        className="px-4 py-3 text-sm text-gray-700 dark:text-gray-200 overflow-hidden"
                       >
                         {flexRender(
                           cell.column.columnDef.cell,

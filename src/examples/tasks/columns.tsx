@@ -24,11 +24,11 @@ export function createTasksColumns(
       accessorKey: "name",
       header: "Task",
       cell: (info) => (
-        <div className="flex flex-col">
-          <span className="font-medium text-gray-900 dark:text-gray-100">
+        <div className="flex flex-col min-w-0">
+          <span className="font-medium text-gray-900 dark:text-gray-100 truncate">
             {info.getValue() as string}
           </span>
-          <span className="text-xs text-gray-500 dark:text-gray-400">
+          <span className="text-xs text-gray-500 dark:text-gray-400 truncate">
             {info.row.original.email}
           </span>
         </div>
@@ -38,9 +38,9 @@ export function createTasksColumns(
       accessorKey: "assignee",
       header: "Assignee",
       cell: (info) => (
-        <div className="flex items-center gap-2">
-          <Avatar size="sm" src={info.row.original.avatar} />
-          <span className="text-gray-700 dark:text-gray-300">
+        <div className="flex items-center gap-2 min-w-0">
+          <Avatar size="sm" src={info.row.original.avatar} className="shrink-0" />
+          <span className="text-gray-700 dark:text-gray-300 truncate">
             {info.getValue() as string}
           </span>
         </div>

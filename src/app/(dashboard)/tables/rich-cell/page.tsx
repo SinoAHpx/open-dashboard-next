@@ -3,23 +3,19 @@
 import { Button, Spinner, useDisclosure } from "@heroui/react";
 import { Plus } from "@phosphor-icons/react";
 import { Suspense, useCallback, useMemo, useRef, useState } from "react";
+import { createTasksConfig, type Task, tasksMeta } from "@/examples/tasks";
 import {
   PaginationTable,
   type PaginationTableRef,
-} from "@/components/PaginationTable";
-import { TablePage } from "@/components/table/TablePage";
-import type { RichCellTask } from "@/lib/api-wrapper/richcell";
-import {
-  createRichCellTasksConfig,
-  richCellMeta,
-} from "@/lib/config/richcells-tasks.config";
+  TablePage,
+} from "@/infra/table";
 
 export default function RichCellPage() {
   const tableRef = useRef<PaginationTableRef>(null);
   const { onOpen } = useDisclosure();
 
   const handleEdit = useCallback(
-    (task: RichCellTask) => {
+    (task: Task) => {
       console.log("Editing task:", task);
       onOpen();
     },
@@ -41,7 +37,7 @@ export default function RichCellPage() {
   const [totalCount, setTotalCount] = useState(0);
   const config = useMemo(
     () =>
-      createRichCellTasksConfig({
+      createTasksConfig({
         onEdit: handleEdit,
         onDelete: handleDelete,
       }),
@@ -50,9 +46,9 @@ export default function RichCellPage() {
 
   return (
     <TablePage
-      title={richCellMeta.title}
-      description={`${richCellMeta.description ?? ""}${
-        richCellMeta.description ? " " : ""
+      title={tasksMeta.title}
+      description={`${tasksMeta.description ?? ""}${
+        tasksMeta.description ? " " : ""
       }Total tasks: ${totalCount}`}
       actions={
         <Button

@@ -16,21 +16,17 @@ import {
 import { Plus, Sparkle } from "@phosphor-icons/react";
 import { Suspense, useCallback, useMemo, useRef, useState } from "react";
 import {
+  createProductsConfig,
+  generateProducts,
+  type Product,
+  productsHandlers,
+  productsMeta,
+} from "@/examples/products";
+import {
   PaginationTable,
   type PaginationTableRef,
-} from "@/components/PaginationTable";
-import { TablePage } from "@/components/table/TablePage";
-import {
-  addProduct,
-  deleteProduct,
-  generateSampleProducts,
-  type Product,
-  updateProduct,
-} from "@/lib/api-wrapper/products";
-import {
-  createProductsConfig,
-  productsTableMeta,
-} from "@/lib/config/actions-products.config";
+  TablePage,
+} from "@/infra/table";
 
 type ProductFormData = Omit<Product, "id" | "createdAt">;
 
@@ -79,18 +75,18 @@ export default function ActionsPage() {
     [onOpen],
   );
 
-  const handleDelete = useCallback((id: string) => {
+  const handleDelete = useCallback(async (id: string) => {
     if (confirm("Are you sure you want to delete this product?")) {
-      deleteProduct(id);
+      await productsHandlers.deleteOne?.(id);
       tableRef.current?.refresh();
     }
   }, []);
 
-  const handleSubmit = useCallback(() => {
+  const handleSubmit = useCallback(async () => {
     if (editingProduct) {
-      updateProduct(editingProduct.id, formData);
+      await productsHandlers.update?.(editingProduct.id, formData);
     } else {
-      addProduct(formData);
+      await productsHandlers.create?.(formData);
     }
     onClose();
     tableRef.current?.refresh();
@@ -104,7 +100,15 @@ export default function ActionsPage() {
   );
 
   const handleGenerateSamples = useCallback(() => {
-    generateSampleProducts(50);
+    // Generate and save sample products via localStorage
+    const products = generateProducts(50);
+    const existing = JSON.parse(
+      localStorage.getItem("example-products") || "[]",
+    );
+    localStorage.setItem(
+      "example-products",
+      JSON.stringify([...products, ...existing]),
+    );
     tableRef.current?.refresh();
   }, []);
 
@@ -120,12 +124,10 @@ export default function ActionsPage() {
 
   return (
     <TablePage
-      title={productsTableMeta.title}
+      title={productsMeta.title}
       description={
         <>
-          {productsTableMeta.description
-            ? `${productsTableMeta.description} `
-            : ""}
+          {productsMeta.description ? `${productsMeta.description} ` : ""}
           Total products: {totalCount}
         </>
       }

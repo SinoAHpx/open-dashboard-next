@@ -2,21 +2,17 @@
 
 import { Spinner } from "@heroui/react";
 import { Suspense, useState } from "react";
-import { PaginationTable } from "@/components/PaginationTable";
-import { TablePage } from "@/components/table/TablePage";
-import {
-  paginationUsersConfig,
-  paginationUsersMeta,
-} from "@/lib/config/pagination-users.config";
+import { usersConfig, usersMeta } from "@/examples/users";
+import { PaginationTable, TablePage } from "@/infra/table";
 
 export default function PaginationPage() {
   const [totalCount, setTotalCount] = useState(0);
 
   return (
     <TablePage
-      title={paginationUsersMeta.title}
-      description={`${paginationUsersMeta.description ?? ""}${
-        paginationUsersMeta.description ? " " : ""
+      title={usersMeta.title}
+      description={`${usersMeta.description ?? ""}${
+        usersMeta.description ? " " : ""
       }Total records: ${totalCount}`}
     >
       <Suspense
@@ -27,7 +23,7 @@ export default function PaginationPage() {
         }
       >
         <PaginationTable
-          {...paginationUsersConfig}
+          {...usersConfig}
           onTotalsChange={({ totalCount }) => setTotalCount(totalCount)}
         />
       </Suspense>

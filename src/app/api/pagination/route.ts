@@ -1,16 +1,16 @@
 import { faker } from "@faker-js/faker";
 import { NextRequest, NextResponse } from "next/server";
-import { PaginationUser } from "@/lib/api-wrapper/pagination";
+import { type User } from "@/examples/users";
 
 const TOTAL_RECORDS = 1000;
-let cachedUsers: PaginationUser[] | null = null;
+let cachedUsers: User[] | null = null;
 
-function generateUsers(): PaginationUser[] {
+function generateUsers(): User[] {
   if (cachedUsers) {
     return cachedUsers;
   }
 
-  const users: PaginationUser[] = [];
+  const users: User[] = [];
   const statuses: Array<"active" | "pending" | "inactive"> = [
     "active",
     "pending",
@@ -69,8 +69,8 @@ export async function GET(request: NextRequest) {
     // Apply sorting
     if (sortBy) {
       filteredUsers.sort((a, b) => {
-        const aValue = a[sortBy as keyof PaginationUser];
-        const bValue = b[sortBy as keyof PaginationUser];
+        const aValue = a[sortBy as keyof User];
+        const bValue = b[sortBy as keyof User];
 
         if (aValue < bValue) return sortOrder === "asc" ? -1 : 1;
         if (aValue > bValue) return sortOrder === "asc" ? 1 : -1;

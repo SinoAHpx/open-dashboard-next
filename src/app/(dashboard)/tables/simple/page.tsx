@@ -10,16 +10,17 @@ import {
   TableRow,
 } from "@heroui/react";
 import { useEffect, useState } from "react";
-import { getSimpleUsers, type SimpleUser } from "@/lib/api-wrapper/simple";
+import { type SimpleUser, simpleHandlers } from "@/examples/simple";
 
 export default function SimplePage() {
   const [users, setUsers] = useState<SimpleUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    getSimpleUsers()
-      .then((data) => {
-        setUsers(data);
+    simpleHandlers
+      .list?.({})
+      .then((result) => {
+        setUsers(result.data);
         setIsLoading(false);
       })
       .catch((error) => {

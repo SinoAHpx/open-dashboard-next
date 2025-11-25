@@ -1,11 +1,15 @@
 "use client";
 
 import type { AuthProvider } from "@refinedev/core";
-import type { SessionUser } from "@/lib/auth/session";
+
+export interface SessionUser {
+  email: string;
+  name?: string;
+}
 
 const SESSION_ENDPOINT = "/api/auth/session";
 
-async function readSession() {
+async function readSession(): Promise<SessionUser | null> {
   const response = await fetch(SESSION_ENDPOINT, {
     credentials: "include",
     cache: "no-store",
@@ -19,7 +23,7 @@ async function readSession() {
   return data?.user ?? null;
 }
 
-async function createSession(user: SessionUser) {
+async function createSession(user: SessionUser): Promise<SessionUser> {
   const response = await fetch(SESSION_ENDPOINT, {
     method: "POST",
     headers: {
@@ -40,7 +44,7 @@ async function createSession(user: SessionUser) {
   return user;
 }
 
-async function clearSession() {
+async function clearSession(): Promise<void> {
   await fetch(SESSION_ENDPOINT, {
     method: "DELETE",
     credentials: "include",
@@ -66,6 +70,7 @@ export const authProvider: AuthProvider = {
       redirectTo: "/",
     };
   },
+
   register: async ({ email, name }: { email?: string; name?: string }) => {
     if (!email) {
       return {
@@ -82,6 +87,7 @@ export const authProvider: AuthProvider = {
       redirectTo: "/login",
     };
   },
+
   logout: async () => {
     await clearSession();
 
@@ -90,6 +96,7 @@ export const authProvider: AuthProvider = {
       redirectTo: "/login",
     };
   },
+
   check: async () => {
     const user = await readSession();
 
@@ -104,10 +111,12 @@ export const authProvider: AuthProvider = {
       redirectTo: "/login",
     };
   },
+
   getIdentity: async () => {
     const user = await readSession();
     return user ?? null;
   },
+
   onError: async (error: Error) => {
     console.error("[authProvider] onError", error);
     return { error };

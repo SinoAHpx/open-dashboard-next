@@ -4,6 +4,10 @@ import "./globals.css";
 import { CommandMenuProvider } from "@/components/CommandMenuProvider";
 import { Providers } from "./providers";
 
+// Opt-out of static generation for all pages
+// Required for Refine's router provider which uses useSearchParams
+export const dynamic = "force-dynamic";
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],

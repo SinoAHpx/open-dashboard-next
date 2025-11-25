@@ -6,12 +6,10 @@ import {
   type BaseRecord,
   type CrudFilter,
   type CrudFilters,
-  type CrudSort,
   type LogicalFilter,
   useTable,
 } from "@refinedev/core";
 import {
-  type ColumnDef,
   flexRender,
   getCoreRowModel,
   useReactTable,
@@ -25,51 +23,9 @@ import {
   useMemo,
   useState,
 } from "react";
-import { TablePaginationControls } from "@/components/table/TablePaginationControls";
-import { TableToolbar } from "@/components/table/TableToolbar";
-import type { FilterConfig } from "@/components/table/types";
-
-export interface SelectionChangePayload<TData extends BaseRecord> {
-  ids: string[];
-  rows: TData[];
-}
-
-export interface PaginationTableConfig<TData extends BaseRecord> {
-  resource: string;
-  columns: ColumnDef<TData>[];
-  filters?: FilterConfig[];
-  pageSizeOptions?: number[];
-  defaultPageSize?: number;
-  enableSearch?: boolean;
-  searchPlaceholder?: string;
-  emptyMessage?: string;
-  className?: string;
-  getRowId?: (row: TData) => string;
-}
-
-export interface PaginationTableProps<TData extends BaseRecord>
-  extends PaginationTableConfig<TData> {
-  permanentFilters?: CrudFilters;
-  permanentSorters?: CrudSort[];
-  onTotalsChange?: (payload: {
-    totalCount: number;
-    currentPage: number;
-    pageSize: number;
-  }) => void;
-  enableSelection?: boolean;
-  onSelectionChange?: (payload: SelectionChangePayload<TData>) => void;
-}
-
-export interface PaginationTableRef {
-  refresh: () => void;
-  resetPage: () => void;
-  getTotalCount: () => number;
-  getCurrentPage: () => number;
-  isLoading: () => boolean;
-  getSelectedKeys: () => Set<string>;
-  clearSelection: () => void;
-  selectAll: () => void;
-}
+import { TablePaginationControls } from "./TablePaginationControls";
+import { TableToolbar } from "./TableToolbar";
+import type { PaginationTableProps, PaginationTableRef } from "./types";
 
 const DEFAULT_PAGE_SIZE_OPTIONS = [5, 10, 15, 20, 25, 50];
 
@@ -126,8 +82,8 @@ function PaginationTableInner<TData extends BaseRecord>(
 ) {
   const {
     tableQuery,
-    currentPage: current,
-    setCurrentPage: setCurrent,
+    currentPage,
+    setCurrentPage,
     pageSize,
     setPageSize,
     sorters,
@@ -156,10 +112,10 @@ function PaginationTableInner<TData extends BaseRecord>(
   useEffect(() => {
     onTotalsChange?.({
       totalCount,
-      currentPage: current,
+      currentPage,
       pageSize,
     });
-  }, [onTotalsChange, totalCount, current, pageSize]);
+  }, [onTotalsChange, totalCount, currentPage, pageSize]);
 
   const filterValues = useMemo(() => {
     const values: Record<string, string> = {};
@@ -311,10 +267,10 @@ function PaginationTableInner<TData extends BaseRecord>(
         tableQuery.refetch();
       },
       resetPage: () => {
-        setCurrent(1);
+        setCurrentPage(1);
       },
       getTotalCount: () => totalCount,
-      getCurrentPage: () => current,
+      getCurrentPage: () => currentPage,
       isLoading: () => isLoading,
       getSelectedKeys: () => new Set(selectedKeys),
       clearSelection: () => setSelectedKeys(new Set()),
@@ -326,11 +282,11 @@ function PaginationTableInner<TData extends BaseRecord>(
       },
     }),
     [
-      current,
+      currentPage,
       isLoading,
       isSelectable,
       selectedKeys,
-      setCurrent,
+      setCurrentPage,
       tableQuery,
       totalCount,
       validRowIds,
@@ -392,7 +348,8 @@ function PaginationTableInner<TData extends BaseRecord>(
                       id?: string;
                       accessorKey?: string;
                     };
-                    const columnId = columnDef.id ?? columnDef.accessorKey ?? "";
+                    const columnId =
+                      columnDef.id ?? columnDef.accessorKey ?? "";
                     const isSorted = sortBy === columnId;
                     return (
                       <th
@@ -487,14 +444,14 @@ function PaginationTableInner<TData extends BaseRecord>(
       </div>
 
       <TablePaginationControls
-        page={current}
+        page={currentPage}
         totalPages={totalPages}
-        onPageChange={setCurrent}
+        onPageChange={setCurrentPage}
         pageSize={pageSize}
         pageSizeOptions={pageSizeOptions}
         onPageSizeChange={(size) => {
           setPageSize(size);
-          setCurrent(1);
+          setCurrentPage(1);
         }}
       />
     </div>

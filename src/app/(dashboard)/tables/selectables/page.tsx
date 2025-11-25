@@ -22,22 +22,18 @@ import {
 import { Suspense, useCallback, useMemo, useRef, useState } from "react";
 import { FloatingActionMenu } from "@/components/FloatingActionMenu";
 import {
+  generateSelectableProducts,
+  type SelectableProduct,
+  selectablesConfig,
+  selectablesHandlers,
+  selectablesMeta,
+} from "@/examples/selectables";
+import {
   PaginationTable,
   type PaginationTableRef,
   type SelectionChangePayload,
-} from "@/components/PaginationTable";
-import { TablePage } from "@/components/table/TablePage";
-import {
-  addProduct,
-  generateSampleProducts,
-  getProducts,
-  type SelectableProduct,
-  updateProduct,
-} from "@/lib/api-wrapper/selectables";
-import {
-  selectableProductsConfig,
-  selectableProductsMeta,
-} from "@/lib/config/selectable-products.config";
+  TablePage,
+} from "@/infra/table";
 
 type ProductFormData = Omit<SelectableProduct, "id" | "lastRestocked">;
 
@@ -90,11 +86,11 @@ export default function SelectablesPage() {
     [onOpen],
   );
 
-  const handleSubmit = useCallback(() => {
+  const handleSubmit = useCallback(async () => {
     if (editingProduct) {
-      updateProduct(editingProduct.id, formData);
+      await selectablesHandlers.update?.(editingProduct.id, formData);
     } else {
-      addProduct(formData);
+      await selectablesHandlers.create?.(formData);
     }
     onClose();
     tableRef.current?.refresh();
@@ -108,7 +104,14 @@ export default function SelectablesPage() {
   );
 
   const handleGenerateSamples = useCallback(() => {
-    generateSampleProducts(50);
+    const products = generateSelectableProducts(50);
+    const existing = JSON.parse(
+      localStorage.getItem("example-selectables") || "[]",
+    );
+    localStorage.setItem(
+      "example-selectables",
+      JSON.stringify([...products, ...existing]),
+    );
     tableRef.current?.refresh();
   }, []);
 
@@ -129,10 +132,10 @@ export default function SelectablesPage() {
   );
 
   const handleEditSelected = useCallback(
-    (id: string) => {
-      const product = getProducts().find((item) => item.id === id);
-      if (product) {
-        handleEdit(product);
+    async (id: string) => {
+      const result = await selectablesHandlers.getOne?.(id);
+      if (result?.data) {
+        handleEdit(result.data);
       }
     },
     [handleEdit],
@@ -163,12 +166,10 @@ export default function SelectablesPage() {
 
   return (
     <TablePage
-      title={selectableProductsMeta.title}
+      title={selectablesMeta.title}
       description={
         <>
-          {selectableProductsMeta.description
-            ? `${selectableProductsMeta.description} `
-            : ""}
+          {selectablesMeta.description ? `${selectablesMeta.description} ` : ""}
           Total products: {totalCount}
         </>
       }
@@ -203,7 +204,7 @@ export default function SelectablesPage() {
         <PaginationTable
           ref={tableRef}
           enableSelection
-          {...selectableProductsConfig}
+          {...selectablesConfig}
           onTotalsChange={({ totalCount }) => setTotalCount(totalCount)}
           onSelectionChange={handleSelectionChange}
         />

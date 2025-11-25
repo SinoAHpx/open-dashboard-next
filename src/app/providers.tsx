@@ -3,9 +3,12 @@
 import { HeroUIProvider } from "@heroui/react";
 import { Refine } from "@refinedev/core";
 import routerProvider from "@refinedev/nextjs-router";
-import { authProvider } from "@/lib/refine/auth-provider";
-import { refineDataProvider } from "@/lib/refine/data-provider";
-import { resources } from "@/lib/refine/resources";
+import { registerExampleResources } from "@/examples/_registry";
+import { exampleResources } from "@/examples/resources";
+import { authProvider, refineDataProvider } from "@/infra/refine";
+
+// Register example resources on module load
+registerExampleResources();
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
@@ -14,10 +17,13 @@ export function Providers({ children }: { children: React.ReactNode }) {
         routerProvider={routerProvider}
         dataProvider={refineDataProvider}
         authProvider={authProvider}
-        resources={resources}
+        resources={exampleResources}
         options={{
-          syncWithLocation: true,
+          // Note: syncWithLocation requires Suspense boundaries in Next.js 15
+          // due to useSearchParams usage. Set to false for static builds.
+          syncWithLocation: false,
           warnWhenUnsavedChanges: true,
+          disableTelemetry: true,
         }}
       >
         {children}

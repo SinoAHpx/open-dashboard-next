@@ -25,7 +25,7 @@ type LoginErrors = {
 
 export default function LoginPage() {
   const router = useRouter();
-  const { mutateAsync: login, isLoading } = useLogin();
+  const { mutateAsync: login, isPending: isLoading } = useLogin();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
@@ -61,7 +61,6 @@ export default function LoginPage() {
         if (err.path[0] === "password") fieldErrors.password = err.message;
       });
       setErrors(fieldErrors);
-      setIsLoading(false);
       return;
     }
 

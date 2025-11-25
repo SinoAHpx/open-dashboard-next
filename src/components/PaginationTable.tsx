@@ -3,9 +3,11 @@
 import { Checkbox, Spinner } from "@heroui/react";
 import { CaretDown, CaretUp } from "@phosphor-icons/react";
 import {
+  type BaseRecord,
   type CrudFilter,
   type CrudFilters,
   type CrudSort,
+  type LogicalFilter,
   useTable,
 } from "@refinedev/core";
 import {
@@ -27,12 +29,12 @@ import { TablePaginationControls } from "@/components/table/TablePaginationContr
 import { TableToolbar } from "@/components/table/TableToolbar";
 import type { FilterConfig } from "@/components/table/types";
 
-export interface SelectionChangePayload<TData> {
+export interface SelectionChangePayload<TData extends BaseRecord> {
   ids: string[];
   rows: TData[];
 }
 
-export interface PaginationTableConfig<TData> {
+export interface PaginationTableConfig<TData extends BaseRecord> {
   resource: string;
   columns: ColumnDef<TData>[];
   filters?: FilterConfig[];
@@ -45,7 +47,7 @@ export interface PaginationTableConfig<TData> {
   getRowId?: (row: TData) => string;
 }
 
-export interface PaginationTableProps<TData>
+export interface PaginationTableProps<TData extends BaseRecord>
   extends PaginationTableConfig<TData> {
   permanentFilters?: CrudFilters;
   permanentSorters?: CrudSort[];
@@ -82,10 +84,10 @@ const upsertFilter = (
   filters: CrudFilter[],
   key: string,
   value: string,
-  operator: CrudFilter["operator"] = "eq",
+  operator: LogicalFilter["operator"] = "eq",
 ): CrudFilter[] => {
   const withoutKey = filters.filter(
-    (filter) => !("field" in filter && filter.field === key),
+    (filter) => "field" in filter && filter.field !== key,
   );
 
   if (!value) {
@@ -98,11 +100,11 @@ const upsertFilter = (
       field: key,
       operator,
       value,
-    },
+    } as LogicalFilter,
   ];
 };
 
-function PaginationTableInner<TData>(
+function PaginationTableInner<TData extends BaseRecord>(
   {
     resource,
     columns,
@@ -123,9 +125,9 @@ function PaginationTableInner<TData>(
   ref: React.Ref<PaginationTableRef>,
 ) {
   const {
-    tableQueryResult,
-    current,
-    setCurrent,
+    tableQuery,
+    currentPage: current,
+    setCurrentPage: setCurrent,
     pageSize,
     setPageSize,
     sorters,
@@ -138,16 +140,16 @@ function PaginationTableInner<TData>(
       pageSize: defaultPageSize,
     },
     sorters: {
-      permanent: permanentSorters ?? [],
+      initial: permanentSorters ?? [],
     },
     filters: {
-      permanent: permanentFilters ?? [],
+      initial: permanentFilters ?? [],
     },
   });
 
-  const data = tableQueryResult.data?.data ?? [];
-  const totalCount = tableQueryResult.data?.total ?? 0;
-  const isLoading = tableQueryResult.isLoading || tableQueryResult.isFetching;
+  const data = (tableQuery.data?.data ?? []) as TData[];
+  const totalCount = tableQuery.data?.total ?? 0;
+  const isLoading = tableQuery.isLoading || tableQuery.isFetching;
   const totalPages =
     totalCount === 0 ? 0 : Math.max(1, Math.ceil(totalCount / pageSize));
 
@@ -192,25 +194,24 @@ function PaginationTableInner<TData>(
 
   const handleSortChange = useCallback(
     (columnId: string) => {
-      setSorters((previous) => {
-        const existing = previous?.[0];
-        if (existing && existing.field === columnId) {
-          return [
-            {
-              field: columnId,
-              order: existing.order === "asc" ? "desc" : "asc",
-            },
-          ];
-        }
-        return [
+      const existing = sorters?.[0];
+      if (existing && existing.field === columnId) {
+        setSorters([
+          {
+            field: columnId,
+            order: existing.order === "asc" ? "desc" : "asc",
+          },
+        ]);
+      } else {
+        setSorters([
           {
             field: columnId,
             order: "asc",
           },
-        ];
-      });
+        ]);
+      }
     },
-    [setSorters],
+    [setSorters, sorters],
   );
 
   const currentSorter = sorters?.[0];
@@ -307,7 +308,7 @@ function PaginationTableInner<TData>(
     ref,
     () => ({
       refresh: () => {
-        tableQueryResult.refetch();
+        tableQuery.refetch();
       },
       resetPage: () => {
         setCurrent(1);
@@ -330,7 +331,7 @@ function PaginationTableInner<TData>(
       isSelectable,
       selectedKeys,
       setCurrent,
-      tableQueryResult,
+      tableQuery,
       totalCount,
       validRowIds,
     ],
@@ -346,7 +347,7 @@ function PaginationTableInner<TData>(
         filters={filters}
         filterValues={filterValues}
         onFilterChange={handleFilterChange}
-        onRefresh={() => tableQueryResult.refetch()}
+        onRefresh={() => tableQuery.refetch()}
         isLoading={isLoading}
       />
 
@@ -387,9 +388,11 @@ function PaginationTableInner<TData>(
                     </th>
                   ) : null}
                   {headerGroup.headers.map((header) => {
-                    const columnId =
-                      header.column.columnDef.id ??
-                      (header.column.columnDef.accessorKey as string);
+                    const columnDef = header.column.columnDef as {
+                      id?: string;
+                      accessorKey?: string;
+                    };
+                    const columnId = columnDef.id ?? columnDef.accessorKey ?? "";
                     const isSorted = sortBy === columnId;
                     return (
                       <th
@@ -498,7 +501,9 @@ function PaginationTableInner<TData>(
   );
 }
 
-export const PaginationTable = forwardRef(PaginationTableInner) as <TData>(
+export const PaginationTable = forwardRef(PaginationTableInner) as <
+  TData extends BaseRecord,
+>(
   props: PaginationTableProps<TData> & {
     ref?: React.Ref<PaginationTableRef>;
   },

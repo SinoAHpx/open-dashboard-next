@@ -1,6 +1,6 @@
 "use client";
 
-import type { AuthBindings } from "@refinedev/core";
+import type { AuthProvider } from "@refinedev/core";
 import type { SessionUser } from "@/lib/auth/session";
 
 const SESSION_ENDPOINT = "/api/auth/session";
@@ -47,8 +47,8 @@ async function clearSession() {
   });
 }
 
-export const authProvider: AuthBindings = {
-  login: async ({ email, name }) => {
+export const authProvider: AuthProvider = {
+  login: async ({ email, name }: { email?: string; name?: string }) => {
     if (!email) {
       return {
         success: false,
@@ -66,7 +66,7 @@ export const authProvider: AuthBindings = {
       redirectTo: "/",
     };
   },
-  register: async ({ email, name }) => {
+  register: async ({ email, name }: { email?: string; name?: string }) => {
     if (!email) {
       return {
         success: false,
@@ -108,7 +108,7 @@ export const authProvider: AuthBindings = {
     const user = await readSession();
     return user ?? null;
   },
-  onError: async (error) => {
+  onError: async (error: Error) => {
     console.error("[authProvider] onError", error);
     return { error };
   },

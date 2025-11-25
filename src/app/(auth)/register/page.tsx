@@ -22,7 +22,7 @@ type RegisterErrors = {
 
 export default function RegisterPage() {
   const router = useRouter();
-  const { mutateAsync: register, isLoading } = useRegister();
+  const { mutateAsync: register, isPending: isLoading } = useRegister();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -91,7 +91,6 @@ export default function RegisterPage() {
         fieldErrors[field] = issue.message;
       });
       setErrors(fieldErrors);
-      setIsLoading(false);
       return;
     }
 

@@ -53,10 +53,10 @@ const notImplemented = (resource: string): never => {
 };
 
 export const refineDataProvider: DataProvider = {
-  getList: async ({ resource, pagination, filters, sorters }) => {
+  getList: async ({ resource, pagination, filters, sorters }): Promise<any> => {
     const filterMap = buildFilterMap(filters);
     const sorter = buildSorter(sorters);
-    const current = pagination?.current ?? 1;
+    const current = (pagination as { current?: number })?.current ?? 1;
     const pageSize = pagination?.pageSize ?? 10;
 
     switch (resource) {
@@ -139,7 +139,7 @@ export const refineDataProvider: DataProvider = {
     }
   },
 
-  create: async ({ resource, variables }) => {
+  create: async ({ resource, variables }): Promise<any> => {
     switch (resource) {
       case "products": {
         const payload = variables as Omit<Product, "id" | "createdAt">;
@@ -151,7 +151,7 @@ export const refineDataProvider: DataProvider = {
     }
   },
 
-  update: async ({ resource, id, variables }) => {
+  update: async ({ resource, id, variables }): Promise<any> => {
     switch (resource) {
       case "products": {
         const product = updateProduct(
@@ -168,7 +168,7 @@ export const refineDataProvider: DataProvider = {
     }
   },
 
-  deleteOne: async ({ resource, id }) => {
+  deleteOne: async ({ resource, id }): Promise<any> => {
     switch (resource) {
       case "products": {
         const success = deleteProduct(String(id));
@@ -182,7 +182,7 @@ export const refineDataProvider: DataProvider = {
     }
   },
 
-  getOne: async ({ resource, id }) => {
+  getOne: async ({ resource, id }): Promise<any> => {
     switch (resource) {
       case "products": {
         const product = getProducts().find((item) => item.id === id);

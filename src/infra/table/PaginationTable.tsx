@@ -317,7 +317,7 @@ function PaginationTableInner<TData extends BaseRecord>(
             {emptyMessage}
           </div>
         ) : (
-          <table className="w-full table-fixed divide-y divide-gray-200 dark:divide-gray-800">
+          <table className="w-full min-w-max divide-y divide-gray-200 dark:divide-gray-800">
             <thead className="bg-gray-50 dark:bg-gray-900/50">
               {table.getHeaderGroups().map((headerGroup) => (
                 <tr key={headerGroup.id}>
@@ -427,7 +427,7 @@ function PaginationTableInner<TData extends BaseRecord>(
                     {row.getVisibleCells().map((cell) => (
                       <td
                         key={cell.id}
-                        className="px-4 py-3 text-sm text-gray-700 dark:text-gray-200 overflow-hidden"
+                        className="px-4 py-3 text-sm text-gray-700 dark:text-gray-200"
                       >
                         {flexRender(
                           cell.column.columnDef.cell,

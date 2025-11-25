@@ -9,7 +9,7 @@ export default async function AuthLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const session = decodeSession(cookieStore.get(SESSION_COOKIE)?.value);
 
   if (session) {

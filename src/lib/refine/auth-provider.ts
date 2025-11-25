@@ -8,6 +8,7 @@ const SESSION_ENDPOINT = "/api/auth/session";
 async function readSession() {
   const response = await fetch(SESSION_ENDPOINT, {
     credentials: "include",
+    cache: "no-store",
   });
 
   if (!response.ok) {

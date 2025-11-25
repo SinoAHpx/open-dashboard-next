@@ -8,8 +8,10 @@ import {
   type SessionUser,
 } from "@/lib/auth/session";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const encoded = cookieStore.get(SESSION_COOKIE)?.value;
   const user = decodeSession(encoded);
 

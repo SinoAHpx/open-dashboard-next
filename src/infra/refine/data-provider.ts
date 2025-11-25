@@ -19,7 +19,7 @@ export const refineDataProvider: DataProvider = {
 
     return handlers.list({
       pagination: {
-        current: (pagination as { current?: number })?.current,
+        current: pagination?.currentPage,
         pageSize: pagination?.pageSize,
       },
       filters,
